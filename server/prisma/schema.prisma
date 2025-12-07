@@ -1,0 +1,297 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum AccountRole {
+  ADMIN
+  USER
+  MEMBER
+}
+
+// Simple user roles for current phase
+enum UserRole {
+  ADMIN
+  USER
+}
+
+enum ItemType {
+  FILE
+  LINK
+  NOTE
+}
+
+enum Importance {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+// BASE MODELS
+
+model User {
+  id       String   @id @default(cuid())
+  email    String   @unique
+  name     String?
+  phone    String?
+  avatar   String?  // URL to avatar image
+  password String?
+  role     UserRole @default(USER)
+  isActive Boolean  @default(true)  // Soft delete flag
+
+  // Auth tokens
+  refreshTokenHash         String?
+  
+  // Email verification
+  isEmailVerified          Boolean   @default(false)
+  emailVerificationToken   String?
+  emailVerificationExpires DateTime?
+  
+  // Password reset
+  passwordResetToken       String?
+  passwordResetExpires     DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  accounts      AccountMember[]
+  ownerAccounts Account[]       @relation("AccountOwner")
+
+  // Opposite relations required by Prisma
+  files       File[]
+  items       Item[]
+  collections Collection[]
+
+  @@index([email])
+}
+
+model Account {
+  id        String   @id @default(cuid())
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Chủ account (sau này có thể cho phép nhiều owner)
+  ownerId String
+  owner   User   @relation("AccountOwner", fields: [ownerId], references: [id])
+
+  members         AccountMember[]
+  files           File[]
+  items           Item[]
+  tags            Tag[]
+  collections     Collection[]
+  sharedLinks     SharedLink[]
+  usage           AccountUsage?
+  embeddings      Embedding[]
+  collectionItems CollectionItem[]
+
+  @@index([ownerId])
+}
+
+// Quan hệ User <-> Account với role
+model AccountMember {
+  id        String      @id @default(cuid())
+  userId    String
+  accountId String
+  role      AccountRole @default(MEMBER)
+  createdAt DateTime    @default(now())
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  account Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, accountId])
+  @@index([accountId])
+}
+
+// STORAGE & LIBRARY
+
+model File {
+  id           String  @id @default(cuid())
+  accountId    String
+  userId       String // người upload
+  storageKey   String // path trên R2
+  originalName String
+  mimeType     String
+  size         BigInt
+  checkSum     String? // optional
+
+  account Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  items Item[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Item: Tập trung mọi thứ (file, link, note)
+model Item {
+  id          String     @id @default(cuid())
+  accountId   String
+  userId      String
+  type        ItemType   @default(FILE)
+  fileId      String? // Neu type = FILE 
+  url         String? // Neu type = LINK
+  content     String?    @db.Text // Noi dung note (neu type = NOTE)
+  title       String
+  description String?
+  thumbnail   String? // URL thumbnail cho preview (link/video)
+  category    String?
+  project     String?
+  importance  Importance @default(MEDIUM)
+  isPinned    Boolean    @default(false) // Pin item quan trong
+  tagsText    String? // cache tags dang text de search nhanh
+  domain      String? // vi du : youtube.com
+  mimeType    String?
+  size        BigInt?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  account Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  file    File?   @relation(fields: [fileId], references: [id], onDelete: Cascade)
+
+  itemTags    ItemTag[]
+  collections CollectionItem[]
+  sharedLinks SharedLink[]
+  embeddings  Embedding[]
+
+  @@index([accountId])
+  @@index([userId])
+  @@index([type])
+  @@index([fileId])
+  @@index([createdAt])
+  @@index([domain])
+  @@index([category])
+  @@index([project])
+  @@index([importance])
+  @@index([isPinned])
+  @@index([title]) // Full-text search co the dung rieng
+}
+
+// Tag nhiều-nhiều
+model Tag {
+  id        String   @id @default(cuid())
+  accountId String
+  name      String
+  createdAt DateTime @default(now())
+
+  account  Account   @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  itemTags ItemTag[]
+
+  @@unique([accountId, name])
+  @@index([accountId])
+}
+
+model ItemTag {
+  itemId String
+  tagId  String
+
+  item Item @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  tag  Tag  @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([itemId, tagId])
+  @@index([tagId])
+}
+
+model Collection {
+  id          String   @id @default(cuid())
+  accountId   String
+  userId      String
+  name        String
+  description String?
+  coverImage  String? // Anh bia cho collection
+  isPublic    Boolean  @default(false)
+  slugPublic  String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  account Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  items CollectionItem[]
+
+  @@unique([accountId, slugPublic])
+  @@index([accountId])
+  @@index([userId])
+}
+
+model CollectionItem {
+  id           String   @id @default(cuid())
+  accountId    String
+  collectionId String
+  itemId       String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  account    Account    @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  collection Collection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+  item       Item       @relation(fields: [itemId], references: [id], onDelete: Cascade)
+
+  @@unique([collectionId, itemId])
+  @@index([accountId])
+}
+
+model SharedLink {
+  id           String   @id @default(cuid())
+  accountId    String
+  itemId       String
+  token        String   @unique
+  passwordHash String?
+  expiresAt    DateTime
+  revoked      Boolean  @default(false)
+  accessCount  Int      @default(0) // Dem so lan truy cap
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  account Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  item    Item    @relation(fields: [itemId], references: [id], onDelete: Cascade)
+
+  @@index([accountId])
+  @@index([itemId])
+  @@index([token])
+  @@index([expiresAt])
+}
+
+// USAGE & ANALYTICS
+
+model AccountUsage {
+  id               String @id @default(cuid())
+  accountId        String @unique
+  usedStorageBytes BigInt @default(0)
+  maxStorageBytes  BigInt @default(0)
+  itemCount        Int    @default(0)
+  maxItems         Int    @default(0)
+  collectionCount  Int    @default(0)
+  maxCollections   Int    @default(0)
+  // bạn có thể thêm các trường khác như maxSharedLinks...
+
+  account Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
+}
+
+// Semantic search (tuỳ chọn)
+// Lưu vector kiểu Bytes hoặc JSON nếu chưa dùng extension `pgvector`
+model Embedding {
+  id        String   @id @default(cuid())
+  accountId String
+  itemId    String   @unique
+  // Nếu bạn cài pgvector có thể dùng:
+  // vector Unsupported("vector")
+  // còn không thì tạm dùng Bytes hoặc Json:
+  vector    Bytes
+  createdAt DateTime @default(now())
+
+  account Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  item    Item    @relation(fields: [itemId], references: [id], onDelete: Cascade)
+
+  @@index([accountId])
+}
