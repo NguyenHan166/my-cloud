@@ -22,8 +22,20 @@ export class PrismaService
       throw new Error('DATABASE_URL environment variable is not set');
     }
 
-    const pool = new Pool({ connectionString });
-    const adapter = new PrismaPg(pool);
+    // SSL config for Supabase Pooler connection
+    // Extract schema from connection string or use default
+    const url = new URL(connectionString);
+    const schema = url.searchParams.get('schema') || 'public';
+
+    const pool = new Pool({
+      connectionString,
+      ssl: {
+        rejectUnauthorized: false, // Required for Supabase pooler with self-signed cert
+      },
+    });
+
+    // Use PrismaPg schema option for custom schema support
+    const adapter = new PrismaPg(pool, { schema });
 
     super({
       adapter,

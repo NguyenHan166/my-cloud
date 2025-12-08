@@ -7,7 +7,7 @@ import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import { TransformInterceptor } from './common/interceptors/transform.interceptor';
 import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
-import { AppConfig } from './config/app.config';  
+import { AppConfig } from './config/app.config';
 
 async function bootstrap() {
   const logger = CustomLogger.create('Bootstrap');
@@ -62,7 +62,9 @@ async function bootstrap() {
   const port = appConfig?.port || 3000;
   await app.listen(port);
 
-  logger.log(`🚀 Application is running on: http://localhost:${port}/${apiPrefix}`);
+  logger.log(
+    `🚀 Application is running on: http://localhost:${port}/${apiPrefix}`,
+  );
   logger.log(`📝 Environment: ${appConfig?.nodeEnv || 'development'}`);
 }
 
