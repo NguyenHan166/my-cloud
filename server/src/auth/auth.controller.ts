@@ -6,6 +6,12 @@ import {
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBearerAuth,
+} from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import {
   RegisterDto,
@@ -20,12 +26,23 @@ import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { Public } from '../common/decorators/public.decorator';
 import { GetUser } from '../common/decorators/get-user.decorator';
 
+@ApiTags('auth')
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Public()
   @Post('register')
+  @ApiOperation({ summary: 'Register new user account' })
+  @ApiResponse({
+    status: 201,
+    description:
+      'User registered successfully. OTP sent to email for verification.',
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Validation error or email already exists.',
+  })
   async register(@Body() dto: RegisterDto) {
     return this.authService.register(dto);
   }
@@ -33,6 +50,15 @@ export class AuthController {
   @Public()
   @Post('login')
   @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Login with email and password' })
+  @ApiResponse({
+    status: 200,
+    description: 'Login successful. Returns access token and refresh token.',
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Invalid credentials or email not verified.',
+  })
   async login(@Body() dto: LoginDto) {
     return this.authService.login(dto);
   }
@@ -40,6 +66,15 @@ export class AuthController {
   @Public()
   @Post('refresh')
   @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Refresh access token using refresh token' })
+  @ApiResponse({
+    status: 200,
+    description: 'Token refreshed successfully. Returns new access token.',
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Invalid or expired refresh token.',
+  })
   async refreshToken(@Body() dto: RefreshTokenDto) {
     return this.authService.refreshToken(dto.refreshToken);
   }
@@ -47,6 +82,15 @@ export class AuthController {
   @Public()
   @Post('verify-otp')
   @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Verify email with OTP code' })
+  @ApiResponse({
+    status: 200,
+    description: 'Email verified successfully.',
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Invalid or expired OTP code.',
+  })
   async verifyOtp(@Body() dto: VerifyOtpDto) {
     return this.authService.verifyOtp(dto.email, dto.otp);
   }
@@ -54,6 +98,15 @@ export class AuthController {
   @Public()
   @Post('resend-otp')
   @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Resend OTP code to email' })
+  @ApiResponse({
+    status: 200,
+    description: 'OTP resent successfully.',
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Email not found or already verified.',
+  })
   async resendOtp(@Body() dto: ResendOtpDto) {
     return this.authService.resendOtp(dto.email);
   }
@@ -61,6 +114,15 @@ export class AuthController {
   @Public()
   @Post('forgot-password')
   @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Request password reset' })
+  @ApiResponse({
+    status: 200,
+    description: 'Password reset OTP sent to email.',
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Email not found.',
+  })
   async forgotPassword(@Body() dto: ForgotPasswordDto) {
     return this.authService.forgotPassword(dto);
   }
@@ -68,6 +130,15 @@ export class AuthController {
   @Public()
   @Post('reset-password')
   @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Reset password with OTP code' })
+  @ApiResponse({
+    status: 200,
+    description: 'Password reset successfully.',
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Invalid or expired OTP code.',
+  })
   async resetPassword(@Body() dto: ResetPasswordDto) {
     return this.authService.resetPassword(dto);
   }
@@ -75,6 +146,16 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   @Post('logout')
   @HttpCode(HttpStatus.OK)
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({ summary: 'Logout current user' })
+  @ApiResponse({
+    status: 200,
+    description: 'Logged out successfully.',
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized - Invalid or missing token.',
+  })
   async logout(@GetUser() user: { id: string }) {
     return this.authService.logout(user.id);
   }

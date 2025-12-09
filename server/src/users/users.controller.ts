@@ -12,6 +12,12 @@ import {
   ForbiddenException,
   ConflictException,
 } from '@nestjs/common';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBearerAuth,
+} from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
@@ -23,6 +29,8 @@ import { AdminUpdateUserDto } from './dto/admin-update-user.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { UserRole } from '@prisma/client';
 
+@ApiTags('users')
+@ApiBearerAuth('JWT-auth')
 @Controller('users')
 @UseGuards(JwtAuthGuard)
 export class UsersController {
@@ -31,6 +39,15 @@ export class UsersController {
   // ========== USER ENDPOINTS ==========
 
   @Get('me')
+  @ApiOperation({ summary: 'Get current user profile' })
+  @ApiResponse({
+    status: 200,
+    description: 'User profile retrieved successfully.',
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized - Invalid or missing token.',
+  })
   async getProfile(@GetUser() user: { id: string }) {
     const fullUser = await this.usersService.findById(user.id);
     if (!fullUser) {
@@ -40,6 +57,19 @@ export class UsersController {
   }
 
   @Patch('me')
+  @ApiOperation({ summary: 'Update current user profile' })
+  @ApiResponse({
+    status: 200,
+    description: 'Profile updated successfully.',
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Validation error.',
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized - Invalid or missing token.',
+  })
   async updateProfile(
     @GetUser() user: { id: string },
     @Body() dto: UpdateProfileDto,
@@ -64,6 +94,19 @@ export class UsersController {
   @Get()
   @UseGuards(RolesGuard)
   @Roles(UserRole.ADMIN)
+  @ApiOperation({ summary: '[Admin] List all users with pagination' })
+  @ApiResponse({
+    status: 200,
+    description: 'Users list retrieved successfully.',
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized - Invalid or missing token.',
+  })
+  @ApiResponse({
+    status: 403,
+    description: 'Forbidden - Admin role required.',
+  })
   async listUsers(@Query() query: QueryUsersDto) {
     const result = await this.usersService.findAll({
       page: query.page || 1,
@@ -92,6 +135,23 @@ export class UsersController {
   @Get(':id')
   @UseGuards(RolesGuard)
   @Roles(UserRole.ADMIN)
+  @ApiOperation({ summary: '[Admin] Get user by ID' })
+  @ApiResponse({
+    status: 200,
+    description: 'User retrieved successfully.',
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized.',
+  })
+  @ApiResponse({
+    status: 403,
+    description: 'Forbidden - Admin role required.',
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'User not found.',
+  })
   async getUserById(@Param('id') id: string) {
     const user = await this.usersService.findById(id);
     if (!user) {
@@ -106,11 +166,32 @@ export class UsersController {
   @Post()
   @UseGuards(RolesGuard)
   @Roles(UserRole.ADMIN)
+  @ApiOperation({ summary: '[Admin] Create new user' })
+  @ApiResponse({
+    status: 201,
+    description: 'User created successfully.',
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Validation error.',
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized.',
+  })
+  @ApiResponse({
+    status: 403,
+    description: 'Forbidden - Admin role required.',
+  })
+  @ApiResponse({
+    status: 409,
+    description: 'Email already exists.',
+  })
   async createUser(@Body() dto: AdminCreateUserDto) {
     // Check if email already exists
     const existing = await this.usersService.findByEmail(dto.email);
     if (existing) {
-      throw new ConflictException('Email đã được sử dụng');
+      throw new ConflictException('Đã Email được sử dụng');
     }
 
     const user = await this.usersService.adminCreate({
@@ -131,6 +212,27 @@ export class UsersController {
   @Patch(':id')
   @UseGuards(RolesGuard)
   @Roles(UserRole.ADMIN)
+  @ApiOperation({ summary: '[Admin] Update user' })
+  @ApiResponse({
+    status: 200,
+    description: 'User updated successfully.',
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Validation error.',
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized.',
+  })
+  @ApiResponse({
+    status: 403,
+    description: 'Forbidden - Admin role required or cannot demote self.',
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'User not found.',
+  })
   async updateUser(
     @Param('id') id: string,
     @Body() dto: AdminUpdateUserDto,
@@ -163,6 +265,23 @@ export class UsersController {
   @Patch(':id/toggle-status')
   @UseGuards(RolesGuard)
   @Roles(UserRole.ADMIN)
+  @ApiOperation({ summary: '[Admin] Toggle user active status' })
+  @ApiResponse({
+    status: 200,
+    description: 'User status toggled successfully.',
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized.',
+  })
+  @ApiResponse({
+    status: 403,
+    description: 'Forbidden - Admin role required or cannot deactivate self.',
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'User not found.',
+  })
   async toggleUserStatus(
     @Param('id') id: string,
     @GetUser() currentUser: { id: string },
@@ -194,6 +313,23 @@ export class UsersController {
   @Delete(':id')
   @UseGuards(RolesGuard)
   @Roles(UserRole.ADMIN)
+  @ApiOperation({ summary: '[Admin] Permanently delete user' })
+  @ApiResponse({
+    status: 200,
+    description: 'User deleted successfully.',
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized.',
+  })
+  @ApiResponse({
+    status: 403,
+    description: 'Forbidden - Admin role required or cannot delete self.',
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'User not found.',
+  })
   async deleteUser(
     @Param('id') id: string,
     @GetUser() currentUser: { id: string },

@@ -16,6 +16,7 @@ import { UploadModule } from './upload/upload.module';
 import { TagsModule } from './tags/tags.module';
 import { ItemsModule } from './items/items.module';
 import { CollectionsModule } from './collections/collections.module';
+import { SharedLinksModule } from './shared-links/shared-links.module';
 
 @Module({
   imports: [
@@ -37,6 +38,7 @@ import { CollectionsModule } from './collections/collections.module';
     TagsModule,
     ItemsModule,
     CollectionsModule,
+    SharedLinksModule,
   ],
   controllers: [AppController],
   providers: [AppService],

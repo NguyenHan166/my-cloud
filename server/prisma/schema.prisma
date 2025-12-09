@@ -37,22 +37,22 @@ model User {
   email    String   @unique
   name     String?
   phone    String?
-  avatar   String?  // URL to avatar image
+  avatar   String? // URL to avatar image
   password String?
   role     UserRole @default(USER)
-  isActive Boolean  @default(true)  // Soft delete flag
+  isActive Boolean  @default(true) // Soft delete flag
 
   // Auth tokens
-  refreshTokenHash         String?
-  
+  refreshTokenHash String?
+
   // Email verification
   isEmailVerified          Boolean   @default(false)
   emailVerificationToken   String?
   emailVerificationExpires DateTime?
-  
+
   // Password reset
-  passwordResetToken       String?
-  passwordResetExpires     DateTime?
+  passwordResetToken   String?
+  passwordResetExpires DateTime?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -83,7 +83,7 @@ model File {
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  itemFiles ItemFile[]  // Changed: 1-to-many through junction
+  itemFiles ItemFile[] // Changed: 1-to-many through junction
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -112,7 +112,7 @@ model Item {
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  files       ItemFile[]  // New: 1-to-many through junction
+  files       ItemFile[] // New: 1-to-many through junction
   itemTags    ItemTag[]
   collections CollectionItem[]
   sharedLinks SharedLink[]
@@ -134,7 +134,7 @@ model ItemFile {
   id        String   @id @default(cuid())
   itemId    String
   fileId    String
-  position  Int      @default(0)  // Order of files within Item
+  position  Int      @default(0) // Order of files within Item
   isPrimary Boolean  @default(false) // Primary file for thumbnail
   createdAt DateTime @default(now())
 

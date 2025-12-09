@@ -1,89 +1,135 @@
 import {
-    IsString,
-    IsOptional,
-    IsEnum,
-    IsArray,
-    IsUrl,
-    ValidateNested,
-    IsNotEmpty,
+  IsString,
+  IsOptional,
+  IsEnum,
+  IsArray,
+  IsUrl,
+  ValidateNested,
+  IsNotEmpty,
 } from 'class-validator';
-import { Type, Transform } from 'class-transformer';
+import { Type, Transform, plainToInstance } from 'class-transformer';
 import { Importance } from '@prisma/client';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 /**
  * Helper to parse JSON string from FormData
  */
 const parseJsonArray = ({ value }: { value: unknown }) => {
-    if (typeof value === 'string') {
-        try {
-            return JSON.parse(value);
-        } catch {
-            return value;
-        }
+  if (typeof value === 'string') {
+    try {
+      return JSON.parse(value);
+    } catch {
+      return value;
     }
-    return value;
+  }
+  return value;
 };
 
 /**
  * DTO for creating new tags inline during update
  */
 export class NewTagDto {
-    @IsString()
-    @IsNotEmpty()
-    name: string;
+  @ApiProperty({ description: 'Tag name' })
+  @IsString()
+  @IsNotEmpty()
+  name: string;
 
-    @IsOptional()
-    @IsString()
-    color?: string;
+  @ApiPropertyOptional({ description: 'Tag color' })
+  @IsOptional()
+  @IsString()
+  color?: string;
 }
 
 export class UpdateItemDto {
-    @IsOptional()
-    @IsString()
-    title?: string;
+  @ApiPropertyOptional({ description: 'Update title' })
+  @IsOptional()
+  @IsString()
+  title?: string;
 
-    @IsOptional()
-    @IsUrl()
-    url?: string;
+  @ApiPropertyOptional({ description: 'Update URL (for LINK)' })
+  @IsOptional()
+  @IsUrl()
+  url?: string;
 
-    @IsOptional()
-    @IsString()
-    content?: string;
+  @ApiPropertyOptional({ description: 'Update content (for NOTE)' })
+  @IsOptional()
+  @IsString()
+  content?: string;
 
-    @IsOptional()
-    @IsString()
-    description?: string;
+  @ApiPropertyOptional({ description: 'Update description' })
+  @IsOptional()
+  @IsString()
+  description?: string;
 
-    @IsOptional()
-    @IsString()
-    category?: string;
+  @ApiPropertyOptional({ description: 'Update category' })
+  @IsOptional()
+  @IsString()
+  category?: string;
 
-    @IsOptional()
-    @IsString()
-    project?: string;
+  @ApiPropertyOptional({ description: 'Update project' })
+  @IsOptional()
+  @IsString()
+  project?: string;
 
-    @IsOptional()
-    @IsEnum(Importance)
-    importance?: Importance;
+  @ApiPropertyOptional({ enum: Importance, description: 'Update importance' })
+  @IsOptional()
+  @IsEnum(Importance)
+  importance?: Importance;
 
-    // Existing tag IDs
-    @IsOptional()
-    @IsArray()
-    @IsString({ each: true })
-    tagIds?: string[];
+  // Existing tag IDs
+  @ApiPropertyOptional({
+    description: 'Array of tag IDs to replace existing ones',
+    isArray: true,
+  })
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  tagIds?: string[];
 
-    // New tags to create inline (Transform must be FIRST)
-    @IsOptional()
-    @Transform(parseJsonArray, { toClassOnly: true })
-    @IsArray()
-    @ValidateNested({ each: true })
-    @Type(() => NewTagDto)
-    newTags?: NewTagDto[];
+  // New tags to create inline (parse JSON and convert to class instances)
+  @ApiPropertyOptional({
+    description: 'New tags to create inline (can be JSON string)',
+    type: [NewTagDto],
+  })
+  @IsOptional()
+  @Transform(
+    ({ value }) => {
+      let parsed = value;
+      if (typeof value === 'string') {
+        try {
+          parsed = JSON.parse(value);
+        } catch {
+          return value;
+        }
+      }
+      // Convert plain objects to NewTagDto class instances
+      if (Array.isArray(parsed)) {
+        return plainToInstance(NewTagDto, parsed);
+      }
+      return parsed;
+    },
+    { toClassOnly: true },
+  )
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => NewTagDto)
+  newTags?: NewTagDto[];
 
-    // File IDs to remove (for multi-file items)
-    @IsOptional()
-    @Transform(parseJsonArray)
-    @IsArray()
-    @IsString({ each: true })
-    removeFileIds?: string[];
+  // File IDs to remove (for multi-file items)
+  @ApiPropertyOptional({
+    description: 'Array of file IDs to remove (can be JSON string)',
+    isArray: true,
+  })
+  @IsOptional()
+  @Transform(parseJsonArray)
+  @IsArray()
+  @IsString({ each: true })
+  removeFileIds?: string[];
+
+  @ApiPropertyOptional({
+    type: 'array',
+    items: { type: 'string', format: 'binary' },
+    description: 'New files to upload (append to existing files)',
+  })
+  files?: any[];
 }

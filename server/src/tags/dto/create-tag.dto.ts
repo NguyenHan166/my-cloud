@@ -1,10 +1,19 @@
-import { IsOptional, IsString } from "class-validator";
+import { IsOptional, IsString } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreateTagDto {
-    @IsString()
-    name: string;
+  @ApiProperty({
+    description: 'Tag name',
+    example: 'Work',
+  })
+  @IsString()
+  name: string;
 
-    @IsString()
-    @IsOptional()
-    color?: string;
+  @ApiPropertyOptional({
+    description: 'Tag color (hex code or color name)',
+    example: '#3B82F6',
+  })
+  @IsString()
+  @IsOptional()
+  color?: string;
 }

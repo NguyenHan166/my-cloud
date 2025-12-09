@@ -14,6 +14,17 @@ import { GetUser } from '../common/decorators/get-user.decorator';
 import { UploadService } from './upload.service';
 import { UsersService } from '../users/users.service';
 
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBearerAuth,
+  ApiConsumes,
+  ApiBody,
+} from '@nestjs/swagger';
+
+@ApiTags('upload')
+@ApiBearerAuth('JWT-auth')
 @Controller('upload')
 @UseGuards(JwtAuthGuard)
 export class UploadController {
@@ -25,8 +36,36 @@ export class UploadController {
   /**
    * Upload avatar for current user
    */
+  /**
+   * Upload avatar for current user
+   */
   @Post('avatar')
   @UseInterceptors(FileInterceptor('file'))
+  @ApiConsumes('multipart/form-data')
+  @ApiOperation({ summary: 'Upload avatar for current user' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        file: {
+          type: 'string',
+          format: 'binary',
+        },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 201,
+    description: 'Avatar uploaded successfully.',
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Bad request (invalid file type or missing file).',
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized.',
+  })
   async uploadAvatar(
     @UploadedFile() file: Express.Multer.File,
     @GetUser() user: { id: string },
@@ -62,8 +101,36 @@ export class UploadController {
   /**
    * Upload avatar for specific user (Admin only)
    */
+  /**
+   * Upload avatar for specific user (Admin only)
+   */
   @Patch('avatar/:userId')
   @UseInterceptors(FileInterceptor('file'))
+  @ApiConsumes('multipart/form-data')
+  @ApiOperation({ summary: 'Upload avatar for specific user (Admin)' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        file: {
+          type: 'string',
+          format: 'binary',
+        },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Avatar updated successfully.',
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Bad request.',
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized.',
+  })
   async uploadAvatarForUser(
     @UploadedFile() file: Express.Multer.File,
     @Param('userId') userId: string,
@@ -102,8 +169,36 @@ export class UploadController {
   /**
    * General file upload
    */
+  /**
+   * General file upload
+   */
   @Post('file')
   @UseInterceptors(FileInterceptor('file'))
+  @ApiConsumes('multipart/form-data')
+  @ApiOperation({ summary: 'General file upload' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        file: {
+          type: 'string',
+          format: 'binary',
+        },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 201,
+    description: 'File uploaded successfully.',
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Bad request.',
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized.',
+  })
   async uploadFile(@UploadedFile() file: Express.Multer.File) {
     if (!file) {
       throw new BadRequestException('Vui lòng chọn file');

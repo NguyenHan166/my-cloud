@@ -1,6 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 import { CustomLogger } from './common/logger/logger.service';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
@@ -33,6 +34,40 @@ async function bootstrap() {
   // Set global prefix
   const apiPrefix = appConfig?.apiPrefix || 'api';
   app.setGlobalPrefix(apiPrefix);
+
+  // Setup Swagger Documentation
+  const config = new DocumentBuilder()
+    .setTitle('Personal Cloud API')
+    .setDescription(
+      'Personal cloud storage and management system - API Documentation',
+    )
+    .setVersion('1.0')
+    .addBearerAuth(
+      {
+        type: 'http',
+        scheme: 'bearer',
+        bearerFormat: 'JWT',
+        name: 'JWT',
+        description: 'Enter JWT token',
+        in: 'header',
+      },
+      'JWT-auth', // This name here is important for matching up with @ApiBearerAuth() in controllers.
+    )
+    .addTag('auth', 'Authentication & Authorization')
+    .addTag('users', 'User management')
+    .addTag('items', 'Items (Files, Notes, Links)')
+    .addTag('collections', 'Collections management')
+    .addTag('tags', 'Tags management')
+    .addTag('shared-links', 'Shared links')
+    .addTag('upload', 'File upload')
+    .build();
+
+  const document = SwaggerModule.createDocument(app, config);
+  SwaggerModule.setup(`${apiPrefix}/docs`, app, document, {
+    swaggerOptions: {
+      persistAuthorization: true, // Persist authorization data between page refreshes
+    },
+  });
 
   // Global pipes
   app.useGlobalPipes(
