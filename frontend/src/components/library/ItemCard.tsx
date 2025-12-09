@@ -6,8 +6,8 @@ import type { Item } from '@/types/domain';
 
 // File type icon mapping
 const getTypeIcon = (item: Item) => {
-  if (item.type === 'link') return Link;
-  if (item.type === 'note') return StickyNote;
+  if (item.type === 'LINK') return Link;
+  if (item.type === 'NOTE') return StickyNote;
   // File type
   if (item.mimeType?.startsWith('image/')) return Image;
   if (item.mimeType?.startsWith('video/')) return Video;
@@ -16,8 +16,8 @@ const getTypeIcon = (item: Item) => {
 
 // File type color mapping
 const getTypeColor = (item: Item) => {
-  if (item.type === 'link') return 'text-blue-500 bg-blue-50';
-  if (item.type === 'note') return 'text-amber-500 bg-amber-50';
+  if (item.type === 'LINK') return 'text-blue-500 bg-blue-50';
+  if (item.type === 'NOTE') return 'text-amber-500 bg-amber-50';
   if (item.mimeType?.startsWith('image/')) return 'text-purple-500 bg-purple-50';
   if (item.mimeType?.startsWith('video/')) return 'text-pink-500 bg-pink-50';
   return 'text-gray-500 bg-gray-50';
@@ -130,7 +130,7 @@ export const ItemCard: React.FC<ItemCardProps> = ({
       </div>
 
       {/* Tags */}
-      {item.tags.length > 0 && (
+      {item.tags && item.tags.length > 0 && (
         <div className="flex flex-wrap gap-1">
           {item.tags.slice(0, 3).map(tag => (
             <Badge
@@ -155,7 +155,7 @@ export const ItemCard: React.FC<ItemCardProps> = ({
       )}
 
       {/* Importance indicator */}
-      {item.importance === 'high' && (
+      {item.importance === 'HIGH' && (
         <div className="absolute top-3 left-3">
           <Tooltip content="High importance">
             <Star className="w-4 h-4 text-amber-500 fill-amber-500" />

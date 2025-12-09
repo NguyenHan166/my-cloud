@@ -6,8 +6,8 @@ import type { Item } from '@/types/domain';
 
 // Get icon for item type
 const getItemIcon = (item: Item) => {
-  if (item.type === 'link') return LinkIcon;
-  if (item.type === 'note') return FileText;
+  if (item.type === 'LINK') return LinkIcon;
+  if (item.type === 'NOTE') return FileText;
   if (item.mimeType?.startsWith('image/')) return Image;
   if (item.mimeType?.startsWith('video/')) return Video;
   return FileText;
@@ -108,14 +108,14 @@ export const PublicCollectionPage = () => {
                         <Badge variant="default" size="sm">
                           {item.type}
                         </Badge>
-                        {item.type === 'link' && item.domain && (
+                        {item.type === 'LINK' && item.domain && (
                           <span className="text-xs text-muted">{item.domain}</span>
                         )}
                       </div>
                     </div>
 
                     {/* Action */}
-                    {item.type === 'link' && item.url && (
+                    {item.type === 'LINK' && item.url && (
                       <a
                         href={item.url}
                         target="_blank"

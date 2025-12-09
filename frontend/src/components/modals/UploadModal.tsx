@@ -12,8 +12,10 @@ import {
   CheckCircle,
   AlertCircle,
   Loader2,
+  Plus,
 } from 'lucide-react';
-import { mockTags } from '@/api/mockData';
+import { useTagsStore } from '@/stores';
+import { createItem } from '@/api/libraryApi';
 
 interface UploadFile {
   file: File;
@@ -27,7 +29,7 @@ interface UploadFile {
 interface UploadModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onUploadComplete?: (files: UploadFile[]) => void;
+  onUploadComplete?: (message: string) => void;
 }
 
 const getFileIcon = (type: string) => {
@@ -53,9 +55,27 @@ export const UploadModal: React.FC<UploadModalProps> = ({
   const [isDragging, setIsDragging] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [title, setTitle] = useState('');
   const [category, setCategory] = useState('');
   const [project, setProject] = useState('');
+  const [newTags, setNewTags] = useState<{name: string; color: string}[]>([]);
+  const [newTagName, setNewTagName] = useState('');
+  const [newTagColor, setNewTagColor] = useState('#6366F1');
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const TAG_COLORS = [
+    '#6366F1', '#22C55E', '#F59E0B', '#EF4444', 
+    '#8B5CF6', '#EC4899', '#14B8A6', '#3B82F6'
+  ];
+
+  const { tags, loadTags } = useTagsStore();
+
+  // Load tags when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      loadTags();
+    }
+  }, [isOpen, loadTags]);
 
   // Cleanup preview URLs when component unmounts
   useEffect(() => {
@@ -119,38 +139,57 @@ export const UploadModal: React.FC<UploadModalProps> = ({
     }
   };
 
-  const simulateUpload = async () => {
+  const handleUpload = async () => {
     setIsUploading(true);
+    const pendingFiles = files.filter(f => f.status === 'pending');
+    
+    if (pendingFiles.length === 0) {
+      setIsUploading(false);
+      return;
+    }
 
-    for (let i = 0; i < files.length; i++) {
-      const file = files[i];
-      if (file.status !== 'pending') continue;
+    // Mark all as uploading
+    setFiles(prev =>
+      prev.map(f =>
+        f.status === 'pending' ? { ...f, status: 'uploading' as const, progress: 0 } : f
+      )
+    );
 
-      // Update status to uploading
-      setFiles((prev) =>
-        prev.map((f) =>
-          f.id === file.id ? { ...f, status: 'uploading' as const } : f
+    try {
+      // Create item with all files
+      const result = await createItem(
+        {
+          type: 'FILE',
+          title: title.trim() || pendingFiles[0].file.name.replace(/\.[^/.]+$/, ''),
+          category: category || undefined,
+          project: project || undefined,
+          tagIds: selectedTags,
+          newTags: newTags,
+        },
+        pendingFiles.map(f => f.file)
+      );
+
+      // Mark all as success
+      setFiles(prev =>
+        prev.map(f =>
+          f.status === 'uploading' ? { ...f, status: 'success' as const, progress: 100 } : f
         )
       );
 
-      // Simulate progress
-      for (let progress = 0; progress <= 100; progress += 10) {
-        await new Promise((r) => setTimeout(r, 100));
-        setFiles((prev) =>
-          prev.map((f) => (f.id === file.id ? { ...f, progress } : f))
-        );
-      }
-
-      // Success
-      setFiles((prev) =>
-        prev.map((f) =>
-          f.id === file.id ? { ...f, status: 'success' as const, progress: 100 } : f
+      onUploadComplete?.(result.message);
+    } catch (error) {
+      console.error('Upload failed:', error);
+      // Mark all as error
+      setFiles(prev =>
+        prev.map(f =>
+          f.status === 'uploading'
+            ? { ...f, status: 'error' as const, error: 'Upload failed' }
+            : f
         )
       );
     }
 
     setIsUploading(false);
-    onUploadComplete?.(files);
   };
 
   const handleClose = () => {
@@ -163,10 +202,28 @@ export const UploadModal: React.FC<UploadModalProps> = ({
       });
       setFiles([]);
       setSelectedTags([]);
+      setNewTags([]);
+      setNewTagName('');
+      setNewTagColor('#6366F1');
+      setTitle('');
       setCategory('');
       setProject('');
       onClose();
     }
+  };
+
+  const handleAddNewTag = () => {
+    const trimmed = newTagName.trim();
+    if (!trimmed) return;
+    if (tags.some(t => t.name.toLowerCase() === trimmed.toLowerCase())) return;
+    if (newTags.some(t => t.name.toLowerCase() === trimmed.toLowerCase())) return;
+    
+    setNewTags(prev => [...prev, { name: trimmed, color: newTagColor }]);
+    setNewTagName('');
+  };
+
+  const handleRemoveNewTag = (name: string) => {
+    setNewTags(prev => prev.filter(t => t.name !== name));
   };
 
   const pendingCount = files.filter((f) => f.status === 'pending').length;
@@ -305,8 +362,16 @@ export const UploadModal: React.FC<UploadModalProps> = ({
           {files.length > 0 && pendingCount > 0 && (
             <div className="mt-6 pt-6 border-t border-border">
               <h3 className="text-sm font-medium text-text mb-3">
-                Optional Metadata (applies to all files)
+                Item Details
               </h3>
+              <div className="mb-4">
+                <label className="block text-sm text-muted mb-1">Title *</label>
+                <Input
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  placeholder="Enter title for these files..."
+                />
+              </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm text-muted mb-1">Category</label>
@@ -328,7 +393,7 @@ export const UploadModal: React.FC<UploadModalProps> = ({
               <div className="mt-4">
                 <label className="block text-sm text-muted mb-1">Tags</label>
                 <div className="flex flex-wrap gap-2">
-                  {mockTags.slice(0, 6).map((tag) => (
+                  {tags.map((tag) => (
                     <button
                       key={tag.id}
                       onClick={() => {
@@ -348,6 +413,47 @@ export const UploadModal: React.FC<UploadModalProps> = ({
                       {tag.name}
                     </button>
                   ))}
+                  {newTags.map((tag) => (
+                    <button
+                      key={`new-${tag.name}`}
+                      onClick={() => handleRemoveNewTag(tag.name)}
+                      className="flex items-center gap-1 px-3 py-1 text-sm rounded-full border border-dashed border-green-300 bg-green-50 text-green-700 hover:bg-green-100"
+                      title="Click to remove"
+                    >
+                      <span className="w-2 h-2 rounded-full" style={{ backgroundColor: tag.color }} />
+                      {tag.name}
+                    </button>
+                  ))}
+                </div>
+                <div className="flex gap-2 mt-2">
+                  <div className="flex items-center gap-1">
+                    {TAG_COLORS.map((color) => (
+                      <button
+                        key={color}
+                        type="button"
+                        onClick={() => setNewTagColor(color)}
+                        className={classNames(
+                          'w-5 h-5 rounded-full transition-transform',
+                          newTagColor === color && 'ring-2 ring-offset-1 ring-gray-400 scale-110'
+                        )}
+                        style={{ backgroundColor: color }}
+                        title={color}
+                      />
+                    ))}
+                  </div>
+                  <Input
+                    value={newTagName}
+                    onChange={(e) => setNewTagName(e.target.value)}
+                    placeholder="New tag name..."
+                    className="flex-1"
+                    onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddNewTag())}
+                  />
+                  <IconButton
+                    aria-label="Add new tag"
+                    icon={<Plus className="w-full h-full" />}
+                    onClick={handleAddNewTag}
+                    disabled={!newTagName.trim()}
+                  />
                 </div>
               </div>
             </div>
@@ -368,7 +474,7 @@ export const UploadModal: React.FC<UploadModalProps> = ({
               Cancel
             </Button>
             <Button
-              onClick={simulateUpload}
+              onClick={handleUpload}
               disabled={pendingCount === 0 || isUploading}
               loading={isUploading}
             >

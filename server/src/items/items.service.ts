@@ -1,0 +1,722 @@
+import {
+    Injectable,
+    NotFoundException,
+    ForbiddenException,
+    BadRequestException,
+    Logger,
+} from '@nestjs/common';
+import { PrismaService } from 'src/prisma/prisma.service';
+import { UploadService } from 'src/upload/upload.service';
+import { CreateItemDto, UpdateItemDto, QueryItemsDto, NewTagDto } from './dto';
+import { PaginatedResult } from './interfaces';
+import { Item, Prisma } from '@prisma/client';
+
+@Injectable()
+export class ItemsService {
+    private readonly logger = new Logger(ItemsService.name);
+
+    constructor(
+        private readonly prisma: PrismaService,
+        private readonly uploadService: UploadService,
+    ) { }
+
+    /**
+     * Response type for item operations with message
+     */
+    private itemResponse(item: any, message: string): { item: any; message: string } {
+        return { item: this.transformItemWithUrls(item), message };
+    }
+
+    /**
+     * Transform a single item to include file URLs
+     */
+    private transformItemWithUrls(item: any): any {
+        if (!item || !item.files) return item;
+
+        return {
+            ...item,
+            files: item.files.map((itemFile: any) => ({
+                ...itemFile,
+                file: itemFile.file ? {
+                    ...itemFile.file,
+                    url: this.uploadService.getPublicUrl(itemFile.file.storageKey),
+                } : itemFile.file,
+            })),
+        };
+    }
+
+    /**
+     * Transform multiple items to include file URLs
+     */
+    private transformItemsWithUrls(items: any[]): any[] {
+        return items.map(item => this.transformItemWithUrls(item));
+    }
+
+    /**
+     * Create a new item (FILE, LINK, or NOTE)
+     * Uses transaction for atomicity
+     * Supports multiple file uploads for FILE type
+     */
+    async createItem(
+        data: CreateItemDto,
+        userId: string,
+        files?: Express.Multer.File[],
+    ): Promise<{ item: Item; message: string }> {
+        const { type, tagIds, newTags, ...itemData } = data;
+
+        // Validate based on type
+        if (type === 'FILE') {
+            if (!files?.length) {
+                throw new BadRequestException('At least one file is required for FILE type items');
+            }
+            const item = await this.createFileItem(itemData, files, userId, tagIds, newTags);
+            const fileCount = files.length;
+            return this.itemResponse(item, `Item "${item.title}" created with ${fileCount} file(s)`);
+        }
+
+        if (type === 'LINK') {
+            if (!data.url) {
+                throw new BadRequestException('URL is required for LINK type items');
+            }
+            const item = await this.createLinkItem(itemData, userId, tagIds, newTags);
+            return this.itemResponse(item, `Link "${item.title}" saved successfully`);
+        }
+
+        if (type === 'NOTE') {
+            if (!data.content) {
+                throw new BadRequestException('Content is required for NOTE type items');
+            }
+            const item = await this.createNoteItem(itemData, userId, tagIds, newTags);
+            return this.itemResponse(item, `Note "${item.title}" created successfully`);
+        }
+
+        throw new BadRequestException('Invalid item type');
+    }
+
+    /**
+     * Create FILE type item with multiple files
+     */
+    private async createFileItem(
+        data: Omit<CreateItemDto, 'type' | 'tagIds' | 'newTags'>,
+        files: Express.Multer.File[],
+        userId: string,
+        tagIds?: string[],
+        newTags?: NewTagDto[],
+    ): Promise<Item> {
+        // Upload all files to R2 first (outside transaction)
+        const uploadResults: { key: string; file: Express.Multer.File }[] = [];
+
+        try {
+            for (const file of files) {
+                const uploadResult = await this.uploadService.uploadFile(file, 'items');
+                uploadResults.push({ key: uploadResult.key, file });
+                this.logger.log(`File uploaded to R2: ${uploadResult.key}`);
+            }
+
+            // Use transaction for database operations
+            return await this.prisma.$transaction(async (tx) => {
+                // 1. Create new tags if any
+                const allTagIds = await this.processTagsInTransaction(
+                    tx,
+                    userId,
+                    tagIds,
+                    newTags,
+                );
+
+                // 2. Build tags text for search
+                const tagsText = await this.buildTagsTextInTransaction(tx, allTagIds);
+
+                // 3. Create Item first
+                const item = await tx.item.create({
+                    data: {
+                        userId,
+                        type: 'FILE',
+                        title: data.title,
+                        description: data.description,
+                        category: data.category,
+                        project: data.project,
+                        importance: data.importance || 'MEDIUM',
+                        tagsText,
+                        itemTags: allTagIds.length
+                            ? {
+                                create: allTagIds.map((tagId) => ({ tagId })),
+                            }
+                            : undefined,
+                    },
+                });
+
+                // 4. Create File records and ItemFile junction entries
+                for (let i = 0; i < uploadResults.length; i++) {
+                    const { key, file } = uploadResults[i];
+
+                    const fileRecord = await tx.file.create({
+                        data: {
+                            userId,
+                            storageKey: key,
+                            originalName: file.originalname,
+                            mimeType: file.mimetype,
+                            size: file.size,
+                        },
+                    });
+
+                    await tx.itemFile.create({
+                        data: {
+                            itemId: item.id,
+                            fileId: fileRecord.id,
+                            position: i,
+                            isPrimary: i === 0, // First file is primary
+                        },
+                    });
+                }
+
+                // Return item with includes
+                return tx.item.findUnique({
+                    where: { id: item.id },
+                    include: this.getItemInclude(),
+                }) as Promise<Item>;
+            });
+        } catch (error) {
+            // Rollback: delete uploaded files from R2 if transaction fails
+            for (const { key } of uploadResults) {
+                await this.uploadService.deleteFile(key);
+                this.logger.error(`Transaction failed, deleted file from R2: ${key}`);
+            }
+            throw error;
+        }
+    }
+
+    /**
+     * Create LINK type item with transaction
+     */
+    private async createLinkItem(
+        data: Omit<CreateItemDto, 'type' | 'tagIds' | 'newTags'>,
+        userId: string,
+        tagIds?: string[],
+        newTags?: NewTagDto[],
+    ): Promise<Item> {
+        const domain = this.extractDomain(data.url!);
+
+        return this.prisma.$transaction(async (tx) => {
+            const allTagIds = await this.processTagsInTransaction(tx, userId, tagIds, newTags);
+            const tagsText = await this.buildTagsTextInTransaction(tx, allTagIds);
+
+            return tx.item.create({
+                data: {
+                    userId,
+                    type: 'LINK',
+                    url: data.url,
+                    domain,
+                    title: data.title,
+                    description: data.description,
+                    category: data.category,
+                    project: data.project,
+                    importance: data.importance || 'MEDIUM',
+                    tagsText,
+                    itemTags: allTagIds.length
+                        ? { create: allTagIds.map((tagId) => ({ tagId })) }
+                        : undefined,
+                },
+                include: this.getItemInclude(),
+            });
+        });
+    }
+
+    /**
+     * Create NOTE type item with transaction
+     */
+    private async createNoteItem(
+        data: Omit<CreateItemDto, 'type' | 'tagIds' | 'newTags'>,
+        userId: string,
+        tagIds?: string[],
+        newTags?: NewTagDto[],
+    ): Promise<Item> {
+        return this.prisma.$transaction(async (tx) => {
+            const allTagIds = await this.processTagsInTransaction(tx, userId, tagIds, newTags);
+            const tagsText = await this.buildTagsTextInTransaction(tx, allTagIds);
+
+            return tx.item.create({
+                data: {
+                    userId,
+                    type: 'NOTE',
+                    content: data.content,
+                    title: data.title,
+                    description: data.description,
+                    category: data.category,
+                    project: data.project,
+                    importance: data.importance || 'MEDIUM',
+                    tagsText,
+                    itemTags: allTagIds.length
+                        ? { create: allTagIds.map((tagId) => ({ tagId })) }
+                        : undefined,
+                },
+                include: this.getItemInclude(),
+            });
+        });
+    }
+
+    /**
+     * Process existing tagIds + create new tags in transaction
+     */
+    private async processTagsInTransaction(
+        tx: Prisma.TransactionClient,
+        userId: string,
+        tagIds?: string[],
+        newTags?: NewTagDto[],
+    ): Promise<string[]> {
+        const allTagIds: string[] = [...(tagIds || [])];
+
+        if (newTags?.length) {
+            for (const newTag of newTags) {
+                const existingTag = await tx.tag.findUnique({
+                    where: { userId_name: { userId, name: newTag.name } },
+                });
+
+                if (existingTag) {
+                    if (!allTagIds.includes(existingTag.id)) {
+                        allTagIds.push(existingTag.id);
+                    }
+                } else {
+                    const createdTag = await tx.tag.create({
+                        data: {
+                            userId,
+                            name: newTag.name,
+                            color: newTag.color || '#6366f1',
+                        },
+                    });
+                    allTagIds.push(createdTag.id);
+                }
+            }
+        }
+
+        return allTagIds;
+    }
+
+    /**
+     * Build tags text within transaction
+     */
+    private async buildTagsTextInTransaction(
+        tx: Prisma.TransactionClient,
+        tagIds: string[],
+    ): Promise<string | null> {
+        if (!tagIds.length) return null;
+
+        const tags = await tx.tag.findMany({
+            where: { id: { in: tagIds } },
+            select: { name: true },
+        });
+
+        return tags.map((t) => t.name).join(', ');
+    }
+
+    /**
+     * Find all items with filters and pagination
+     */
+    async findAll(
+        query: QueryItemsDto,
+        userId: string,
+    ): Promise<PaginatedResult<Item>> {
+        const {
+            type,
+            category,
+            project,
+            domain,
+            importance,
+            isPinned,
+            tagIds,
+            search,
+            sortBy = 'createdAt',
+            sortOrder = 'desc',
+            page = 1,
+            limit = 20,
+        } = query;
+
+        const where: Prisma.ItemWhereInput = {
+            userId,
+            ...(type && { type }),
+            ...(category && { category }),
+            ...(project && { project }),
+            ...(domain && { domain }),
+            ...(importance && { importance }),
+            ...(isPinned !== undefined && { isPinned }),
+            ...(tagIds?.length && {
+                itemTags: { some: { tagId: { in: tagIds } } },
+            }),
+            ...(search && {
+                OR: [
+                    { title: { contains: search, mode: 'insensitive' } },
+                    { description: { contains: search, mode: 'insensitive' } },
+                    { tagsText: { contains: search, mode: 'insensitive' } },
+                ],
+            }),
+        };
+
+        const orderBy: Prisma.ItemOrderByWithRelationInput = {
+            [sortBy]: sortOrder,
+        };
+
+        const total = await this.prisma.item.count({ where });
+
+        const data = await this.prisma.item.findMany({
+            where,
+            orderBy,
+            skip: (page - 1) * limit,
+            take: limit,
+            include: this.getItemInclude(),
+        });
+
+        return {
+            data: this.transformItemsWithUrls(data),
+            meta: {
+                total,
+                page,
+                limit,
+                totalPages: Math.ceil(total / limit),
+            },
+        };
+    }
+
+    /**
+     * Find item by ID
+     */
+    async findById(id: string): Promise<Item> {
+        const item = await this.prisma.item.findUnique({
+            where: { id },
+            include: this.getItemInclude(),
+        });
+
+        if (!item) {
+            throw new NotFoundException('Item not found');
+        }
+
+        return this.transformItemWithUrls(item);
+    }
+
+    /**
+     * Update item with transaction
+     * Supports adding new files and removing specific files
+     */
+    async updateItem(
+        id: string,
+        data: UpdateItemDto,
+        userId: string,
+        newFiles?: Express.Multer.File[],
+    ): Promise<{ item: Item; message: string }> {
+        const existingItem = await this.findById(id);
+
+        if (existingItem.userId !== userId) {
+            throw new ForbiddenException('You are not allowed to update this item');
+        }
+
+        const { tagIds, newTags, removeFileIds, ...updateData } = data;
+
+        // Handle file removal for FILE type (outside transaction for R2 operations)
+        if (removeFileIds?.length && existingItem.type === 'FILE') {
+            await this.removeFilesFromItem(id, removeFileIds, userId);
+        }
+
+        // Handle adding new files for FILE type
+        if (newFiles?.length && existingItem.type === 'FILE') {
+            await this.addFilesToItem(id, newFiles, userId);
+        }
+
+        // Handle URL domain extraction for LINK type
+        if (data.url && existingItem.type === 'LINK') {
+            (updateData as any).domain = this.extractDomain(data.url);
+        }
+
+        // Use transaction for tag operations and item update
+        const item = await this.prisma.$transaction(async (tx) => {
+            if (tagIds !== undefined || newTags?.length) {
+                const allTagIds = await this.processTagsInTransaction(tx, userId, tagIds, newTags);
+
+                await tx.itemTag.deleteMany({ where: { itemId: id } });
+
+                if (allTagIds.length > 0) {
+                    await tx.itemTag.createMany({
+                        data: allTagIds.map((tagId) => ({ itemId: id, tagId })),
+                    });
+                }
+
+                (updateData as any).tagsText = await this.buildTagsTextInTransaction(tx, allTagIds);
+            }
+
+            return tx.item.update({
+                where: { id },
+                data: updateData,
+                include: this.getItemInclude(),
+            });
+        });
+
+        return this.itemResponse(item, `"${item.title}" updated successfully`);
+    }
+
+    /**
+     * Remove specific files from an item (with R2 cleanup)
+     */
+    private async removeFilesFromItem(
+        itemId: string,
+        fileIds: string[],
+        userId: string,
+    ): Promise<void> {
+        for (const fileId of fileIds) {
+            // Get ItemFile junction and File record
+            const itemFile = await this.prisma.itemFile.findFirst({
+                where: { itemId, fileId },
+                include: { file: true },
+            });
+
+            if (!itemFile) continue;
+
+            // Verify file ownership
+            if (itemFile.file.userId !== userId) {
+                throw new ForbiddenException('You are not allowed to remove this file');
+            }
+
+            // Delete from R2
+            await this.uploadService.deleteFile(itemFile.file.storageKey);
+            this.logger.log(`Deleted file from R2: ${itemFile.file.storageKey}`);
+
+            // Delete ItemFile junction and File record
+            await this.prisma.$transaction(async (tx) => {
+                await tx.itemFile.delete({ where: { id: itemFile.id } });
+                await tx.file.delete({ where: { id: fileId } });
+            });
+        }
+
+        // Update primary file if needed
+        await this.ensurePrimaryFile(itemId);
+    }
+
+    /**
+     * Add new files to an existing item
+     */
+    private async addFilesToItem(
+        itemId: string,
+        files: Express.Multer.File[],
+        userId: string,
+    ): Promise<void> {
+        // Get current max position
+        const maxPositionResult = await this.prisma.itemFile.aggregate({
+            where: { itemId },
+            _max: { position: true },
+        });
+        let position = (maxPositionResult._max.position ?? -1) + 1;
+
+        // Check if item has any files (for isPrimary)
+        const existingFilesCount = await this.prisma.itemFile.count({ where: { itemId } });
+
+        for (const file of files) {
+            // Upload to R2
+            const uploadResult = await this.uploadService.uploadFile(file, 'items');
+            this.logger.log(`File uploaded to R2: ${uploadResult.key}`);
+
+            try {
+                await this.prisma.$transaction(async (tx) => {
+                    // Create File record
+                    const fileRecord = await tx.file.create({
+                        data: {
+                            userId,
+                            storageKey: uploadResult.key,
+                            originalName: file.originalname,
+                            mimeType: file.mimetype,
+                            size: file.size,
+                        },
+                    });
+
+                    // Create ItemFile junction
+                    await tx.itemFile.create({
+                        data: {
+                            itemId,
+                            fileId: fileRecord.id,
+                            position: position++,
+                            isPrimary: existingFilesCount === 0 && position === 1,
+                        },
+                    });
+                });
+            } catch (error) {
+                // Rollback R2 upload on failure
+                await this.uploadService.deleteFile(uploadResult.key);
+                throw error;
+            }
+        }
+    }
+
+    /**
+     * Ensure item has a primary file (set first file as primary if none)
+     */
+    private async ensurePrimaryFile(itemId: string): Promise<void> {
+        const hasPrimary = await this.prisma.itemFile.findFirst({
+            where: { itemId, isPrimary: true },
+        });
+
+        if (!hasPrimary) {
+            const firstFile = await this.prisma.itemFile.findFirst({
+                where: { itemId },
+                orderBy: { position: 'asc' },
+            });
+
+            if (firstFile) {
+                await this.prisma.itemFile.update({
+                    where: { id: firstFile.id },
+                    data: { isPrimary: true },
+                });
+            }
+        }
+    }
+
+    /**
+     * Delete item (and all files from R2 if FILE type)
+     */
+    async deleteItem(id: string, userId: string): Promise<{ message: string }> {
+        const item = await this.findById(id);
+
+        if (item.userId !== userId) {
+            throw new ForbiddenException('You are not allowed to delete this item');
+        }
+
+        // If FILE type, delete all files from R2 first
+        if (item.type === 'FILE') {
+            const itemFiles = await this.prisma.itemFile.findMany({
+                where: { itemId: id },
+                include: { file: true },
+            });
+
+            for (const itemFile of itemFiles) {
+                await this.uploadService.deleteFile(itemFile.file.storageKey);
+                this.logger.log(`Deleted file from R2: ${itemFile.file.storageKey}`);
+            }
+        }
+
+        // Delete Item in transaction (cascades to itemFiles, itemTags)
+        await this.prisma.$transaction(async (tx) => {
+            // Delete file records if FILE type
+            if (item.type === 'FILE') {
+                const itemFiles = await tx.itemFile.findMany({
+                    where: { itemId: id },
+                    select: { fileId: true },
+                });
+
+                for (const { fileId } of itemFiles) {
+                    await tx.file.delete({ where: { id: fileId } });
+                }
+            }
+
+            await tx.item.delete({ where: { id } });
+        });
+
+        return { message: 'Item deleted successfully' };
+    }
+
+    /**
+     * Toggle pin status
+     */
+    async togglePin(id: string, userId: string): Promise<{ item: Item; message: string }> {
+        const item = await this.findById(id);
+
+        if (item.userId !== userId) {
+            throw new ForbiddenException('You are not allowed to update this item');
+        }
+
+        const updatedItem = await this.prisma.item.update({
+            where: { id },
+            data: { isPinned: !item.isPinned },
+            include: this.getItemInclude(),
+        });
+
+        const message = updatedItem.isPinned
+            ? `"${updatedItem.title}" pinned successfully`
+            : `"${updatedItem.title}" unpinned successfully`;
+
+        return { item: updatedItem, message };
+    }
+
+    /**
+     * Set primary file for an item
+     */
+    async setPrimaryFile(itemId: string, fileId: string, userId: string): Promise<Item> {
+        const item = await this.findById(itemId);
+
+        if (item.userId !== userId) {
+            throw new ForbiddenException('You are not allowed to update this item');
+        }
+
+        // Verify file belongs to this item
+        const itemFile = await this.prisma.itemFile.findFirst({
+            where: { itemId, fileId },
+        });
+
+        if (!itemFile) {
+            throw new NotFoundException('File not found in this item');
+        }
+
+        await this.prisma.$transaction(async (tx) => {
+            // Remove primary from all files
+            await tx.itemFile.updateMany({
+                where: { itemId },
+                data: { isPrimary: false },
+            });
+
+            // Set new primary
+            await tx.itemFile.update({
+                where: { id: itemFile.id },
+                data: { isPrimary: true },
+            });
+        });
+
+        return this.findById(itemId);
+    }
+
+    /**
+     * Reorder files in an item
+     */
+    async reorderFiles(
+        itemId: string,
+        fileIds: string[],
+        userId: string
+    ): Promise<Item> {
+        const item = await this.findById(itemId);
+
+        if (item.userId !== userId) {
+            throw new ForbiddenException('You are not allowed to update this item');
+        }
+
+        for (let i = 0; i < fileIds.length; i++) {
+            await this.prisma.itemFile.updateMany({
+                where: { itemId, fileId: fileIds[i] },
+                data: { position: i },
+            });
+        }
+
+        return this.findById(itemId);
+    }
+
+    /**
+     * Extract domain from URL
+     */
+    private extractDomain(url: string): string | null {
+        try {
+            return new URL(url).hostname;
+        } catch {
+            return null;
+        }
+    }
+
+    /**
+     * Default include for item queries
+     */
+    private getItemInclude() {
+        return {
+            files: {
+                include: {
+                    file: true,
+                },
+                orderBy: { position: 'asc' as const },
+            },
+            itemTags: {
+                include: {
+                    tag: true,
+                },
+            },
+        };
+    }
+}

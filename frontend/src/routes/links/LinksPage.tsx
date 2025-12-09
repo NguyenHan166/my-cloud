@@ -44,7 +44,7 @@ export const LinksPage = () => {
   // Filter only links
   const links = useMemo(() => {
     return mockItems
-      .filter(item => item.type === 'link')
+      .filter(item => item.type === 'LINK')
       .filter(item => {
         if (!searchQuery) return true;
         const query = searchQuery.toLowerCase();
@@ -53,7 +53,7 @@ export const LinksPage = () => {
           item.description?.toLowerCase().includes(query) ||
           item.url?.toLowerCase().includes(query) ||
           item.domain?.toLowerCase().includes(query) ||
-          item.tags.some(t => t.name.toLowerCase().includes(query))
+          (item.tags || []).some(t => t.name.toLowerCase().includes(query))
         );
       });
   }, [searchQuery]);
@@ -359,7 +359,7 @@ const LinkCard: React.FC<LinkCardProps> = ({ link, onOpen, onEdit, onDelete, onP
         )}
 
         {/* Tags */}
-        {link.tags.length > 0 && (
+        {link.tags && link.tags.length > 0 && (
           <div className="flex flex-wrap gap-1 mb-2">
             {link.tags.slice(0, 2).map(tag => (
               <span
@@ -443,7 +443,7 @@ const LinkListItem: React.FC<LinkCardProps> = ({ link, onOpen, onEdit, onDelete,
 
       {/* Tags */}
       <div className="hidden md:flex items-center gap-1">
-        {link.tags.slice(0, 2).map(tag => (
+        {(link.tags || []).slice(0, 2).map(tag => (
           <Badge key={tag.id} variant="default" size="sm">
             {tag.name}
           </Badge>

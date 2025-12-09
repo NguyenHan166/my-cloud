@@ -9,7 +9,7 @@ import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { classNames } from "@/utils/classNames";
 import { Avatar, IconButton, Input, Tooltip } from "@/components/common";
 import { useMediaQuery } from "@/hooks";
-import { useAuthStore } from "@/stores";
+import { useAuthStore, useTagsStore } from "@/stores";
 import {
     Library,
     FolderOpen,
@@ -33,7 +33,6 @@ import {
     Tag as TagIcon,
     LogOut,
 } from "lucide-react";
-import type { Tag } from "@/types/domain";
 
 // Context for sidebar state
 interface SidebarContextValue {
@@ -71,30 +70,27 @@ const navItems = [
     { path: "/public", label: "Public Library", icon: Globe, external: true },
 ];
 
-// Dummy tags for now
-const dummyTags: Tag[] = [
-    { id: "1", name: "Frontend", color: "#6366F1", usageCount: 15 },
-    { id: "2", name: "Backend", color: "#22C55E", usageCount: 12 },
-    { id: "3", name: "Design", color: "#F59E0B", usageCount: 8 },
-    { id: "4", name: "DevOps", color: "#EF4444", usageCount: 5 },
-    { id: "5", name: "AI/ML", color: "#8B5CF6", usageCount: 3 },
-];
+
 
 interface AppShellProps {
-    tags?: Tag[];
     onTagSelect?: (tagId: string) => void;
 }
 
 export const AppShell: React.FC<AppShellProps> = ({
-    tags = dummyTags,
     onTagSelect,
 }) => {
     const { isMobile } = useMediaQuery();
     const { user } = useAuthStore();
+    const { loadTags, getPopularTags } = useTagsStore();
     const [isCollapsed, setIsCollapsed] = useState(true); // Start collapsed on desktop
     const [isMobileOpen, setMobileOpen] = useState(false);
     const [isTagsExpanded, setIsTagsExpanded] = useState(true);
     const location = useLocation();
+
+    // Load tags on mount
+    useEffect(() => {
+        loadTags();
+    }, [loadTags]);
 
     const toggleCollapse = () => setIsCollapsed(!isCollapsed);
 
@@ -125,12 +121,12 @@ export const AppShell: React.FC<AppShellProps> = ({
             {/* Logo & Toggle */}
             <div className="flex items-center justify-between h-16 px-3 border-b border-border">
                 {(!isCollapsed || isMobile) && (
-                    <Link
-                        to="/app"
+                    <NavLink
+                        to="/app/library"
                         className="text-lg font-bold text-primary truncate hover:opacity-80 transition-opacity"
                     >
-                        CloudLib
-                    </Link>
+                        CloudHan
+                    </NavLink>
                 )}
                 {showToggle && !isMobile && (
                     <Tooltip
@@ -164,7 +160,7 @@ export const AppShell: React.FC<AppShellProps> = ({
             </div>
 
             {/* Navigation */}
-            <nav className="flex-1 overflow-y-auto py-4">
+            <nav className="flex-1 overflow-y-auto overflow-x-hidden py-4">
                 <ul className="space-y-1 px-2">
                     {navItems
                         .filter((item) => {
@@ -220,7 +216,7 @@ export const AppShell: React.FC<AppShellProps> = ({
                                         >
                                             <NavIcon className="w-5 h-5 flex-shrink-0" />
                                             {showLabel && (
-                                                <span>{item.label}</span>
+                                                <span className="whitespace-nowrap">{item.label}</span>
                                             )}
                                         </NavLink>
                                     </Tooltip>
@@ -245,7 +241,7 @@ export const AppShell: React.FC<AppShellProps> = ({
                         </button>
                         {isTagsExpanded && (
                             <ul className="mt-1 space-y-1">
-                                {tags.map((tag) => (
+                                {getPopularTags(5).map((tag) => (
                                     <li key={tag.id}>
                                         <button
                                             onClick={() =>
@@ -263,9 +259,9 @@ export const AppShell: React.FC<AppShellProps> = ({
                                             <span className="truncate">
                                                 {tag.name}
                                             </span>
-                                            {tag.usageCount !== undefined && (
+                                            {tag.itemCount !== undefined && (
                                                 <span className="ml-auto text-xs text-muted">
-                                                    {tag.usageCount}
+                                                    {tag.itemCount}
                                                 </span>
                                             )}
                                         </button>
@@ -285,14 +281,16 @@ export const AppShell: React.FC<AppShellProps> = ({
                         isCollapsed && !isMobile && "justify-center"
                     )}
                 >
-                    <Avatar name="John Doe" size="sm" />
+                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center text-white font-semibold text-sm flex-shrink-0">
+                        {user?.name?.charAt(0)?.toUpperCase() || "U"}
+                    </div>
                     {(!isCollapsed || isMobile) && (
                         <div className="flex-1 min-w-0">
                             <p className="text-sm font-medium text-text truncate">
-                                John Doe
+                                {user?.name || "User"}
                             </p>
                             <p className="text-xs text-muted truncate">
-                                john@example.com
+                                {user?.email || ""}
                             </p>
                         </div>
                     )}
@@ -337,15 +335,17 @@ export const AppShell: React.FC<AppShellProps> = ({
                     </aside>
                 )}
 
-                {/* Desktop Sidebar - overlay mode */}
+                {/* Desktop Sidebar - overlay mode with hover to expand */}
                 {!isMobile && (
                     <aside
                         className={classNames(
                             "fixed inset-y-0 left-0 z-50",
                             "flex flex-col bg-surface border-r border-border shadow-lg",
-                            "transition-all duration-300 ease-in-out",
+                            "transition-all duration-300 ease-in-out overflow-hidden",
                             isCollapsed ? "w-16" : "w-64"
                         )}
+                        onMouseEnter={() => setIsCollapsed(false)}
+                        onMouseLeave={() => setIsCollapsed(true)}
                     >
                         <SidebarContent />
                     </aside>
@@ -387,32 +387,34 @@ const Header: React.FC = () => {
                 />
             )}
 
-            {/* Logo - clickable to go home */}
-            <Link
-                to="/app"
+            {/* Logo - clickable to go to library */}
+            <NavLink
+                to="/app/library"
                 className="flex items-center gap-2 hover:opacity-80 transition-opacity flex-shrink-0"
             >
                 <div className="w-8 h-8 bg-gradient-to-br from-primary to-accent rounded-lg flex items-center justify-center">
                     <Cloud className="w-5 h-5 text-white" />
                 </div>
-                <span className="font-bold text-primary">CloudHan</span>
-            </Link>
+                <span className="font-bold text-primary hidden sm:inline">CloudHan</span>
+            </NavLink>
 
-            {/* Search bar - flexible width */}
-            <div
-                className={classNames("flex-1 max-w-2xl", isMobile && "hidden")}
-            >
-                <Input
-                    placeholder="Search by title, tags, content..."
-                    leftIcon={<Search className="w-4 h-4" />}
-                />
-            </div>
+            {/* Search bar - centered, flexible width */}
+            {!isMobile && (
+                <div className="flex-1 flex justify-center">
+                    <div className="w-full max-w-xl">
+                        <Input
+                            placeholder="Search by title, tags, content..."
+                            leftIcon={<Search className="w-4 h-4" />}
+                        />
+                    </div>
+                </div>
+            )}
 
             {/* Spacer for mobile */}
             {isMobile && <div className="flex-1" />}
 
             {/* Right side actions */}
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-shrink-0">
                 {/* Mobile search button */}
                 {isMobile && (
                     <Tooltip content="Search" position="bottom">

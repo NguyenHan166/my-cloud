@@ -16,16 +16,8 @@ import {
   ForgotPasswordDto,
   ResetPasswordDto,
 } from './dto';
+import { TokenPair, AuthResponse } from './interfaces';
 
-export interface TokenPair {
-  accessToken: string;
-  refreshToken: string;
-}
-
-export interface AuthResponse {
-  user: Record<string, unknown>;
-  tokens: TokenPair;
-}
 
 @Injectable()
 export class AuthService {

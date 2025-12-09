@@ -8,7 +8,7 @@ type ShareStatus = 'all' | 'active' | 'expired' | 'revoked';
 
 // Get status of shared link
 const getShareStatus = (link: SharedLink): 'active' | 'expired' | 'revoked' => {
-  if (link.isRevoked) return 'revoked';
+  if (link.revoked) return 'revoked';
   if (new Date(link.expiresAt) < new Date()) return 'expired';
   return 'active';
 };
@@ -16,8 +16,8 @@ const getShareStatus = (link: SharedLink): 'active' | 'expired' | 'revoked' => {
 // Get icon for item type
 const getItemIcon = (item?: Item) => {
   if (!item) return FileText;
-  if (item.type === 'link') return LinkIcon;
-  if (item.type === 'note') return StickyNote;
+  if (item.type === 'LINK') return LinkIcon;
+  if (item.type === 'NOTE') return StickyNote;
   if (item.mimeType?.startsWith('image/')) return Image;
   return FileText;
 };
@@ -151,7 +151,7 @@ export const SharedLinksPage = () => {
                             <code className="text-xs bg-gray-100 px-2 py-1 rounded truncate max-w-[180px]">
                               /s/{link.token}
                             </code>
-                            {link.hasPassword && (
+                            {link.passwordHash && (
                               <Tooltip content="Password protected">
                                 <Lock className="w-3.5 h-3.5 text-orange-500" />
                               </Tooltip>

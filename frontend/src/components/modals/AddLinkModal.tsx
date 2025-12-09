@@ -1,26 +1,28 @@
 import { useState, useEffect } from 'react';
 import { classNames } from '@/utils/classNames';
 import { Button, IconButton, Input, Textarea } from '@/components/common';
-import { X, Link as LinkIcon, Globe, AlertCircle } from 'lucide-react';
-import { mockTags } from '@/api/mockData';
+import { X, Link as LinkIcon, Globe, AlertCircle, Plus } from 'lucide-react';
+import { useTagsStore } from '@/stores';
+import { createItem, updateItem } from '@/api/libraryApi';
 import type { Item } from '@/types/domain';
 
 interface AddLinkModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit?: (data: LinkFormData) => void;
+  onSubmit?: (message: string) => void;
   link?: Item | null; // For edit mode
 }
 
-interface LinkFormData {
-  url: string;
-  title: string;
-  description: string;
-  category: string;
-  project: string;
-  importance: 'low' | 'normal' | 'high';
-  tags: string[];
+interface NewTagData {
+  name: string;
+  color: string;
 }
+
+// Map form importance to API importance
+const mapImportance = (value: 'low' | 'normal' | 'high') => {
+  const map = { low: 'LOW', normal: 'MEDIUM', high: 'HIGH' } as const;
+  return map[value];
+};
 
 const isValidUrl = (url: string): boolean => {
   try {
@@ -52,10 +54,27 @@ export const AddLinkModal: React.FC<AddLinkModalProps> = ({
   const [project, setProject] = useState('');
   const [importance, setImportance] = useState<'low' | 'normal' | 'high'>('normal');
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [newTags, setNewTags] = useState<NewTagData[]>([]);
+  const [newTagName, setNewTagName] = useState('');
+  const [newTagColor, setNewTagColor] = useState('#6366F1');
   const [urlError, setUrlError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
+  const TAG_COLORS = [
+    '#6366F1', '#22C55E', '#F59E0B', '#EF4444', 
+    '#8B5CF6', '#EC4899', '#14B8A6', '#3B82F6'
+  ];
+
+  const { tags, loadTags } = useTagsStore();
+
   const isEditMode = !!link;
+
+  // Load tags when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      loadTags();
+    }
+  }, [isOpen, loadTags]);
 
   // Pre-fill form when editing
   useEffect(() => {
@@ -65,7 +84,7 @@ export const AddLinkModal: React.FC<AddLinkModalProps> = ({
       setDescription(link.description || '');
       setCategory(link.category || '');
       setProject(link.project || '');
-      setImportance(link.importance || 'normal');
+      setImportance((link.importance?.toLowerCase() as 'low' | 'normal' | 'high') || 'normal');
       setSelectedTags(link.tags?.map(t => t.id) || []);
     } else if (!isOpen) {
       // Reset form when closed
@@ -76,6 +95,9 @@ export const AddLinkModal: React.FC<AddLinkModalProps> = ({
       setProject('');
       setImportance('normal');
       setSelectedTags([]);
+      setNewTags([]);
+      setNewTagName('');
+      setNewTagColor('#6366F1');
       setUrlError('');
     }
   }, [link, isOpen]);
@@ -104,21 +126,41 @@ export const AddLinkModal: React.FC<AddLinkModalProps> = ({
 
     setIsLoading(true);
     
-    // Simulate API call
-    await new Promise(r => setTimeout(r, 500));
-
-    onSubmit?.({
-      url,
-      title: title || getDomainFromUrl(url),
-      description,
-      category,
-      project,
-      importance,
-      tags: selectedTags,
-    });
-
-    setIsLoading(false);
-    handleClose();
+    try {
+      if (isEditMode && link) {
+        // Update existing link
+        const result = await updateItem(link.id, {
+          title: title || getDomainFromUrl(url),
+          url,
+          description: description || undefined,
+          category: category || undefined,
+          project: project || undefined,
+          importance: mapImportance(importance),
+          tagIds: selectedTags,
+          newTags,
+        });
+        onSubmit?.(result.message);
+      } else {
+        // Create new link
+        const result = await createItem({
+          type: 'LINK',
+          title: title || getDomainFromUrl(url),
+          url,
+          description: description || undefined,
+          category: category || undefined,
+          project: project || undefined,
+          importance: mapImportance(importance),
+          tagIds: selectedTags,
+          newTags,
+        });
+        onSubmit?.(result.message);
+      }
+      handleClose();
+    } catch (error) {
+      console.error('Failed to save link:', error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleClose = () => {
@@ -129,8 +171,26 @@ export const AddLinkModal: React.FC<AddLinkModalProps> = ({
     setProject('');
     setImportance('normal');
     setSelectedTags([]);
+    setNewTags([]);
+    setNewTagName('');
+    setNewTagColor('#6366F1');
     setUrlError('');
     onClose();
+  };
+
+  const handleAddNewTag = () => {
+    const trimmed = newTagName.trim();
+    if (!trimmed) return;
+    // Check if tag name already exists
+    if (tags.some(t => t.name.toLowerCase() === trimmed.toLowerCase())) return;
+    if (newTags.some(t => t.name.toLowerCase() === trimmed.toLowerCase())) return;
+    
+    setNewTags(prev => [...prev, { name: trimmed, color: newTagColor }]);
+    setNewTagName('');
+  };
+
+  const handleRemoveNewTag = (name: string) => {
+    setNewTags(prev => prev.filter(t => t.name !== name));
   };
 
   if (!isOpen) return null;
@@ -274,7 +334,7 @@ export const AddLinkModal: React.FC<AddLinkModalProps> = ({
               Tags
             </label>
             <div className="flex flex-wrap gap-2">
-              {mockTags.slice(0, 8).map((tag) => (
+              {tags.map((tag) => (
                 <button
                   key={tag.id}
                   onClick={() => {
@@ -294,6 +354,49 @@ export const AddLinkModal: React.FC<AddLinkModalProps> = ({
                   {tag.name}
                 </button>
               ))}
+              {/* New tags (pending) */}
+              {newTags.map((tag) => (
+                <button
+                  key={`new-${tag.name}`}
+                  onClick={() => handleRemoveNewTag(tag.name)}
+                  className="flex items-center gap-1 px-3 py-1 text-sm rounded-full border border-dashed border-green-300 bg-green-50 text-green-700 hover:bg-green-100"
+                  title="Click to remove"
+                >
+                  <span className="w-2 h-2 rounded-full" style={{ backgroundColor: tag.color }} />
+                  {tag.name}
+                </button>
+              ))}
+            </div>
+            {/* Add new tag */}
+            <div className="flex gap-2 mt-2">
+              <div className="flex items-center gap-1">
+                {TAG_COLORS.map((color) => (
+                  <button
+                    key={color}
+                    type="button"
+                    onClick={() => setNewTagColor(color)}
+                    className={classNames(
+                      'w-5 h-5 rounded-full transition-transform',
+                      newTagColor === color && 'ring-2 ring-offset-1 ring-gray-400 scale-110'
+                    )}
+                    style={{ backgroundColor: color }}
+                    title={color}
+                  />
+                ))}
+              </div>
+              <Input
+                value={newTagName}
+                onChange={(e) => setNewTagName(e.target.value)}
+                placeholder="New tag name..."
+                className="flex-1"
+                onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddNewTag())}
+              />
+              <IconButton
+                aria-label="Add new tag"
+                icon={<Plus className="w-full h-full" />}
+                onClick={handleAddNewTag}
+                disabled={!newTagName.trim()}
+              />
             </div>
           </div>
         </div>

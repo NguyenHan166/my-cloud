@@ -1,69 +1,58 @@
-// Tags API
+// Tags API - Real backend calls
+import apiClient from './client';
 import type { Tag } from '@/types/domain';
-import type { ListTagsParams } from '@/types/api';
-import { mockTags, delay } from './mockData';
-
-const API_DELAY = 200;
+import type { CreateTagPayload, UpdateTagPayload } from '@/types/api';
 
 /**
- * GET /api/tags
- * List all tags
- */
-export async function listTags(params: ListTagsParams = {}): Promise<Tag[]> {
-  await delay(API_DELAY);
-
-  let filtered = [...mockTags];
-
-  // Search
-  if (params.search) {
-    const query = params.search.toLowerCase();
-    filtered = filtered.filter(tag =>
-      tag.name.toLowerCase().includes(query)
-    );
-  }
-
-  // Sort by usage count
-  filtered.sort((a, b) => (b.usageCount || 0) - (a.usageCount || 0));
-
-  // Limit
-  if (params.limit) {
-    filtered = filtered.slice(0, params.limit);
-  }
-
-  return filtered;
-}
-
-/**
- * POST /api/tags
+ * POST /tags
  * Create new tag
  */
-export async function createTag(name: string, color?: string): Promise<Tag> {
-  await delay(API_DELAY);
-
-  return {
-    id: `tag-${Date.now()}`,
-    name,
-    color: color || '#6366F1',
-    usageCount: 0,
-  };
+export async function createTag(payload: CreateTagPayload): Promise<Tag> {
+  const response = await apiClient.post('/tags', payload);
+  return response.data.data;
 }
 
 /**
- * DELETE /api/tags/:id
+ * GET /tags
+ * List all tags (with itemCount)
+ */
+export async function listTags(): Promise<Tag[]> {
+  const response = await apiClient.get('/tags');
+  return response.data.data;
+}
+
+/**
+ * GET /tags/:id
+ * Get single tag by ID
+ */
+export async function getTagById(id: string): Promise<Tag> {
+  const response = await apiClient.get(`/tags/${id}`);
+  return response.data.data;
+}
+
+/**
+ * PATCH /tags/:id
+ * Update tag
+ */
+export async function updateTag(id: string, payload: UpdateTagPayload): Promise<Tag> {
+  const response = await apiClient.patch(`/tags/${id}`, payload);
+  return response.data.data;
+}
+
+/**
+ * DELETE /tags/:id
  * Delete tag
  */
-export async function deleteTag(id: string): Promise<boolean> {
-  await delay(API_DELAY);
-  return mockTags.some(tag => tag.id === id);
+export async function deleteTag(id: string): Promise<void> {
+  await apiClient.delete(`/tags/${id}`);
 }
 
 /**
- * Get popular tags (top N by usage)
+ * Get popular tags (sorted by itemCount)
  */
 export async function getPopularTags(limit: number = 5): Promise<Tag[]> {
-  await delay(API_DELAY);
-  
-  return [...mockTags]
-    .sort((a, b) => (b.usageCount || 0) - (a.usageCount || 0))
+  const tags = await listTags();
+  return tags
+    .sort((a, b) => (b.itemCount || 0) - (a.itemCount || 0))
     .slice(0, limit);
 }

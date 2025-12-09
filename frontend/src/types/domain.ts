@@ -5,32 +5,54 @@ export interface User {
   email: string;
   name: string;
   avatar?: string;
+  phone?: string;
+  role: 'ADMIN' | 'USER';
+  isActive: boolean;
+  isEmailVerified: boolean;
   createdAt: string;
+  updatedAt: string;
 }
 
 export interface Tag {
   id: string;
+  userId: string;
   name: string;
   color?: string;
-  usageCount?: number;
+  itemCount: number;
+  createdAt: string;
 }
 
-export type ItemType = 'file' | 'link' | 'note';
-export type Importance = 'low' | 'normal' | 'high';
+// Match BE enums (UPPER_CASE)
+export type ItemType = 'FILE' | 'LINK' | 'NOTE';
+export type Importance = 'LOW' | 'MEDIUM' | 'HIGH';
 
 export interface FileMeta {
   id: string;
   userId: string;
   storageKey: string;
   originalName: string;
-  filename: string; // display name
   mimeType: string;
   size: number;
-  url?: string; // access URL
-  thumbnailUrl?: string;
-  checksum?: string;
+  checkSum?: string;
   createdAt: string;
-  uploadedAt: string;
+  updatedAt: string;
+}
+
+export interface ItemTag {
+  itemId: string;
+  tagId: string;
+  tag: Tag;
+}
+
+// ItemFile junction for multi-file support
+export interface ItemFile {
+  id: string;
+  itemId: string;
+  fileId: string;
+  position: number;
+  isPrimary: boolean;
+  createdAt: string;
+  file: FileMeta;
 }
 
 export interface CollectionSummary {
@@ -47,23 +69,41 @@ export interface Item {
   category?: string;
   project?: string;
   importance: Importance;
-  tags: Tag[];
   isPinned: boolean;
+  tagsText?: string;
   createdAt: string;
   updatedAt: string;
-  // For file type
-  fileId?: string;
-  file?: FileMeta;
-  mimeType?: string;
-  size?: number;
-  thumbnailUrl?: string;
-  // For link type
+  // For FILE type - now uses files array
+  files?: ItemFile[];
+  thumbnail?: string;
+  thumbnailUrl?: string; // alias for backward compat
+  // For LINK type
   url?: string;
   domain?: string;
-  // For note type
+  // For NOTE type
   content?: string;
-  // Relations
+  // Relations - backend returns itemTags
+  itemTags: ItemTag[];
+  // Computed from itemTags for backward compat
+  tags?: Tag[];
+  // Collections
   collections?: CollectionSummary[];
+}
+
+// Helper to get tags array from item
+export function getTagsFromItem(item: Item): Tag[] {
+  return item.itemTags?.map(it => it.tag) || [];
+}
+
+// Helper to get primary file from item
+export function getPrimaryFile(item: Item): FileMeta | undefined {
+  const primaryItemFile = item.files?.find(f => f.isPrimary);
+  return primaryItemFile?.file || item.files?.[0]?.file;
+}
+
+// Helper to get all files from item
+export function getFilesFromItem(item: Item): FileMeta[] {
+  return item.files?.map(f => f.file) || [];
 }
 
 export interface Collection {
@@ -71,10 +111,9 @@ export interface Collection {
   userId: string;
   name: string;
   description?: string;
+  coverImage?: string;
   isPublic: boolean;
   slugPublic?: string;
-  itemCount: number;
-  coverImage?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -85,20 +124,15 @@ export interface SharedLink {
   itemId: string;
   item?: Item;
   token: string;
-  hasPassword: boolean;
+  passwordHash?: string;
   expiresAt: string;
-  createdAt: string;
-  isRevoked: boolean;
+  revoked: boolean;
   accessCount: number;
-}
-
-export interface EmbeddingMeta {
-  id: string;
-  itemId: string;
   createdAt: string;
+  updatedAt: string;
 }
 
 // View mode types
 export type ViewMode = 'grid' | 'list';
-export type SortField = 'createdAt' | 'updatedAt' | 'title' | 'size';
+export type SortField = 'createdAt' | 'updatedAt' | 'title' | 'importance';
 export type SortOrder = 'asc' | 'desc';

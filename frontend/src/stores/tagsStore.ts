@@ -1,18 +1,12 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
 import type { Tag } from '@/types/domain';
-
-// Default tags for new users
-const defaultTags: Tag[] = [
-  { id: 'tag-1', name: 'Work', color: '#6366F1', usageCount: 0 },
-  { id: 'tag-2', name: 'Personal', color: '#22C55E', usageCount: 0 },
-  { id: 'tag-3', name: 'Important', color: '#EF4444', usageCount: 0 },
-];
+import * as tagsApi from '@/api/tagsApi';
 
 interface TagsState {
   tags: Tag[];
   isLoading: boolean;
-  
+  error: string | null;
+
   // Actions
   loadTags: () => Promise<void>;
   addTag: (name: string, color: string) => Promise<Tag>;
@@ -20,122 +14,95 @@ interface TagsState {
   deleteTag: (id: string) => Promise<void>;
   getTagById: (id: string) => Tag | undefined;
   getTagsByIds: (ids: string[]) => Tag[];
-  incrementUsage: (tagId: string) => void;
-  decrementUsage: (tagId: string) => void;
-  
-  // For BE integration
+  getPopularTags: (limit?: number) => Tag[];
+
+  // For manual set
   setTags: (tags: Tag[]) => void;
   clearTags: () => void;
 }
 
-export const useTagsStore = create<TagsState>()(
-  persist(
-    (set, get) => ({
-      tags: [],
-      isLoading: false,
+export const useTagsStore = create<TagsState>()((set, get) => ({
+  tags: [],
+  isLoading: false,
+  error: null,
 
-      loadTags: async () => {
-        set({ isLoading: true });
-        
-        // TODO: Replace with API call
-        // const response = await tagsApi.getMyTags();
-        // set({ tags: response.data, isLoading: false });
-        
-        // For now, use default tags if empty
-        const { tags } = get();
-        if (tags.length === 0) {
-          set({ tags: defaultTags });
-        }
-        
-        set({ isLoading: false });
-      },
+  loadTags: async () => {
+    set({ isLoading: true, error: null });
 
-      addTag: async (name: string, color: string) => {
-        // TODO: Replace with API call
-        // const response = await tagsApi.create({ name, color });
-        // const newTag = response.data;
-        
-        const newTag: Tag = {
-          id: `tag-${Date.now()}`,
-          name,
-          color,
-          usageCount: 0,
-        };
-
-        set((state) => ({
-          tags: [...state.tags, newTag],
-        }));
-
-        return newTag;
-      },
-
-      updateTag: async (id: string, updates: Partial<Pick<Tag, 'name' | 'color'>>) => {
-        // TODO: Replace with API call
-        // await tagsApi.update(id, updates);
-        
-        set((state) => ({
-          tags: state.tags.map((tag) =>
-            tag.id === id ? { ...tag, ...updates } : tag
-          ),
-        }));
-      },
-
-      deleteTag: async (id: string) => {
-        // TODO: Replace with API call
-        // await tagsApi.delete(id);
-        
-        set((state) => ({
-          tags: state.tags.filter((tag) => tag.id !== id),
-        }));
-      },
-
-      getTagById: (id: string) => {
-        return get().tags.find((tag) => tag.id === id);
-      },
-
-      getTagsByIds: (ids: string[]) => {
-        return get().tags.filter((tag) => ids.includes(tag.id));
-      },
-
-      incrementUsage: (tagId: string) => {
-        set((state) => ({
-          tags: state.tags.map((tag) =>
-            tag.id === tagId
-              ? { ...tag, usageCount: (tag.usageCount || 0) + 1 }
-              : tag
-          ),
-        }));
-      },
-
-      decrementUsage: (tagId: string) => {
-        set((state) => ({
-          tags: state.tags.map((tag) =>
-            tag.id === tagId
-              ? { ...tag, usageCount: Math.max(0, (tag.usageCount || 0) - 1) }
-              : tag
-          ),
-        }));
-      },
-
-      // For BE integration - set tags from API response
-      setTags: (tags: Tag[]) => {
-        set({ tags });
-      },
-
-      // Clear tags on logout
-      clearTags: () => {
-        set({ tags: [] });
-      },
-    }),
-    {
-      name: 'cloudhan-tags',
-      // Persist only tags data
-      partialize: (state) => ({
-        tags: state.tags,
-      }),
+    try {
+      const tags = await tagsApi.listTags();
+      set({ tags, isLoading: false });
+    } catch (error: any) {
+      console.error('Failed to load tags:', error);
+      set({
+        error: error.message || 'Failed to load tags',
+        isLoading: false
+      });
     }
-  )
-);
+  },
+
+  addTag: async (name: string, color: string) => {
+    try {
+      const newTag = await tagsApi.createTag({ name, color });
+      set((state) => ({
+        tags: [...state.tags, newTag],
+      }));
+      return newTag;
+    } catch (error: any) {
+      console.error('Failed to add tag:', error);
+      throw error;
+    }
+  },
+
+  updateTag: async (id: string, updates: Partial<Pick<Tag, 'name' | 'color'>>) => {
+    try {
+      const updatedTag = await tagsApi.updateTag(id, updates);
+      set((state) => ({
+        tags: state.tags.map((tag) =>
+          tag.id === id ? updatedTag : tag
+        ),
+      }));
+    } catch (error: any) {
+      console.error('Failed to update tag:', error);
+      throw error;
+    }
+  },
+
+  deleteTag: async (id: string) => {
+    try {
+      await tagsApi.deleteTag(id);
+      set((state) => ({
+        tags: state.tags.filter((tag) => tag.id !== id),
+      }));
+    } catch (error: any) {
+      console.error('Failed to delete tag:', error);
+      throw error;
+    }
+  },
+
+  getTagById: (id: string) => {
+    return get().tags.find((tag) => tag.id === id);
+  },
+
+  getTagsByIds: (ids: string[]) => {
+    return get().tags.filter((tag) => ids.includes(tag.id));
+  },
+
+  getPopularTags: (limit: number = 5) => {
+    return get().tags
+      .slice()
+      .sort((a, b) => (b.itemCount || 0) - (a.itemCount || 0))
+      .slice(0, limit);
+  },
+
+  setTags: (tags: Tag[]) => {
+    set({ tags });
+  },
+
+  clearTags: () => {
+    set({ tags: [], error: null });
+  },
+}));
 
 // Hook to initialize tags when user logs in
 export const useInitializeTags = () => {

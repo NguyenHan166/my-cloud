@@ -1,25 +1,28 @@
 import { useState, useEffect } from 'react';
 import { classNames } from '@/utils/classNames';
 import { Button, IconButton, Input, Textarea } from '@/components/common';
-import { X, StickyNote } from 'lucide-react';
-import { mockTags } from '@/api/mockData';
+import { X, StickyNote, Plus } from 'lucide-react';
+import { useTagsStore } from '@/stores';
+import { createItem, updateItem } from '@/api/libraryApi';
 import type { Item } from '@/types/domain';
 
 interface AddNoteModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit?: (data: NoteFormData) => void;
+  onSubmit?: (message: string) => void;
   note?: Item | null; // For edit mode
 }
 
-interface NoteFormData {
-  title: string;
-  content: string;
-  category: string;
-  project: string;
-  importance: 'low' | 'normal' | 'high';
-  tags: string[];
+interface NewTagData {
+  name: string;
+  color: string;
 }
+
+// Map form importance to API importance
+const mapImportance = (value: 'low' | 'normal' | 'high') => {
+  const map = { low: 'LOW', normal: 'MEDIUM', high: 'HIGH' } as const;
+  return map[value];
+};
 
 export const AddNoteModal: React.FC<AddNoteModalProps> = ({
   isOpen,
@@ -33,9 +36,26 @@ export const AddNoteModal: React.FC<AddNoteModalProps> = ({
   const [project, setProject] = useState('');
   const [importance, setImportance] = useState<'low' | 'normal' | 'high'>('normal');
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [newTags, setNewTags] = useState<NewTagData[]>([]);
+  const [newTagName, setNewTagName] = useState('');
+  const [newTagColor, setNewTagColor] = useState('#6366F1');
   const [isLoading, setIsLoading] = useState(false);
 
+  const TAG_COLORS = [
+    '#6366F1', '#22C55E', '#F59E0B', '#EF4444', 
+    '#8B5CF6', '#EC4899', '#14B8A6', '#3B82F6'
+  ];
+
+  const { tags, loadTags } = useTagsStore();
+
   const isEditMode = !!note;
+
+  // Load tags when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      loadTags();
+    }
+  }, [isOpen, loadTags]);
 
   // Pre-fill form when editing
   useEffect(() => {
@@ -44,7 +64,7 @@ export const AddNoteModal: React.FC<AddNoteModalProps> = ({
       setContent(note.content || '');
       setCategory(note.category || '');
       setProject(note.project || '');
-      setImportance(note.importance || 'normal');
+      setImportance((note.importance?.toLowerCase() as 'low' | 'normal' | 'high') || 'normal');
       setSelectedTags(note.tags?.map(t => t.id) || []);
     } else if (!isOpen) {
       // Reset form when closed
@@ -54,6 +74,9 @@ export const AddNoteModal: React.FC<AddNoteModalProps> = ({
       setProject('');
       setImportance('normal');
       setSelectedTags([]);
+      setNewTags([]);
+      setNewTagName('');
+      setNewTagColor('#6366F1');
     }
   }, [note, isOpen]);
 
@@ -62,20 +85,39 @@ export const AddNoteModal: React.FC<AddNoteModalProps> = ({
 
     setIsLoading(true);
     
-    // Simulate API call
-    await new Promise(r => setTimeout(r, 500));
-
-    onSubmit?.({
-      title: title.trim(),
-      content,
-      category,
-      project,
-      importance,
-      tags: selectedTags,
-    });
-
-    setIsLoading(false);
-    handleClose();
+    try {
+      if (isEditMode && note) {
+        // Update existing note
+        const result = await updateItem(note.id, {
+          title: title.trim(),
+          content,
+          category: category || undefined,
+          project: project || undefined,
+          importance: mapImportance(importance),
+          tagIds: selectedTags,
+          newTags,
+        });
+        onSubmit?.(result.message);
+      } else {
+        // Create new note
+        const result = await createItem({
+          type: 'NOTE',
+          title: title.trim(),
+          content,
+          category: category || undefined,
+          project: project || undefined,
+          importance: mapImportance(importance),
+          tagIds: selectedTags,
+          newTags,
+        });
+        onSubmit?.(result.message);
+      }
+      handleClose();
+    } catch (error) {
+      console.error('Failed to save note:', error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleClose = () => {
@@ -85,7 +127,24 @@ export const AddNoteModal: React.FC<AddNoteModalProps> = ({
     setProject('');
     setImportance('normal');
     setSelectedTags([]);
+    setNewTags([]);
+    setNewTagName('');
+    setNewTagColor('#6366F1');
     onClose();
+  };
+
+  const handleAddNewTag = () => {
+    const trimmed = newTagName.trim();
+    if (!trimmed) return;
+    if (tags.some(t => t.name.toLowerCase() === trimmed.toLowerCase())) return;
+    if (newTags.some(t => t.name.toLowerCase() === trimmed.toLowerCase())) return;
+    
+    setNewTags(prev => [...prev, { name: trimmed, color: newTagColor }]);
+    setNewTagName('');
+  };
+
+  const handleRemoveNewTag = (name: string) => {
+    setNewTags(prev => prev.filter(t => t.name !== name));
   };
 
   if (!isOpen) return null;
@@ -203,7 +262,7 @@ export const AddNoteModal: React.FC<AddNoteModalProps> = ({
               Tags
             </label>
             <div className="flex flex-wrap gap-2">
-              {mockTags.slice(0, 8).map((tag) => (
+              {tags.map((tag) => (
                 <button
                   key={tag.id}
                   onClick={() => {
@@ -223,6 +282,47 @@ export const AddNoteModal: React.FC<AddNoteModalProps> = ({
                   {tag.name}
                 </button>
               ))}
+              {newTags.map((tag) => (
+                <button
+                  key={`new-${tag.name}`}
+                  onClick={() => handleRemoveNewTag(tag.name)}
+                  className="flex items-center gap-1 px-3 py-1 text-sm rounded-full border border-dashed border-green-300 bg-green-50 text-green-700 hover:bg-green-100"
+                  title="Click to remove"
+                >
+                  <span className="w-2 h-2 rounded-full" style={{ backgroundColor: tag.color }} />
+                  {tag.name}
+                </button>
+              ))}
+            </div>
+            <div className="flex gap-2 mt-2">
+              <div className="flex items-center gap-1">
+                {TAG_COLORS.map((color) => (
+                  <button
+                    key={color}
+                    type="button"
+                    onClick={() => setNewTagColor(color)}
+                    className={classNames(
+                      'w-5 h-5 rounded-full transition-transform',
+                      newTagColor === color && 'ring-2 ring-offset-1 ring-gray-400 scale-110'
+                    )}
+                    style={{ backgroundColor: color }}
+                    title={color}
+                  />
+                ))}
+              </div>
+              <Input
+                value={newTagName}
+                onChange={(e) => setNewTagName(e.target.value)}
+                placeholder="New tag name..."
+                className="flex-1"
+                onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddNewTag())}
+              />
+              <IconButton
+                aria-label="Add new tag"
+                icon={<Plus className="w-full h-full" />}
+                onClick={handleAddNewTag}
+                disabled={!newTagName.trim()}
+              />
             </div>
           </div>
         </div>

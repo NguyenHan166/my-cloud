@@ -6,16 +6,16 @@ import type { Item } from '@/types/domain';
 
 // Reuse helpers from ItemCard
 const getTypeIcon = (item: Item) => {
-  if (item.type === 'link') return Link;
-  if (item.type === 'note') return StickyNote;
+  if (item.type === 'LINK') return Link;
+  if (item.type === 'NOTE') return StickyNote;
   if (item.mimeType?.startsWith('image/')) return Image;
   if (item.mimeType?.startsWith('video/')) return Video;
   return FileText;
 };
 
 const getTypeColor = (item: Item) => {
-  if (item.type === 'link') return 'text-blue-500';
-  if (item.type === 'note') return 'text-amber-500';
+  if (item.type === 'LINK') return 'text-blue-500';
+  if (item.type === 'NOTE') return 'text-amber-500';
   if (item.mimeType?.startsWith('image/')) return 'text-purple-500';
   if (item.mimeType?.startsWith('video/')) return 'text-pink-500';
   return 'text-gray-500';
@@ -73,13 +73,13 @@ export const ItemListRow: React.FC<ItemListRowProps> = ({
           {item.isPinned && (
             <Pin className="w-3 h-3 text-primary fill-primary flex-shrink-0" />
           )}
-          {item.importance === 'high' && (
+          {item.importance === 'HIGH' && (
             <Star className="w-3 h-3 text-amber-500 fill-amber-500 flex-shrink-0" />
           )}
           <h3 className="font-medium text-text truncate">
             {item.title}
           </h3>
-          {item.type === 'link' && item.url && (
+          {item.type === 'LINK' && item.url && (
             <a
               href={item.url}
               target="_blank"
@@ -100,7 +100,7 @@ export const ItemListRow: React.FC<ItemListRowProps> = ({
 
       {/* Tags */}
       <div className="hidden md:flex items-center gap-1 flex-shrink-0 max-w-[200px]">
-        {item.tags.slice(0, 2).map(tag => (
+        {item.tags?.slice(0, 2).map(tag => (
           <Badge
             key={tag.id}
             variant="default"
@@ -113,7 +113,7 @@ export const ItemListRow: React.FC<ItemListRowProps> = ({
             {tag.name}
           </Badge>
         ))}
-        {item.tags.length > 2 && (
+        {item.tags && item.tags.length > 2 && (
           <span className="text-xs text-muted">+{item.tags.length - 2}</span>
         )}
       </div>
@@ -128,7 +128,7 @@ export const ItemListRow: React.FC<ItemListRowProps> = ({
       {/* Size */}
       <div className="hidden sm:block w-20 text-right flex-shrink-0">
         <span className="text-sm text-muted">
-          {item.type === 'file' ? formatSize(item.size) : '-'}
+          {item.type === 'FILE' ? formatSize(item.size) : '-'}
         </span>
       </div>
 

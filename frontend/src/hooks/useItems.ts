@@ -53,20 +53,20 @@ export function useItems(filters: UseItemsFilters = defaultFilters): UseItemsRet
   });
 
   const fetchItems = useCallback(async (page: number = 1, append: boolean = false) => {
-    setState(prev => ({ 
-      ...prev, 
-      isLoading: true, 
-      isError: false, 
-      errorMessage: null 
+    setState(prev => ({
+      ...prev,
+      isLoading: true,
+      isError: false,
+      errorMessage: null
     }));
 
     try {
       const params: ListItemsParams = {
         page,
-        pageSize: state.pageSize,
+        limit: state.pageSize,
         search: filters.search || undefined,
         type: filters.type === 'all' ? undefined : filters.type,
-        tags: filters.tags.length > 0 ? filters.tags : undefined,
+        tagIds: filters.tags.length > 0 ? filters.tags : undefined,
         category: filters.category || undefined,
         project: filters.project || undefined,
         sortBy: filters.sortBy,
@@ -78,9 +78,9 @@ export function useItems(filters: UseItemsFilters = defaultFilters): UseItemsRet
       setState(prev => ({
         ...prev,
         items: append ? [...prev.items, ...response.data] : response.data,
-        total: response.total,
-        page: response.page,
-        totalPages: response.totalPages,
+        total: response.meta.total,
+        page: response.meta.page,
+        totalPages: response.meta.totalPages,
         isLoading: false,
       }));
     } catch (error) {

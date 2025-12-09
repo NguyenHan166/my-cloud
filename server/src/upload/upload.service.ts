@@ -6,14 +6,8 @@ import {
   DeleteObjectCommand,
 } from '@aws-sdk/client-s3';
 import { v4 as uuidv4 } from 'uuid';
+import { UploadResult } from './interfaces';
 
-export interface UploadResult {
-  key: string;
-  url: string;
-  filename: string;
-  mimetype: string;
-  size: number;
-}
 
 @Injectable()
 export class UploadService {
@@ -101,6 +95,13 @@ export class UploadService {
 
     const key = url.replace(`${this.publicBaseUrl}/`, '');
     await this.deleteFile(key);
+  }
+
+  /**
+   * Get public URL for a storage key
+   */
+  getPublicUrl(storageKey: string): string {
+    return `${this.publicBaseUrl}/${storageKey}`;
   }
 
   /**

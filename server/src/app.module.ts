@@ -13,6 +13,9 @@ import { UsersModule } from './users/users.module';
 import { MailModule } from './mail/mail.module';
 import { SeedModule } from './seed/seed.module';
 import { UploadModule } from './upload/upload.module';
+import { TagsModule } from './tags/tags.module';
+import { ItemsModule } from './items/items.module';
+import { CollectionsModule } from './collections/collections.module';
 
 @Module({
   imports: [
@@ -31,6 +34,9 @@ import { UploadModule } from './upload/upload.module';
     UsersModule,
     SeedModule,
     UploadModule,
+    TagsModule,
+    ItemsModule,
+    CollectionsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

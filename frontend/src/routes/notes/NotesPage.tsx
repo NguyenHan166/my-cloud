@@ -28,7 +28,7 @@ export const NotesPage = () => {
   // Filter only notes
   const notes = useMemo(() => {
     return mockItems
-      .filter(item => item.type === 'note')
+      .filter(item => item.type === 'NOTE')
       .filter(item => {
         if (!searchQuery) return true;
         const query = searchQuery.toLowerCase();
@@ -36,7 +36,7 @@ export const NotesPage = () => {
           item.title.toLowerCase().includes(query) ||
           item.description?.toLowerCase().includes(query) ||
           item.content?.toLowerCase().includes(query) ||
-          item.tags.some(t => t.name.toLowerCase().includes(query))
+          (item.tags || []).some(t => t.name.toLowerCase().includes(query))
         );
       });
   }, [searchQuery]);
@@ -243,7 +243,7 @@ const NoteCard: React.FC<NoteCardProps> = ({ note, onClick, onEdit, onDelete, on
       </p>
 
       {/* Tags */}
-      {note.tags.length > 0 && (
+      {note.tags && note.tags.length > 0 && (
         <div className="flex flex-wrap gap-1 mb-3">
           {note.tags.slice(0, 3).map(tag => (
             <span
@@ -324,7 +324,7 @@ const NoteListItem: React.FC<NoteCardProps> = ({ note, onClick, onEdit, onDelete
 
       {/* Tags */}
       <div className="hidden md:flex items-center gap-1">
-        {note.tags.slice(0, 2).map(tag => (
+        {(note.tags || []).slice(0, 2).map(tag => (
           <Badge key={tag.id} variant="default" size="sm">
             {tag.name}
           </Badge>
@@ -392,7 +392,7 @@ const NotePreviewModal: React.FC<NotePreviewModalProps> = ({ note, onClose, onEd
         {/* Content */}
         <div className="flex-1 overflow-y-auto p-4">
           {/* Tags */}
-          {note.tags.length > 0 && (
+          {note.tags && note.tags.length > 0 && (
             <div className="flex flex-wrap gap-2 mb-4">
               {note.tags.map(tag => (
                 <span

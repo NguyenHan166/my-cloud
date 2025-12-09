@@ -419,7 +419,7 @@ const TagsSettings: React.FC = () => {
                                     {tag.name}
                                 </span>
                                 <Badge variant="default" size="sm">
-                                    {Math.floor(Math.random() * 20)} items
+                                    {tag.itemCount ?? 0} items
                                 </Badge>
                             </div>
                             <div className="flex items-center gap-1">

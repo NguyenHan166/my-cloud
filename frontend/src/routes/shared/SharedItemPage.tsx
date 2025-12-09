@@ -21,8 +21,8 @@ import type { SharedLink, Item } from '@/types/domain';
 // Get icon for item type
 const getItemIcon = (item?: Item) => {
   if (!item) return FileText;
-  if (item.type === 'link') return LinkIcon;
-  if (item.type === 'note') return StickyNote;
+  if (item.type === 'LINK') return LinkIcon;
+  if (item.type === 'NOTE') return StickyNote;
   if (item.mimeType?.startsWith('image/')) return Image;
   return FileText;
 };
@@ -40,7 +40,7 @@ const formatDate = (dateStr: string) => {
 
 // Get status
 const getShareStatus = (link: SharedLink): 'active' | 'expired' | 'revoked' => {
-  if (link.isRevoked) return 'revoked';
+  if (link.revoked) return 'revoked';
   if (new Date(link.expiresAt) < new Date()) return 'expired';
   return 'active';
 };
@@ -61,7 +61,7 @@ export const SharedItemPage = () => {
       const link = mockSharedLinks.find(l => l.token === token);
       setSharedLink(link || null);
       // Auto-unlock if no password
-      if (link && !link.hasPassword) {
+      if (link && !link.passwordHash) {
         setIsUnlocked(true);
       }
       setIsLoading(false);
@@ -142,7 +142,7 @@ export const SharedItemPage = () => {
   }
 
   // Password required
-  if (sharedLink.hasPassword && !isUnlocked) {
+  if (sharedLink.passwordHash && !isUnlocked) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
         <div className="max-w-md w-full bg-white rounded-2xl shadow-lg p-8">
@@ -228,7 +228,7 @@ export const SharedItemPage = () => {
             )}
 
             {/* Link specific - URL */}
-            {item?.type === 'link' && item.url && (
+            {item?.type === 'LINK' && item.url && (
               <a
                 href={item.url}
                 target="_blank"
@@ -242,7 +242,7 @@ export const SharedItemPage = () => {
             )}
 
             {/* Note specific - Content */}
-            {item?.type === 'note' && item.content && (
+            {item?.type === 'NOTE' && item.content && (
               <div className="p-4 bg-gray-50 rounded-lg mb-6">
                 <pre className="whitespace-pre-wrap text-sm text-text">
                   {item.content}
@@ -286,7 +286,7 @@ export const SharedItemPage = () => {
 
             {/* Actions */}
             <div className="flex gap-3 mt-6">
-              {item?.type === 'file' && (
+              {item?.type === 'FILE' && (
                 <Button
                   leftIcon={<Download className="w-4 h-4" />}
                   onClick={() => console.log('Download')}
@@ -294,7 +294,7 @@ export const SharedItemPage = () => {
                   Download
                 </Button>
               )}
-              {item?.type === 'link' && item.url && (
+              {item?.type === 'LINK' && item.url && (
                 <Button
                   leftIcon={<ExternalLink className="w-4 h-4" />}
                   onClick={() => window.open(item.url, '_blank')}

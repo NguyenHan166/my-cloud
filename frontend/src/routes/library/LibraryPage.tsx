@@ -2,9 +2,11 @@ import React, { useState } from 'react';
 import { LibraryToolbar, LibraryFilters, ItemGrid, ItemDetailPanel } from '@/components/library';
 import { UploadModal, AddLinkModal, AddNoteModal, CreateShareModal } from '@/components/modals';
 import { Button } from '@/components/common';
+import { useToast } from '@/components/common/ToastProvider';
 import { Upload, Link, StickyNote } from 'lucide-react';
 import { useItems } from '@/hooks/useItems';
 import { mockTags } from '@/api/mockData';
+import { deleteItem, togglePinItem } from '@/api/libraryApi';
 import type { ViewMode, Item } from '@/types/domain';
 
 export const LibraryPage = () => {
@@ -27,6 +29,7 @@ export const LibraryPage = () => {
   const [shareItem, setShareItem] = useState<Item | null>(null);
 
   const { items, total, isLoading, isError, errorMessage, refetch } = useItems(filters);
+  const toast = useToast();
 
   // Get unique categories and projects from items
   const categories = [...new Set(items.map(i => i.category).filter(Boolean))] as string[];
@@ -36,12 +39,21 @@ export const LibraryPage = () => {
     setSelectedItem(item);
   };
 
-  const handleItemPin = (item: Item) => {
-    console.log('Toggle pin:', item);
-    // TODO: Call togglePinItem API
+  const handleItemPin = async (item: Item) => {
+    try {
+      const result = await togglePinItem(item.id);
+      toast.success(result.message);
+      refetch();
+    } catch (error: unknown) {
+      console.error('Failed to toggle pin:', error);
+      const errorMessage = error instanceof Error && 'response' in error
+        ? (error as { response?: { data?: { message?: string } } }).response?.data?.message
+        : 'Failed to toggle pin';
+      toast.error(errorMessage || 'Failed to toggle pin');
+    }
   };
 
-  const handleItemMenu = (item: Item, e: React.MouseEvent) => {
+  const handleItemMenu = (item: Item, _e: React.MouseEvent) => {
     console.log('Open menu:', item);
     // TODO: Show context menu
   };
@@ -50,18 +62,21 @@ export const LibraryPage = () => {
     setIsUploadModalOpen(true);
   };
 
-  const handleUploadComplete = (files: unknown[]) => {
-    console.log('Upload complete:', files);
+  const handleUploadComplete = (message: string) => {
+    toast.success(message);
+    setIsUploadModalOpen(false);
     refetch();
   };
 
-  const handleAddLink = (data: unknown) => {
-    console.log('Add link:', data);
+  const handleAddLink = (message: string) => {
+    toast.success(message);
+    setIsAddLinkModalOpen(false);
     refetch();
   };
 
-  const handleAddNote = (data: unknown) => {
-    console.log('Add note:', data);
+  const handleAddNote = (message: string) => {
+    toast.success(message);
+    setIsAddNoteModalOpen(false);
     refetch();
   };
 
@@ -72,10 +87,23 @@ export const LibraryPage = () => {
     setSelectedItem(prev => prev ? { ...prev, ...updates } : null);
   };
 
-  const handleDeleteItem = (item: Item) => {
-    console.log('Delete item:', item);
-    // TODO: Show confirm dialog and call delete API
-    setSelectedItem(null);
+  const handleDeleteItem = async (item: Item) => {
+    if (!confirm(`Are you sure you want to delete "${item.title}"?`)) {
+      return;
+    }
+    
+    try {
+      const result = await deleteItem(item.id);
+      toast.success(result.message);
+      setSelectedItem(null);
+      refetch();
+    } catch (error: unknown) {
+      console.error('Delete failed:', error);
+      const errorMessage = error instanceof Error && 'response' in error
+        ? (error as { response?: { data?: { message?: string } } }).response?.data?.message
+        : 'Failed to delete item';
+      toast.error(errorMessage || 'Failed to delete item');
+    }
   };
 
   const handleShareItem = (item: Item) => {

@@ -15,8 +15,8 @@ interface ItemPickerModalProps {
 
 // File type icon mapping
 const getTypeIcon = (item: Item) => {
-  if (item.type === 'link') return Link;
-  if (item.type === 'note') return StickyNote;
+  if (item.type === 'LINK') return Link;
+  if (item.type === 'NOTE') return StickyNote;
   if (item.mimeType?.startsWith('image/')) return Image;
   if (item.mimeType?.startsWith('video/')) return Video;
   return FileText;
@@ -24,8 +24,8 @@ const getTypeIcon = (item: Item) => {
 
 // File type color mapping
 const getTypeColor = (item: Item) => {
-  if (item.type === 'link') return 'text-blue-500 bg-blue-50';
-  if (item.type === 'note') return 'text-amber-500 bg-amber-50';
+  if (item.type === 'LINK') return 'text-blue-500 bg-blue-50';
+  if (item.type === 'NOTE') return 'text-amber-500 bg-amber-50';
   if (item.mimeType?.startsWith('image/')) return 'text-purple-500 bg-purple-50';
   if (item.mimeType?.startsWith('video/')) return 'text-pink-500 bg-pink-50';
   return 'text-gray-500 bg-gray-50';
@@ -47,13 +47,16 @@ export const ItemPickerModal: React.FC<ItemPickerModalProps> = ({
     return mockItems
       .filter(item => !excludeItemIds.includes(item.id))
       .filter(item => {
-        if (typeFilter !== 'all' && item.type !== typeFilter) return false;
+        if (typeFilter !== 'all') {
+          const typeMap = { 'file': 'FILE', 'link': 'LINK', 'note': 'NOTE' } as const;
+          if (item.type !== typeMap[typeFilter]) return false;
+        }
         if (!searchQuery) return true;
         const query = searchQuery.toLowerCase();
         return (
           item.title.toLowerCase().includes(query) ||
           item.description?.toLowerCase().includes(query) ||
-          item.tags.some(t => t.name.toLowerCase().includes(query))
+          (item.tags || []).some(t => t.name.toLowerCase().includes(query))
         );
       });
   }, [searchQuery, typeFilter, excludeItemIds]);
@@ -166,7 +169,7 @@ export const ItemPickerModal: React.FC<ItemPickerModalProps> = ({
                       {item.description && (
                         <p className="text-sm text-muted truncate">{item.description}</p>
                       )}
-                      {item.tags.length > 0 && (
+                      {item.tags && item.tags.length > 0 && (
                         <div className="flex gap-1 mt-1">
                           {item.tags.slice(0, 3).map(tag => (
                             <span

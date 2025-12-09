@@ -2,30 +2,15 @@ import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { User } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
-
-export interface CreateUserData {
-  email: string;
-  password: string;
-  name?: string;
-  phone?: string;
-  avatar?: string;
-  isEmailVerified?: boolean;
-  emailVerificationToken?: string;
-  emailVerificationExpires?: Date;
-}
-
-export interface UpdateUserData {
-  name?: string;
-  phone?: string;
-  avatar?: string;
-  password?: string;
-  isEmailVerified?: boolean;
-  emailVerificationToken?: string | null;
-  emailVerificationExpires?: Date | null;
-  refreshTokenHash?: string | null;
-  passwordResetToken?: string | null;
-  passwordResetExpires?: Date | null;
-}
+import {
+  CreateUserData,
+  UpdateUserData,
+  AdminCreateUserData,
+  AdminUpdateUserData,
+  FindAllParams,
+  FindAllResult,
+  UpdateProfileData,
+} from './interfaces';
 
 @Injectable()
 export class UsersService {
@@ -168,14 +153,7 @@ export class UsersService {
   /**
    * Update user profile (for self)
    */
-  async updateProfile(
-    id: string,
-    data: {
-      name?: string;
-      phone?: string;
-      password?: string;
-    },
-  ): Promise<User> {
+  async updateProfile(id: string, data: UpdateProfileData): Promise<User> {
     const updateData: any = {};
 
     if (data.name !== undefined) updateData.name = data.name;
@@ -196,15 +174,7 @@ export class UsersService {
   /**
    * Find all users with pagination and filters (Admin only)
    */
-  async findAll(params: {
-    page: number;
-    limit: number;
-    search?: string;
-    isActive?: boolean;
-    isEmailVerified?: boolean;
-    sortBy: string;
-    sortOrder: 'asc' | 'desc';
-  }): Promise<{ data: User[]; total: number; page: number; limit: number }> {
+  async findAll(params: FindAllParams): Promise<FindAllResult> {
     const {
       page,
       limit,
@@ -252,16 +222,7 @@ export class UsersService {
   /**
    * Admin create user (can set role, isActive, isEmailVerified)
    */
-  async adminCreate(data: {
-    email: string;
-    password: string;
-    name?: string;
-    phone?: string;
-    avatar?: string;
-    role?: 'ADMIN' | 'USER';
-    isActive?: boolean;
-    isEmailVerified?: boolean;
-  }): Promise<User> {
+  async adminCreate(data: AdminCreateUserData): Promise<User> {
     const hashedPassword = await bcrypt.hash(data.password, 12);
 
     return this.prisma.user.create({
@@ -281,18 +242,7 @@ export class UsersService {
   /**
    * Admin update user
    */
-  async adminUpdate(
-    id: string,
-    data: {
-      name?: string;
-      phone?: string;
-      avatar?: string;
-      password?: string;
-      role?: 'ADMIN' | 'USER';
-      isActive?: boolean;
-      isEmailVerified?: boolean;
-    },
-  ): Promise<User> {
+  async adminUpdate(id: string, data: AdminUpdateUserData): Promise<User> {
     const updateData: any = {};
 
     if (data.name !== undefined) updateData.name = data.name;

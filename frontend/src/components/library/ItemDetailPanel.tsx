@@ -26,16 +26,16 @@ import type { Item, Tag as TagType, Importance } from '@/types/domain';
 
 // Type icon helpers
 const getTypeIcon = (item: Item) => {
-  if (item.type === 'link') return LinkIcon;
-  if (item.type === 'note') return StickyNote;
+  if (item.type === 'LINK') return LinkIcon;
+  if (item.type === 'NOTE') return StickyNote;
   if (item.mimeType?.startsWith('image/')) return Image;
   if (item.mimeType?.startsWith('video/')) return Video;
   return FileText;
 };
 
 const getTypeLabel = (item: Item) => {
-  if (item.type === 'link') return 'Link';
-  if (item.type === 'note') return 'Note';
+  if (item.type === 'LINK') return 'Link';
+  if (item.type === 'NOTE') return 'Note';
   if (item.mimeType?.startsWith('image/')) return 'Image';
   if (item.mimeType?.startsWith('video/')) return 'Video';
   if (item.mimeType?.includes('pdf')) return 'PDF';
@@ -157,7 +157,7 @@ export const ItemDetailPanel: React.FC<ItemDetailPanelProps> = ({
     // Mock AI tag generation
     await new Promise(r => setTimeout(r, 1500));
     const suggestions = ['AI-generated', 'Suggested', 'Auto-tag'].filter(
-      t => !currentItem.tags.some(tag => tag.name === t)
+      t => !(currentItem.tags || []).some(tag => tag.name === t)
     );
     setSuggestedTags(suggestions);
     setIsGeneratingTags(false);
@@ -188,16 +188,19 @@ export const ItemDetailPanel: React.FC<ItemDetailPanelProps> = ({
     // Create new tag-like object
     const newTag: TagType = {
       id: `tag-new-${Date.now()}`,
+      userId: '',
       name: tagName,
       color: '#6366F1',
+      itemCount: 0,
+      createdAt: new Date().toISOString(),
     };
-    onUpdate?.(currentItem, { tags: [...currentItem.tags, newTag] });
+    onUpdate?.(currentItem, { tags: [...(currentItem.tags || []), newTag] });
     setSuggestedTags(prev => prev.filter(t => t !== tagName));
   };
 
   const removeTag = (tagId: string) => {
     if (!currentItem) return;
-    onUpdate?.(currentItem, { tags: currentItem.tags.filter(t => t.id !== tagId) });
+    onUpdate?.(currentItem, { tags: (currentItem.tags || []).filter(t => t.id !== tagId) });
   };
 
   return (
@@ -273,7 +276,7 @@ export const ItemDetailPanel: React.FC<ItemDetailPanelProps> = ({
                   className="w-full h-48 object-cover"
                 />
               </div>
-            ) : currentItem.type === 'link' && currentItem.url ? (
+            ) : currentItem.type === 'LINK' && currentItem.url ? (
               <a
                 href={currentItem.url}
                 target="_blank"
@@ -354,7 +357,7 @@ export const ItemDetailPanel: React.FC<ItemDetailPanelProps> = ({
                 <span className="text-sm font-medium text-text">Tags</span>
               </div>
               <div className="flex flex-wrap gap-1.5">
-                {currentItem.tags.map(tag => (
+                {(currentItem.tags || []).map(tag => (
                   <Badge
                     key={tag.id}
                     variant="default"
@@ -370,7 +373,7 @@ export const ItemDetailPanel: React.FC<ItemDetailPanelProps> = ({
                     {tag.name}
                   </Badge>
                 ))}
-                {currentItem.tags.length === 0 && (
+                {(!currentItem.tags || currentItem.tags.length === 0) && (
                   <span className="text-sm text-muted">No tags</span>
                 )}
               </div>
@@ -418,22 +421,22 @@ export const ItemDetailPanel: React.FC<ItemDetailPanelProps> = ({
                 <span className="text-sm font-medium text-text">Importance</span>
               </div>
               <div className="flex gap-2">
-                {(['low', 'normal', 'high'] as Importance[]).map(level => (
+                {(['LOW', 'MEDIUM', 'HIGH'] as Importance[]).map(level => (
                   <button
                     key={level}
                     onClick={() => handleImportanceChange(level)}
                     className={classNames(
                       'px-3 py-1 text-sm rounded-full border transition-colors capitalize',
                       currentItem.importance === level
-                        ? level === 'high'
+                        ? level === 'HIGH'
                           ? 'bg-amber-100 text-amber-700 border-amber-300'
-                          : level === 'low'
+                          : level === 'LOW'
                           ? 'bg-gray-100 text-gray-600 border-gray-300'
                           : 'bg-blue-100 text-blue-700 border-blue-300'
                         : 'bg-white text-muted border-border hover:border-gray-300'
                     )}
                   >
-                    {level}
+                    {level.toLowerCase()}
                   </button>
                 ))}
               </div>
@@ -499,7 +502,7 @@ export const ItemDetailPanel: React.FC<ItemDetailPanelProps> = ({
           </div>
 
           {/* Note content */}
-          {currentItem.type === 'note' && currentItem.content && (
+          {currentItem.type === 'NOTE' && currentItem.content && (
             <div className="p-4 border-b border-border">
               <div className="flex items-center gap-2 mb-3">
                 <StickyNote className="w-4 h-4 text-muted" />
@@ -516,7 +519,7 @@ export const ItemDetailPanel: React.FC<ItemDetailPanelProps> = ({
 
         {/* Footer actions */}
         <div className="p-4 border-t border-border flex gap-2">
-          {currentItem.type === 'file' && (
+          {currentItem.type === 'FILE' && (
             <Button
               variant="secondary"
               className="flex-1"
@@ -526,7 +529,7 @@ export const ItemDetailPanel: React.FC<ItemDetailPanelProps> = ({
               Download
             </Button>
           )}
-          {currentItem.type === 'link' && currentItem.url && (
+          {currentItem.type === 'LINK' && currentItem.url && (
             <Button
               variant="secondary"
               className="flex-1"

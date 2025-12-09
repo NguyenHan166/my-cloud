@@ -12,12 +12,6 @@ datasource db {
   provider = "postgresql"
 }
 
-enum AccountRole {
-  ADMIN
-  USER
-  MEMBER
-}
-
 // Simple user roles for current phase
 enum UserRole {
   ADMIN
@@ -63,83 +57,45 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  accounts      AccountMember[]
-  ownerAccounts Account[]       @relation("AccountOwner")
-
-  // Opposite relations required by Prisma
-  files       File[]
-  items       Item[]
-  collections Collection[]
-
-  @@index([email])
-}
-
-model Account {
-  id        String   @id @default(cuid())
-  name      String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  // Chủ account (sau này có thể cho phép nhiều owner)
-  ownerId String
-  owner   User   @relation("AccountOwner", fields: [ownerId], references: [id])
-
-  members         AccountMember[]
+  // Relations - User owns everything directly
   files           File[]
   items           Item[]
   tags            Tag[]
   collections     Collection[]
   sharedLinks     SharedLink[]
-  usage           AccountUsage?
+  usage           UserUsage?
   embeddings      Embedding[]
   collectionItems CollectionItem[]
 
-  @@index([ownerId])
-}
-
-// Quan hệ User <-> Account với role
-model AccountMember {
-  id        String      @id @default(cuid())
-  userId    String
-  accountId String
-  role      AccountRole @default(MEMBER)
-  createdAt DateTime    @default(now())
-
-  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  account Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
-
-  @@unique([userId, accountId])
-  @@index([accountId])
+  @@index([email])
 }
 
 // STORAGE & LIBRARY
 
 model File {
   id           String  @id @default(cuid())
-  accountId    String
-  userId       String // người upload
+  userId       String
   storageKey   String // path trên R2
   originalName String
   mimeType     String
   size         BigInt
   checkSum     String? // optional
 
-  account Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
-  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  items Item[]
+  itemFiles ItemFile[]  // Changed: 1-to-many through junction
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([userId])
 }
 
 // Item: Tập trung mọi thứ (file, link, note)
 model Item {
   id          String     @id @default(cuid())
-  accountId   String
   userId      String
   type        ItemType   @default(FILE)
-  fileId      String? // Neu type = FILE 
   url         String? // Neu type = LINK
   content     String?    @db.Text // Noi dung note (neu type = NOTE)
   title       String
@@ -151,24 +107,19 @@ model Item {
   isPinned    Boolean    @default(false) // Pin item quan trong
   tagsText    String? // cache tags dang text de search nhanh
   domain      String? // vi du : youtube.com
-  mimeType    String?
-  size        BigInt?
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
 
-  account Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
-  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  file    File?   @relation(fields: [fileId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  files       ItemFile[]  // New: 1-to-many through junction
   itemTags    ItemTag[]
   collections CollectionItem[]
   sharedLinks SharedLink[]
   embeddings  Embedding[]
 
-  @@index([accountId])
   @@index([userId])
   @@index([type])
-  @@index([fileId])
   @@index([createdAt])
   @@index([domain])
   @@index([category])
@@ -178,18 +129,36 @@ model Item {
   @@index([title]) // Full-text search co the dung rieng
 }
 
+// Junction table for Item-File many-to-many
+model ItemFile {
+  id        String   @id @default(cuid())
+  itemId    String
+  fileId    String
+  position  Int      @default(0)  // Order of files within Item
+  isPrimary Boolean  @default(false) // Primary file for thumbnail
+  createdAt DateTime @default(now())
+
+  item Item @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  file File @relation(fields: [fileId], references: [id], onDelete: Cascade)
+
+  @@unique([itemId, fileId])
+  @@index([itemId])
+  @@index([fileId])
+}
+
 // Tag nhiều-nhiều
 model Tag {
   id        String   @id @default(cuid())
-  accountId String
+  userId    String
   name      String
+  color     String? // Màu sắc cho tag
   createdAt DateTime @default(now())
 
-  account  Account   @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   itemTags ItemTag[]
 
-  @@unique([accountId, name])
-  @@index([accountId])
+  @@unique([userId, name])
+  @@index([userId])
 }
 
 model ItemTag {
@@ -205,7 +174,6 @@ model ItemTag {
 
 model Collection {
   id          String   @id @default(cuid())
-  accountId   String
   userId      String
   name        String
   description String?
@@ -215,35 +183,33 @@ model Collection {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  account Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
-  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   items CollectionItem[]
 
-  @@unique([accountId, slugPublic])
-  @@index([accountId])
+  @@unique([userId, slugPublic])
   @@index([userId])
 }
 
 model CollectionItem {
   id           String   @id @default(cuid())
-  accountId    String
+  userId       String
   collectionId String
   itemId       String
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  account    Account    @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
   collection Collection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
   item       Item       @relation(fields: [itemId], references: [id], onDelete: Cascade)
 
   @@unique([collectionId, itemId])
-  @@index([accountId])
+  @@index([userId])
 }
 
 model SharedLink {
   id           String   @id @default(cuid())
-  accountId    String
+  userId       String
   itemId       String
   token        String   @unique
   passwordHash String?
@@ -253,10 +219,10 @@ model SharedLink {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  account Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
-  item    Item    @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  item Item @relation(fields: [itemId], references: [id], onDelete: Cascade)
 
-  @@index([accountId])
+  @@index([userId])
   @@index([itemId])
   @@index([token])
   @@index([expiresAt])
@@ -264,25 +230,24 @@ model SharedLink {
 
 // USAGE & ANALYTICS
 
-model AccountUsage {
+model UserUsage {
   id               String @id @default(cuid())
-  accountId        String @unique
+  userId           String @unique
   usedStorageBytes BigInt @default(0)
   maxStorageBytes  BigInt @default(0)
   itemCount        Int    @default(0)
   maxItems         Int    @default(0)
   collectionCount  Int    @default(0)
   maxCollections   Int    @default(0)
-  // bạn có thể thêm các trường khác như maxSharedLinks...
 
-  account Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 // Semantic search (tuỳ chọn)
 // Lưu vector kiểu Bytes hoặc JSON nếu chưa dùng extension `pgvector`
 model Embedding {
   id        String   @id @default(cuid())
-  accountId String
+  userId    String
   itemId    String   @unique
   // Nếu bạn cài pgvector có thể dùng:
   // vector Unsupported("vector")
@@ -290,8 +255,8 @@ model Embedding {
   vector    Bytes
   createdAt DateTime @default(now())
 
-  account Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
-  item    Item    @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  item Item @relation(fields: [itemId], references: [id], onDelete: Cascade)
 
-  @@index([accountId])
+  @@index([userId])
 }

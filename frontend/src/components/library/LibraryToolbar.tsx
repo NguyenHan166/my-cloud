@@ -30,9 +30,9 @@ const sortOptions = [
 // Type filter options
 const typeOptions: { value: ItemType | 'all'; label: string; icon: React.ReactNode }[] = [
   { value: 'all', label: 'All Types', icon: null },
-  { value: 'file', label: 'Files', icon: <FileText className="w-4 h-4" /> },
-  { value: 'link', label: 'Links', icon: <Link className="w-4 h-4" /> },
-  { value: 'note', label: 'Notes', icon: <StickyNote className="w-4 h-4" /> },
+  { value: 'FILE', label: 'Files', icon: <FileText className="w-4 h-4" /> },
+  { value: 'LINK', label: 'Links', icon: <Link className="w-4 h-4" /> },
+  { value: 'NOTE', label: 'Notes', icon: <StickyNote className="w-4 h-4" /> },
 ];
 
 export interface LibraryFilters {

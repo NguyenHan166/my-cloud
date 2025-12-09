@@ -1,6 +1,7 @@
 export interface ApiResponse<T> {
   success: true;
   data: T;
+  message?: string;
   timestamp: string;
 }
 
@@ -24,4 +25,4 @@ export interface PaginatedResponse<T> {
   };
 }
 
-export interface ApiPaginatedResponse<T> extends ApiResponse<PaginatedResponse<T>> {}
+export interface ApiPaginatedResponse<T> extends ApiResponse<PaginatedResponse<T>> { }

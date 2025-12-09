@@ -1,23 +1,45 @@
 // API DTOs and request/response types
-import type { Item, ItemType, Importance, Collection, SharedLink, Tag, SortField, SortOrder } from './domain';
+import type { ItemType, Importance, SortField, SortOrder } from './domain';
 
-// Pagination
-export interface PaginatedResponse<T> {
-  data: T[];
+// Backend pagination response format
+export interface PaginationMeta {
   total: number;
   page: number;
-  pageSize: number;
+  limit: number;
   totalPages: number;
+}
+
+export interface PaginatedResponse<T> {
+  data: T[];
+  meta: PaginationMeta;
+}
+
+// New tag inline creation
+export interface NewTagPayload {
+  name: string;
+  color?: string;
+}
+
+// Tags
+export interface CreateTagPayload {
+  name: string;
+  color?: string;
+}
+
+export interface UpdateTagPayload {
+  name?: string;
+  color?: string;
 }
 
 // Items / Library
 export interface ListItemsParams {
   page?: number;
-  pageSize?: number;
+  limit?: number;
   type?: ItemType;
   category?: string;
   project?: string;
-  tags?: string[];
+  domain?: string;
+  tagIds?: string[];
   importance?: Importance;
   search?: string;
   sortBy?: SortField;
@@ -32,10 +54,11 @@ export interface CreateItemPayload {
   category?: string;
   project?: string;
   importance?: Importance;
-  tags?: string[];
-  // For link
+  tagIds?: string[];
+  newTags?: NewTagPayload[];
+  // For LINK
   url?: string;
-  // For note
+  // For NOTE
   content?: string;
 }
 
@@ -45,15 +68,18 @@ export interface UpdateItemPayload {
   category?: string;
   project?: string;
   importance?: Importance;
-  tags?: string[];
-  isPinned?: boolean;
+  tagIds?: string[];
+  newTags?: NewTagPayload[];
+  url?: string;
   content?: string;
+  // For FILE type - IDs of files to remove
+  removeFileIds?: string[];
 }
 
 // Collections
 export interface ListCollectionsParams {
   page?: number;
-  pageSize?: number;
+  limit?: number;
   search?: string;
 }
 
@@ -67,6 +93,7 @@ export interface UpdateCollectionPayload {
   name?: string;
   description?: string;
   isPublic?: boolean;
+  coverImage?: string;
 }
 
 // Shared Links
@@ -76,28 +103,13 @@ export interface CreateSharedLinkPayload {
   password?: string;
 }
 
-// Files
-export interface InitUploadResponse {
-  uploadId: string;
-  presignedUrl: string;
-}
-
-export interface ConfirmUploadPayload {
-  uploadId: string;
-  originalName: string;
-  mimeType: string;
+// Files / Upload
+export interface UploadResult {
+  key: string;
+  url: string;
+  filename: string;
+  mimetype: string;
   size: number;
-  title?: string;
-  description?: string;
-  category?: string;
-  project?: string;
-  tags?: string[];
-}
-
-// Tags
-export interface ListTagsParams {
-  search?: string;
-  limit?: number;
 }
 
 // AI
@@ -115,7 +127,7 @@ export interface AiSearchParams {
 }
 
 export interface AiSearchResult {
-  item: Item;
+  itemId: string;
   score: number;
   highlight?: string;
 }
