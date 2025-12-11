@@ -17,6 +17,11 @@ import {
   UpdateCollectionDto,
   QueryCollectionsDto,
   AddItemsDto,
+  CollectionResponseDto,
+  CollectionsListResponseDto,
+  MessageResponseDto,
+  AddItemsResponseDto,
+  RemoveItemsResponseDto,
 } from './dto';
 import { Type } from 'class-transformer';
 import { IsInt, Min } from 'class-validator';
@@ -28,6 +33,7 @@ import {
   ApiBearerAuth,
   ApiPropertyOptional,
 } from '@nestjs/swagger';
+import { ItemsListResponseDto } from 'src/items/dto';
 
 class PaginationQueryDto {
   @ApiPropertyOptional({ minimum: 1, default: 1 })
@@ -58,6 +64,7 @@ export class CollectionsController {
   @ApiResponse({
     status: 201,
     description: 'Collection created successfully.',
+    type: CollectionResponseDto,
   })
   @ApiResponse({
     status: 401,
@@ -78,6 +85,7 @@ export class CollectionsController {
   @ApiResponse({
     status: 200,
     description: 'Collections retrieved successfully.',
+    type: CollectionsListResponseDto,
   })
   @ApiResponse({
     status: 401,
@@ -98,6 +106,7 @@ export class CollectionsController {
   @ApiResponse({
     status: 200,
     description: 'Collection retrieved successfully.',
+    type: CollectionResponseDto,
   })
   @ApiResponse({
     status: 401,
@@ -119,6 +128,7 @@ export class CollectionsController {
   @ApiResponse({
     status: 200,
     description: 'Collection updated successfully.',
+    type: CollectionResponseDto,
   })
   @ApiResponse({
     status: 401,
@@ -144,6 +154,7 @@ export class CollectionsController {
   @ApiResponse({
     status: 200,
     description: 'Collection deleted successfully.',
+    type: MessageResponseDto,
   })
   @ApiResponse({
     status: 401,
@@ -165,6 +176,7 @@ export class CollectionsController {
   @ApiResponse({
     status: 200,
     description: 'Items added successfully.',
+    type: AddItemsResponseDto,
   })
   @ApiResponse({
     status: 401,
@@ -190,6 +202,7 @@ export class CollectionsController {
   @ApiResponse({
     status: 200,
     description: 'Items removed successfully.',
+    type: RemoveItemsResponseDto,
   })
   @ApiResponse({
     status: 401,
@@ -215,6 +228,7 @@ export class CollectionsController {
   @ApiResponse({
     status: 200,
     description: 'Collection items retrieved successfully.',
+    type: ItemsListResponseDto,
   })
   @ApiResponse({
     status: 401,

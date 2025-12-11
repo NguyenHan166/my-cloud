@@ -3,8 +3,19 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "react-hot-toast";
 import { AuthProvider } from "./contexts/AuthContext";
 import ProtectedRoute from "./components/layout/ProtectedRoute";
+import AppLayout from "./components/layout/AppLayout";
+
+// Public pages
 import LoginPage from "./pages/auth/LoginPage";
+import RegisterPage from "./pages/auth/RegisterPage";
+import VerifyOtpPage from "./pages/auth/VerifyOtpPage";
+import ForgotPasswordPage from "./pages/auth/ForgotPasswordPage";
+import ResetPasswordPage from "./pages/auth/ResetPasswordPage";
+
+// Protected pages
 import LibraryPage from "./pages/library/LibraryPage";
+import ProfilePage from "./pages/settings/ProfilePage";
+import SettingsPage from "./pages/settings/SettingsPage";
 
 const queryClient = new QueryClient({
     defaultOptions: {
@@ -21,15 +32,157 @@ function App() {
             <BrowserRouter>
                 <AuthProvider>
                     <Routes>
-                        {/* Public routes */}
+                        {/* Public routes (no layout) */}
                         <Route path="/login" element={<LoginPage />} />
+                        <Route path="/register" element={<RegisterPage />} />
+                        <Route path="/verify-otp" element={<VerifyOtpPage />} />
+                        <Route
+                            path="/forgot-password"
+                            element={<ForgotPasswordPage />}
+                        />
+                        <Route
+                            path="/reset-password"
+                            element={<ResetPasswordPage />}
+                        />
 
-                        {/* Protected routes */}
+                        {/* Protected routes (with AppLayout) */}
                         <Route
                             path="/library"
                             element={
                                 <ProtectedRoute>
-                                    <LibraryPage />
+                                    <AppLayout>
+                                        <LibraryPage />
+                                    </AppLayout>
+                                </ProtectedRoute>
+                            }
+                        />
+
+                        <Route
+                            path="/collections"
+                            element={
+                                <ProtectedRoute>
+                                    <AppLayout>
+                                        <div className="container mx-auto px-4 py-8">
+                                            <h1 className="text-3xl font-bold">
+                                                Collections
+                                            </h1>
+                                            <p className="text-neutral-600 mt-2">
+                                                Coming soon...
+                                            </p>
+                                        </div>
+                                    </AppLayout>
+                                </ProtectedRoute>
+                            }
+                        />
+
+                        <Route
+                            path="/files"
+                            element={
+                                <ProtectedRoute>
+                                    <AppLayout>
+                                        <div className="container mx-auto px-4 py-8">
+                                            <h1 className="text-3xl font-bold">
+                                                Files
+                                            </h1>
+                                            <p className="text-neutral-600 mt-2">
+                                                Coming soon...
+                                            </p>
+                                        </div>
+                                    </AppLayout>
+                                </ProtectedRoute>
+                            }
+                        />
+
+                        <Route
+                            path="/links"
+                            element={
+                                <ProtectedRoute>
+                                    <AppLayout>
+                                        <div className="container mx-auto px-4 py-8">
+                                            <h1 className="text-3xl font-bold">
+                                                Links
+                                            </h1>
+                                            <p className="text-neutral-600 mt-2">
+                                                Coming soon...
+                                            </p>
+                                        </div>
+                                    </AppLayout>
+                                </ProtectedRoute>
+                            }
+                        />
+
+                        <Route
+                            path="/notes"
+                            element={
+                                <ProtectedRoute>
+                                    <AppLayout>
+                                        <div className="container mx-auto px-4 py-8">
+                                            <h1 className="text-3xl font-bold">
+                                                Notes
+                                            </h1>
+                                            <p className="text-neutral-600 mt-2">
+                                                Coming soon...
+                                            </p>
+                                        </div>
+                                    </AppLayout>
+                                </ProtectedRoute>
+                            }
+                        />
+
+                        <Route
+                            path="/shared-links"
+                            element={
+                                <ProtectedRoute>
+                                    <AppLayout>
+                                        <div className="container mx-auto px-4 py-8">
+                                            <h1 className="text-3xl font-bold">
+                                                Shared Links
+                                            </h1>
+                                            <p className="text-neutral-600 mt-2">
+                                                Coming soon...
+                                            </p>
+                                        </div>
+                                    </AppLayout>
+                                </ProtectedRoute>
+                            }
+                        />
+
+                        <Route
+                            path="/trash"
+                            element={
+                                <ProtectedRoute>
+                                    <AppLayout>
+                                        <div className="container mx-auto px-4 py-8">
+                                            <h1 className="text-3xl font-bold">
+                                                Trash
+                                            </h1>
+                                            <p className="text-neutral-600 mt-2">
+                                                Coming soon...
+                                            </p>
+                                        </div>
+                                    </AppLayout>
+                                </ProtectedRoute>
+                            }
+                        />
+
+                        <Route
+                            path="/profile"
+                            element={
+                                <ProtectedRoute>
+                                    <AppLayout>
+                                        <ProfilePage />
+                                    </AppLayout>
+                                </ProtectedRoute>
+                            }
+                        />
+
+                        <Route
+                            path="/settings"
+                            element={
+                                <ProtectedRoute>
+                                    <AppLayout>
+                                        <SettingsPage />
+                                    </AppLayout>
                                 </ProtectedRoute>
                             }
                         />

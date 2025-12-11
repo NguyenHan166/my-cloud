@@ -23,7 +23,15 @@ import {
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { GetUser } from 'src/common';
 import { ItemsService } from './items.service';
-import { CreateItemDto, UpdateItemDto, QueryItemsDto } from './dto';
+import {
+  CreateItemDto,
+  UpdateItemDto,
+  QueryItemsDto,
+  ItemResponseDto,
+  ItemWithMessageResponseDto,
+  ItemsListResponseDto,
+  MessageResponseDto,
+} from './dto';
 
 @ApiTags('items')
 @ApiBearerAuth('JWT-auth')
@@ -47,6 +55,7 @@ export class ItemsController {
   @ApiResponse({
     status: 201,
     description: 'Item created successfully.',
+    type: ItemWithMessageResponseDto,
   })
   @ApiResponse({
     status: 400,
@@ -72,6 +81,7 @@ export class ItemsController {
   @ApiResponse({
     status: 200,
     description: 'Items retrieved successfully.',
+    type: ItemsListResponseDto,
   })
   @ApiResponse({
     status: 401,
@@ -92,6 +102,7 @@ export class ItemsController {
   @ApiResponse({
     status: 200,
     description: 'Item retrieved successfully.',
+    type: ItemResponseDto,
   })
   @ApiResponse({
     status: 401,
@@ -121,6 +132,7 @@ export class ItemsController {
   @ApiResponse({
     status: 200,
     description: 'Item updated successfully.',
+    type: ItemWithMessageResponseDto,
   })
   @ApiResponse({
     status: 400,
@@ -151,6 +163,7 @@ export class ItemsController {
   @ApiResponse({
     status: 200,
     description: 'Item deleted successfully.',
+    type: MessageResponseDto,
   })
   @ApiResponse({
     status: 401,
@@ -172,6 +185,7 @@ export class ItemsController {
   @ApiResponse({
     status: 200,
     description: 'Pin status toggled successfully.',
+    type: ItemWithMessageResponseDto,
   })
   @ApiResponse({
     status: 401,
@@ -193,6 +207,7 @@ export class ItemsController {
   @ApiResponse({
     status: 200,
     description: 'Primary file set successfully.',
+    type: ItemResponseDto,
   })
   @ApiResponse({
     status: 401,
@@ -232,6 +247,7 @@ export class ItemsController {
   @ApiResponse({
     status: 200,
     description: 'Files reordered successfully.',
+    type: ItemResponseDto,
   })
   @ApiResponse({
     status: 401,

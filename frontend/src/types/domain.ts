@@ -3,7 +3,12 @@
 export interface User {
     id: string;
     email: string;
-    name: string;
+    name?: string;
+    phone?: string;
+    avatar?: string;
+    role: "USER" | "ADMIN";
+    isActive: boolean;
+    isEmailVerified: boolean;
     createdAt: string;
     updatedAt: string;
 }

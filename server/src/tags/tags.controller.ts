@@ -16,6 +16,11 @@ import {
 } from '@nestjs/swagger';
 import { TagsService } from './tags.service';
 import { CreateTagDto } from './dto/create-tag.dto';
+import {
+  TagResponseDto,
+  TagWithMessageResponseDto,
+  MessageResponseDto,
+} from './dto/response';
 import { GetUser } from 'src/common';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 
@@ -31,6 +36,7 @@ export class TagsController {
   @ApiResponse({
     status: 201,
     description: 'Tag created successfully.',
+    type: TagWithMessageResponseDto,
   })
   @ApiResponse({
     status: 400,
@@ -52,6 +58,7 @@ export class TagsController {
   @ApiResponse({
     status: 200,
     description: 'Tags retrieved successfully.',
+    type: [TagResponseDto],
   })
   @ApiResponse({
     status: 401,
@@ -66,6 +73,7 @@ export class TagsController {
   @ApiResponse({
     status: 200,
     description: 'Tag retrieved successfully.',
+    type: TagResponseDto,
   })
   @ApiResponse({
     status: 401,
@@ -84,6 +92,7 @@ export class TagsController {
   @ApiResponse({
     status: 200,
     description: 'Tag updated successfully.',
+    type: TagWithMessageResponseDto,
   })
   @ApiResponse({
     status: 400,
@@ -110,6 +119,7 @@ export class TagsController {
   @ApiResponse({
     status: 200,
     description: 'Tag deleted successfully.',
+    type: MessageResponseDto,
   })
   @ApiResponse({
     status: 401,

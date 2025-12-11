@@ -15,6 +15,10 @@ import {
   CreateSharedLinkDto,
   QuerySharedLinksDto,
   AccessSharedLinkDto,
+  SharedLinkResponseDto,
+  SharedLinksListResponseDto,
+  AccessSharedLinkResponseDto,
+  MessageResponseDto,
 } from './dto';
 import {
   ApiTags,
@@ -38,6 +42,7 @@ export class SharedLinksController {
   @ApiResponse({
     status: 201,
     description: 'Shared link created successfully.',
+    type: SharedLinkResponseDto,
   })
   @ApiResponse({
     status: 401,
@@ -64,6 +69,7 @@ export class SharedLinksController {
   @ApiResponse({
     status: 200,
     description: 'Shared links retrieved successfully.',
+    type: SharedLinksListResponseDto,
   })
   @ApiResponse({
     status: 401,
@@ -86,6 +92,7 @@ export class SharedLinksController {
   @ApiResponse({
     status: 200,
     description: 'Shared link revoked successfully.',
+    type: MessageResponseDto,
   })
   @ApiResponse({
     status: 401,
@@ -107,6 +114,7 @@ export class SharedLinksController {
   @ApiResponse({
     status: 200,
     description: 'Shared item retrieved successfully.',
+    type: AccessSharedLinkResponseDto,
   })
   @ApiResponse({
     status: 401,
@@ -135,6 +143,7 @@ export class SharedLinksController {
   @ApiResponse({
     status: 200,
     description: 'Password verified, returns access token or item.',
+    type: AccessSharedLinkResponseDto,
   })
   @ApiResponse({
     status: 401,

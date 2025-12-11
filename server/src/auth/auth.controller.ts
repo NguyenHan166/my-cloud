@@ -21,6 +21,9 @@ import {
   ResetPasswordDto,
   VerifyOtpDto,
   ResendOtpDto,
+  LoginResponseDto,
+  TokensResponseDto,
+  MessageResponseDto,
 } from './dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { Public } from '../common/decorators/public.decorator';
@@ -38,6 +41,7 @@ export class AuthController {
     status: 201,
     description:
       'User registered successfully. OTP sent to email for verification.',
+    type: MessageResponseDto,
   })
   @ApiResponse({
     status: 400,
@@ -54,6 +58,7 @@ export class AuthController {
   @ApiResponse({
     status: 200,
     description: 'Login successful. Returns access token and refresh token.',
+    type: LoginResponseDto,
   })
   @ApiResponse({
     status: 401,
@@ -70,6 +75,7 @@ export class AuthController {
   @ApiResponse({
     status: 200,
     description: 'Token refreshed successfully. Returns new access token.',
+    type: TokensResponseDto,
   })
   @ApiResponse({
     status: 401,
@@ -86,6 +92,7 @@ export class AuthController {
   @ApiResponse({
     status: 200,
     description: 'Email verified successfully.',
+    type: MessageResponseDto,
   })
   @ApiResponse({
     status: 400,
@@ -102,6 +109,7 @@ export class AuthController {
   @ApiResponse({
     status: 200,
     description: 'OTP resent successfully.',
+    type: MessageResponseDto,
   })
   @ApiResponse({
     status: 400,
@@ -118,6 +126,7 @@ export class AuthController {
   @ApiResponse({
     status: 200,
     description: 'Password reset OTP sent to email.',
+    type: MessageResponseDto,
   })
   @ApiResponse({
     status: 404,
@@ -134,6 +143,7 @@ export class AuthController {
   @ApiResponse({
     status: 200,
     description: 'Password reset successfully.',
+    type: MessageResponseDto,
   })
   @ApiResponse({
     status: 400,
@@ -151,6 +161,7 @@ export class AuthController {
   @ApiResponse({
     status: 200,
     description: 'Logged out successfully.',
+    type: MessageResponseDto,
   })
   @ApiResponse({
     status: 401,

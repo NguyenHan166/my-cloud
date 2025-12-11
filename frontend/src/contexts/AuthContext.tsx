@@ -27,18 +27,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     useEffect(() => {
         const loadUser = async () => {
             const token = localStorage.getItem("accessToken");
+
             if (!token) {
                 setIsLoading(false);
                 return;
             }
 
             try {
-                const currentUser = await authApi.getCurrentUser();
-                setUser(currentUser);
+                // Fetch fresh user data from API
+                const response = await authApi.getCurrentUser();
+                setUser(response.data);
             } catch (error) {
                 console.error("Failed to load user:", error);
+                // Token invalid, clear storage
                 localStorage.removeItem("accessToken");
                 localStorage.removeItem("refreshToken");
+                localStorage.removeItem("user");
             } finally {
                 setIsLoading(false);
             }
@@ -49,9 +53,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const login = async (credentials: LoginRequest) => {
         const response = await authApi.login(credentials);
-        localStorage.setItem("accessToken", response.accessToken);
-        localStorage.setItem("refreshToken", response.refreshToken);
-        setUser(response.user);
+        const { user, tokens } = response.data;
+        localStorage.setItem("accessToken", tokens.accessToken);
+        localStorage.setItem("refreshToken", tokens.refreshToken);
+        localStorage.setItem("user", JSON.stringify(user));
+        setUser(user);
     };
 
     const logout = async () => {
@@ -62,13 +68,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         } finally {
             localStorage.removeItem("accessToken");
             localStorage.removeItem("refreshToken");
+            localStorage.removeItem("user");
             setUser(null);
         }
     };
 
     const refreshUser = async () => {
-        const currentUser = await authApi.getCurrentUser();
-        setUser(currentUser);
+        try {
+            const response = await authApi.getCurrentUser();
+            setUser(response.data);
+            localStorage.setItem("user", JSON.stringify(response.data));
+        } catch (error) {
+            console.error("Failed to refresh user:", error);
+        }
     };
 
     return (

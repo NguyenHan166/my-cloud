@@ -27,6 +27,13 @@ import { QueryUsersDto } from './dto/query-users.dto';
 import { AdminCreateUserDto } from './dto/admin-create-user.dto';
 import { AdminUpdateUserDto } from './dto/admin-update-user.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
+import {
+  UserResponseDto,
+  UsersListResponseDto,
+  UpdateProfileResponseDto,
+  ToggleStatusResponseDto,
+  MessageResponseDto,
+} from './dto/response';
 import { UserRole } from '@prisma/client';
 
 @ApiTags('users')
@@ -43,6 +50,7 @@ export class UsersController {
   @ApiResponse({
     status: 200,
     description: 'User profile retrieved successfully.',
+    type: UserResponseDto,
   })
   @ApiResponse({
     status: 401,
@@ -61,6 +69,7 @@ export class UsersController {
   @ApiResponse({
     status: 200,
     description: 'Profile updated successfully.',
+    type: UpdateProfileResponseDto,
   })
   @ApiResponse({
     status: 400,
@@ -98,6 +107,7 @@ export class UsersController {
   @ApiResponse({
     status: 200,
     description: 'Users list retrieved successfully.',
+    type: UsersListResponseDto,
   })
   @ApiResponse({
     status: 401,
@@ -139,6 +149,7 @@ export class UsersController {
   @ApiResponse({
     status: 200,
     description: 'User retrieved successfully.',
+    type: UserResponseDto,
   })
   @ApiResponse({
     status: 401,
@@ -170,6 +181,7 @@ export class UsersController {
   @ApiResponse({
     status: 201,
     description: 'User created successfully.',
+    type: UserResponseDto,
   })
   @ApiResponse({
     status: 400,
@@ -216,6 +228,7 @@ export class UsersController {
   @ApiResponse({
     status: 200,
     description: 'User updated successfully.',
+    type: UserResponseDto,
   })
   @ApiResponse({
     status: 400,
@@ -269,6 +282,7 @@ export class UsersController {
   @ApiResponse({
     status: 200,
     description: 'User status toggled successfully.',
+    type: ToggleStatusResponseDto,
   })
   @ApiResponse({
     status: 401,
@@ -317,6 +331,7 @@ export class UsersController {
   @ApiResponse({
     status: 200,
     description: 'User deleted successfully.',
+    type: MessageResponseDto,
   })
   @ApiResponse({
     status: 401,

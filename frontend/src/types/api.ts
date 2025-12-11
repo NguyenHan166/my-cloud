@@ -1,34 +1,83 @@
 // API request and response types
 import type { User } from "./domain";
 
+// =====================
+// Auth Request DTOs
+// =====================
+
 export interface LoginRequest {
     email: string;
     password: string;
 }
 
-export interface LoginResponse {
-    accessToken: string;
-    refreshToken: string;
-    user: User;
-}
-
 export interface RegisterRequest {
     email: string;
     password: string;
-    name: string;
+    name?: string;
 }
 
-export interface RegisterResponse {
-    message: string;
+export interface VerifyOtpRequest {
+    email: string;
+    otp: string; // 8 digits
+}
+
+export interface ResendOtpRequest {
+    email: string;
+}
+
+export interface ForgotPasswordRequest {
+    email: string;
+}
+
+export interface ResetPasswordRequest {
+    token: string; // OTP code
+    newPassword: string;
 }
 
 export interface RefreshTokenRequest {
     refreshToken: string;
 }
 
-export interface RefreshTokenResponse {
-    accessToken: string;
+// =====================
+// Auth Response DTOs (matching backend)
+// =====================
+
+// Standard API response wrapper (from NestJS interceptor)
+export interface ApiResponse<T> {
+    success: boolean;
+    data: T;
+    timestamp: string;
 }
+
+// Login response - { user, tokens }
+export interface LoginResponseData {
+    user: User;
+    tokens: {
+        accessToken: string;
+        refreshToken: string;
+    };
+}
+
+export type LoginResponse = ApiResponse<LoginResponseData>;
+
+// Message response for register, verify, forgot, reset
+export interface MessageResponseData {
+    message: string;
+}
+
+export type MessageResponse = ApiResponse<MessageResponseData>;
+
+// Refresh token response - just tokens
+export interface RefreshTokenResponseData {
+    accessToken: string;
+    refreshToken: string;
+}
+
+export type RefreshTokenResponse = ApiResponse<RefreshTokenResponseData>;
+
+// =====================
+// Items DTOs
+// =====================
 
 export interface CreateItemRequest {
     type: "file" | "link" | "note";
@@ -54,11 +103,19 @@ export interface UpdateItemRequest {
     tags?: string[];
 }
 
+// =====================
+// Collection DTOs
+// =====================
+
 export interface CreateCollectionRequest {
     name: string;
     description?: string;
     isPublic?: boolean;
 }
+
+// =====================
+// Shared Links DTOs
+// =====================
 
 export interface CreateSharedLinkRequest {
     itemId: string;
@@ -66,11 +123,19 @@ export interface CreateSharedLinkRequest {
     password?: string;
 }
 
+// =====================
+// File Upload DTOs
+// =====================
+
 export interface UploadFileResponse {
     fileId: string;
     storageKey: string;
     url: string;
 }
+
+// =====================
+// Pagination
+// =====================
 
 export interface PaginatedResponse<T> {
     data: T[];
@@ -81,6 +146,10 @@ export interface PaginatedResponse<T> {
         totalPages: number;
     };
 }
+
+// =====================
+// Error Response
+// =====================
 
 export interface ApiError {
     message: string;

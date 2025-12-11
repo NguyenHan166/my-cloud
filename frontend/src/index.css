@@ -17,30 +17,237 @@
     h4,
     h5,
     h6 {
-        @apply font-semibold;
+        @apply font-semibold tracking-tight;
     }
 }
 
 @layer components {
-    /* Custom component styles can go here */
+    /* Glassmorphism card */
+    .glass {
+        @apply bg-white/80 backdrop-blur-xl border border-white/20;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    }
+
+    .glass-dark {
+        @apply bg-neutral-900/80 backdrop-blur-xl border border-neutral-700/50;
+    }
+
+    /* Gradient backgrounds */
+    .bg-gradient-auth {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+
+    .bg-gradient-primary {
+        background: linear-gradient(
+            135deg,
+            #6366f1 0%,
+            #8b5cf6 50%,
+            #d946ef 100%
+        );
+    }
+
+    .bg-gradient-mesh {
+        background-color: #1a1a2e;
+        background-image: radial-gradient(
+                at 40% 20%,
+                hsla(228, 94%, 67%, 0.3) 0px,
+                transparent 50%
+            ),
+            radial-gradient(
+                at 80% 0%,
+                hsla(270, 95%, 60%, 0.25) 0px,
+                transparent 50%
+            ),
+            radial-gradient(
+                at 0% 50%,
+                hsla(280, 100%, 70%, 0.2) 0px,
+                transparent 50%
+            ),
+            radial-gradient(
+                at 80% 50%,
+                hsla(240, 100%, 70%, 0.15) 0px,
+                transparent 50%
+            ),
+            radial-gradient(
+                at 0% 100%,
+                hsla(270, 100%, 60%, 0.2) 0px,
+                transparent 50%
+            ),
+            radial-gradient(
+                at 80% 100%,
+                hsla(228, 94%, 67%, 0.25) 0px,
+                transparent 50%
+            );
+    }
+
+    /* Animated gradient text */
+    .text-gradient {
+        @apply bg-clip-text text-transparent bg-gradient-to-r from-primary-500 via-purple-500 to-primary-500;
+        background-size: 200% auto;
+        animation: gradient 8s ease infinite;
+    }
+
+    /* Modern input styling */
+    .input-modern {
+        @apply w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-white/50
+           focus:outline-none focus:ring-2 focus:ring-white/30 focus:border-transparent
+           transition-all duration-300;
+    }
+
+    /* Glow button */
+    .btn-glow {
+        @apply relative overflow-hidden bg-gradient-to-r from-primary-500 to-purple-500 
+           text-white font-semibold py-3 px-6 rounded-xl
+           transition-all duration-300;
+        box-shadow: 0 0 40px rgba(99, 102, 241, 0.3);
+    }
+
+    .btn-glow:hover {
+        box-shadow: 0 0 60px rgba(99, 102, 241, 0.4);
+        transform: scale(1.02);
+    }
+
+    .btn-glow:active {
+        transform: scale(0.98);
+    }
+
+    .btn-glow::before {
+        content: "";
+        @apply absolute inset-0 bg-gradient-to-r from-white/0 via-white/25 to-white/0;
+        transform: translateX(-200%);
+        transition: transform 0.7s;
+    }
+
+    .btn-glow:hover::before {
+        transform: translateX(200%);
+    }
+
+    /* Floating shapes for background decoration */
+    .floating-shape {
+        @apply absolute rounded-full;
+        mix-blend-mode: multiply;
+        filter: blur(40px);
+        opacity: 0.7;
+        animation: float 6s ease-in-out infinite;
+    }
+
+    /* Shadow utilities */
+    .shadow-glow {
+        box-shadow: 0 0 40px rgba(99, 102, 241, 0.3);
+    }
+
+    .shadow-glass {
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    }
 }
 
 @layer utilities {
-    /* Custom utility classes can go here */
+    /* Scrollbar styling */
     .scrollbar-thin::-webkit-scrollbar {
         width: 6px;
         height: 6px;
     }
 
     .scrollbar-thin::-webkit-scrollbar-track {
-        @apply bg-neutral-100;
+        @apply bg-transparent;
     }
 
     .scrollbar-thin::-webkit-scrollbar-thumb {
-        @apply bg-neutral-300 rounded-full;
+        @apply bg-neutral-300/50 rounded-full;
     }
 
     .scrollbar-thin::-webkit-scrollbar-thumb:hover {
-        @apply bg-neutral-400;
+        @apply bg-neutral-400/50;
     }
+
+    /* Hide scrollbar */
+    .scrollbar-hide::-webkit-scrollbar {
+        display: none;
+    }
+    .scrollbar-hide {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+    }
+
+    /* Text shadow */
+    .text-shadow {
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+
+    .text-shadow-lg {
+        text-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    }
+}
+
+/* Keyframe animations */
+@keyframes float {
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-20px);
+    }
+}
+
+@keyframes gradient {
+    0%,
+    100% {
+        background-position: 0% 50%;
+    }
+    50% {
+        background-position: 100% 50%;
+    }
+}
+
+@keyframes fadeIn {
+    0% {
+        opacity: 0;
+    }
+    100% {
+        opacity: 1;
+    }
+}
+
+@keyframes slideUp {
+    0% {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes slideDown {
+    0% {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Animation classes */
+.animate-fade-in {
+    animation: fadeIn 0.5s ease-out;
+}
+
+.animate-slide-up {
+    animation: slideUp 0.5s ease-out;
+}
+
+.animate-slide-down {
+    animation: slideDown 0.3s ease-out;
+}
+
+.animate-float {
+    animation: float 6s ease-in-out infinite;
+}
+
+.animate-gradient {
+    animation: gradient 8s ease infinite;
 }

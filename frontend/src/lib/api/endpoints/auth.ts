@@ -3,8 +3,12 @@ import type {
     LoginRequest,
     LoginResponse,
     RegisterRequest,
-    RegisterResponse,
+    MessageResponse,
     RefreshTokenResponse,
+    VerifyOtpRequest,
+    ResendOtpRequest,
+    ForgotPasswordRequest,
+    ResetPasswordRequest,
 } from "@/types/api";
 import type { User } from "@/types/domain";
 
@@ -23,8 +27,8 @@ export const authApi = {
     /**
      * Register new user
      */
-    async register(data: RegisterRequest): Promise<RegisterResponse> {
-        const response = await apiClient.post<RegisterResponse>(
+    async register(data: RegisterRequest): Promise<MessageResponse> {
+        const response = await apiClient.post<MessageResponse>(
             "/auth/register",
             data
         );
@@ -45,39 +49,70 @@ export const authApi = {
     /**
      * Logout user (revoke tokens)
      */
-    async logout(): Promise<void> {
-        await apiClient.post("/auth/logout");
+    async logout(): Promise<MessageResponse> {
+        const response = await apiClient.post<MessageResponse>("/auth/logout");
+        return response.data;
     },
 
     /**
      * Get current user profile
      */
-    async getCurrentUser(): Promise<User> {
-        const response = await apiClient.get<User>("/auth/me");
+    async getCurrentUser(): Promise<{
+        success: boolean;
+        data: User;
+        timestamp: string;
+    }> {
+        const response = await apiClient.get<{
+            success: boolean;
+            data: User;
+            timestamp: string;
+        }>("/users/me");
         return response.data;
     },
 
     /**
-     * Request password reset
+     * Verify email with OTP code
      */
-    async forgotPassword(email: string): Promise<{ message: string }> {
-        const response = await apiClient.post("/auth/forgot-password", {
-            email,
-        });
+    async verifyOtp(data: VerifyOtpRequest): Promise<MessageResponse> {
+        const response = await apiClient.post<MessageResponse>(
+            "/auth/verify-otp",
+            data
+        );
         return response.data;
     },
 
     /**
-     * Reset password with token
+     * Resend OTP code to email
      */
-    async resetPassword(
-        token: string,
-        password: string
-    ): Promise<{ message: string }> {
-        const response = await apiClient.post("/auth/reset-password", {
-            token,
-            password,
-        });
+    async resendOtp(data: ResendOtpRequest): Promise<MessageResponse> {
+        const response = await apiClient.post<MessageResponse>(
+            "/auth/resend-otp",
+            data
+        );
+        return response.data;
+    },
+
+    /**
+     * Request password reset OTP
+     */
+    async forgotPassword(
+        data: ForgotPasswordRequest
+    ): Promise<MessageResponse> {
+        const response = await apiClient.post<MessageResponse>(
+            "/auth/forgot-password",
+            data
+        );
+        return response.data;
+    },
+
+    /**
+     * Reset password with OTP token
+     */
+    async resetPassword(data: ResetPasswordRequest): Promise<MessageResponse> {
+        const response = await apiClient.post<MessageResponse>(
+            "/auth/reset-password",
+            data
+        );
         return response.data;
     },
 };
