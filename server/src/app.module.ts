@@ -8,15 +8,15 @@ import { jwtConfig } from './config/jwt.config';
 import { mailConfig } from './config/mail.config';
 import { adminConfig } from './config/admin.config';
 import { PrismaModule } from './prisma/prisma.module';
-import { AuthModule } from './auth/auth.module';
-import { UsersModule } from './users/users.module';
+import { AuthModule } from './modules/auth/auth.module';
+import { UsersModule } from './modules/users/users.module';
 import { MailModule } from './mail/mail.module';
 import { SeedModule } from './seed/seed.module';
-import { UploadModule } from './upload/upload.module';
-import { TagsModule } from './tags/tags.module';
-import { ItemsModule } from './items/items.module';
-import { CollectionsModule } from './collections/collections.module';
-import { SharedLinksModule } from './shared-links/shared-links.module';
+import { UploadModule } from './modules/upload/upload.module';
+import { TagsModule } from './modules/tags/tags.module';
+import { ItemsModule } from './modules/items/items.module';
+import { CollectionsModule } from './modules/collections/collections.module';
+import { SharedLinksModule } from './modules/shared-links/shared-links.module';
 
 @Module({
   imports: [

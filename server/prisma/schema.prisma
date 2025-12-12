@@ -106,6 +106,8 @@ model Item {
   project     String?
   importance  Importance @default(MEDIUM)
   isPinned    Boolean    @default(false) // Pin item quan trong
+  isTrashed   Boolean    @default(false) // Soft delete - move to trash
+  trashedAt   DateTime? // Timestamp when moved to trash
   tagsText    String? // cache tags dang text de search nhanh
   domain      String? // vi du : youtube.com
   createdAt   DateTime   @default(now())
@@ -127,6 +129,8 @@ model Item {
   @@index([project])
   @@index([importance])
   @@index([isPinned])
+  @@index([isTrashed])
+  @@index([trashedAt])
   @@index([title]) // Full-text search co the dung rieng
 }
 
@@ -181,8 +185,13 @@ model Collection {
   coverImage  String? // Anh bia cho collection
   isPublic    Boolean  @default(false)
   slugPublic  String?
+  parentId    String? // null = root collection
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+
+  // Self-referential relationship for nested collections
+  parent   Collection?  @relation("CollectionHierarchy", fields: [parentId], references: [id], onDelete: Cascade)
+  children Collection[] @relation("CollectionHierarchy")
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -190,6 +199,7 @@ model Collection {
 
   @@unique([userId, slugPublic])
   @@index([userId])
+  @@index([parentId])
 }
 
 model CollectionItem {

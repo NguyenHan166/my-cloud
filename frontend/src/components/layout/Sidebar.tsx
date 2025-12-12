@@ -1,4 +1,5 @@
-import { NavLink } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { NavLink, useNavigate } from "react-router-dom";
 import {
     BookOpen,
     FolderOpen,
@@ -8,8 +9,11 @@ import {
     Trash2,
     X,
     Sparkles,
+    Loader2,
+    Tag as TagIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
+import { tagsApi, type Tag } from "@/lib/api/endpoints/tags";
 
 export interface SidebarProps {
     isOpen: boolean;
@@ -25,9 +29,40 @@ const navigation = [
     { name: "Trash", href: "/trash", icon: Trash2 },
 ];
 
-const popularTags = ["work", "study", "design", "backend", "cloud"];
-
 export default function Sidebar({ isOpen, onClose }: SidebarProps) {
+    const navigate = useNavigate();
+    const [tags, setTags] = useState<Tag[]>([]);
+    const [isLoadingTags, setIsLoadingTags] = useState(true);
+
+    // Fetch tags from API
+    useEffect(() => {
+        const fetchTags = async () => {
+            try {
+                setIsLoadingTags(true);
+                const response = await tagsApi.getAll();
+                if (response.success) {
+                    // Take first 5 tags for quick access
+                    setTags(response.data.slice(0, 5));
+                }
+            } catch (error) {
+                console.error("Failed to fetch tags:", error);
+            } finally {
+                setIsLoadingTags(false);
+            }
+        };
+
+        fetchTags();
+    }, []);
+
+    const handleTagClick = (tag: Tag) => {
+        // Navigate to library with tag filter
+        navigate(`/library?tags=${encodeURIComponent(tag.id)}`);
+        // Close sidebar on mobile
+        if (window.innerWidth < 1024) {
+            onClose();
+        }
+    };
+
     return (
         <>
             {/* Mobile overlay */}
@@ -101,20 +136,43 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
 
                 {/* Tags section */}
                 <div className="p-4 border-t border-white/10">
-                    <h3 className="text-xs font-semibold text-white/40 uppercase tracking-wider mb-3 px-2">
+                    <h3 className="text-xs font-semibold text-white/40 uppercase tracking-wider mb-3 px-2 flex items-center gap-2">
+                        <TagIcon className="w-3 h-3" />
                         Quick Tags
                     </h3>
                     <div className="flex flex-wrap gap-2">
-                        {popularTags.map((tag) => (
-                            <button
-                                key={tag}
-                                className="px-3 py-1.5 text-xs font-medium bg-white/5 text-white/70 rounded-full 
-                         hover:bg-primary-500/20 hover:text-primary-300 border border-white/10
-                         hover:border-primary-500/30 transition-all duration-200"
-                            >
-                                #{tag}
-                            </button>
-                        ))}
+                        {isLoadingTags ? (
+                            <div className="flex items-center gap-2 text-white/50 text-xs px-2">
+                                <Loader2 className="w-3 h-3 animate-spin" />
+                                Loading tags...
+                            </div>
+                        ) : tags.length === 0 ? (
+                            <p className="text-white/40 text-xs px-2">
+                                No tags yet
+                            </p>
+                        ) : (
+                            tags.map((tag) => (
+                                <button
+                                    key={tag.id}
+                                    onClick={() => handleTagClick(tag)}
+                                    className="px-3 py-1.5 text-xs font-medium rounded-full 
+                                        border transition-all duration-200 hover:scale-105"
+                                    style={{
+                                        backgroundColor: tag.color
+                                            ? `${tag.color}20`
+                                            : "rgba(255,255,255,0.05)",
+                                        borderColor:
+                                            tag.color ||
+                                            "rgba(255,255,255,0.1)",
+                                        color:
+                                            tag.color ||
+                                            "rgba(255,255,255,0.7)",
+                                    }}
+                                >
+                                    #{tag.name}
+                                </button>
+                            ))
+                        )}
                     </div>
                 </div>
 

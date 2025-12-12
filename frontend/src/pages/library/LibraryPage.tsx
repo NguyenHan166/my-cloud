@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import { FileText } from "lucide-react";
@@ -7,7 +8,7 @@ import { itemsApi } from "@/lib/api/endpoints/items";
 import EmptyState from "@/components/ui/EmptyState";
 import Skeleton from "@/components/ui/Skeleton";
 import ErrorState from "@/components/ui/ErrorState";
-import ConfirmModal from "@/components/ui/ConfirmModal";
+import DeleteOptionModal from "@/components/library/DeleteOptionModal";
 import LibraryToolbar from "@/components/library/LibraryToolbar";
 import ItemCard from "@/components/library/ItemCard";
 import ItemListRow from "@/components/library/ItemListRow";
@@ -16,20 +17,56 @@ import CreateItemModal from "@/components/library/CreateItemModal";
 
 export default function LibraryPage() {
     const queryClient = useQueryClient();
+    const [searchParams, setSearchParams] = useSearchParams();
 
     // State
     const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
-    const [filters, setFilters] = useState<QueryItemsDto>({
-        page: 1,
-        limit: 20,
-        sortBy: "createdAt",
-        sortOrder: "desc",
+    const [filters, setFilters] = useState<QueryItemsDto>(() => {
+        // Initialize filters from URL params
+        const tagsParam = searchParams.get("tags");
+        return {
+            page: 1,
+            limit: 20,
+            sortBy: "createdAt",
+            sortOrder: "desc",
+            tagIds: tagsParam ? [tagsParam] : undefined,
+        };
     });
     const [selectedItem, setSelectedItem] = useState<Item | null>(null);
     const [isPanelOpen, setIsPanelOpen] = useState(false);
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const [editItem, setEditItem] = useState<Item | null>(null);
     const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+
+    // Sync URL params with filters (for tags) - only on initial load
+    useEffect(() => {
+        const tagsParam = searchParams.get("tags");
+        if (tagsParam) {
+            setFilters((prev) => ({
+                ...prev,
+                tagIds: [tagsParam],
+                page: 1,
+            }));
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []); // Only run on mount
+
+    // Clear tags param from URL when filter is cleared
+    const handleFilterChange = (newFilters: Partial<QueryItemsDto>) => {
+        const updatedFilters = { ...newFilters, page: 1 };
+        setFilters((prev) => ({ ...prev, ...updatedFilters }));
+
+        // If tagIds filter is being changed, update URL
+        if (newFilters.tagIds !== undefined) {
+            const newSearchParams = new URLSearchParams(searchParams);
+            if (!newFilters.tagIds || newFilters.tagIds.length === 0) {
+                newSearchParams.delete("tags");
+            } else {
+                newSearchParams.set("tags", newFilters.tagIds[0]);
+            }
+            setSearchParams(newSearchParams, { replace: true });
+        }
+    };
 
     // Fetch items
     const {
@@ -58,14 +95,30 @@ export default function LibraryPage() {
         },
     });
 
-    // Delete mutation
+    // Move to Trash mutation
+    const trashMutation = useMutation({
+        mutationFn: (itemId: string) => itemsApi.moveToTrash(itemId),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["items"] });
+            setIsPanelOpen(false);
+            setSelectedItem(null);
+            setDeleteConfirmId(null);
+            toast.success("Item moved to trash");
+        },
+        onError: () => {
+            toast.error("Failed to move item to trash");
+        },
+    });
+
+    // Permanent Delete mutation
     const deleteMutation = useMutation({
         mutationFn: (itemId: string) => itemsApi.deleteItem(itemId),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["items"] });
             setIsPanelOpen(false);
             setSelectedItem(null);
-            toast.success("Item deleted");
+            setDeleteConfirmId(null);
+            toast.success("Item permanently deleted");
         },
         onError: () => {
             toast.error("Failed to delete item");
@@ -75,10 +128,6 @@ export default function LibraryPage() {
     // Handlers
     const handleSearchChange = (search: string) => {
         setFilters((prev) => ({ ...prev, search, page: 1 }));
-    };
-
-    const handleFilterChange = (newFilters: Partial<QueryItemsDto>) => {
-        setFilters((prev) => ({ ...prev, ...newFilters, page: 1 }));
     };
 
     const handleItemClick = (item: Item) => {
@@ -115,13 +164,14 @@ export default function LibraryPage() {
         setDeleteConfirmId(itemId);
     };
 
-    const confirmDelete = async () => {
+    const handleConfirmTrash = async () => {
         if (!deleteConfirmId) return;
-        try {
-            await deleteMutation.mutateAsync(deleteConfirmId);
-        } finally {
-            setDeleteConfirmId(null);
-        }
+        await trashMutation.mutateAsync(deleteConfirmId);
+    };
+
+    const handleConfirmDelete = async () => {
+        if (!deleteConfirmId) return;
+        await deleteMutation.mutateAsync(deleteConfirmId);
     };
 
     const handlePageChange = (page: number) => {
@@ -302,17 +352,14 @@ export default function LibraryPage() {
                     editItem={editItem}
                 />
 
-                {/* Delete Confirmation Modal */}
-                <ConfirmModal
+                {/* Delete Options Modal */}
+                <DeleteOptionModal
                     isOpen={!!deleteConfirmId}
-                    title="Delete Item"
-                    message="Are you sure you want to delete this item? This action cannot be undone."
-                    confirmText="Delete"
-                    cancelText="Cancel"
-                    variant="danger"
-                    onConfirm={confirmDelete}
-                    onCancel={() => setDeleteConfirmId(null)}
-                    isLoading={deleteMutation.isPending}
+                    onClose={() => setDeleteConfirmId(null)}
+                    onMoveToTrash={handleConfirmTrash}
+                    onDeletePermanently={handleConfirmDelete}
+                    isTrashing={trashMutation.isPending}
+                    isDeleting={deleteMutation.isPending}
                 />
             </div>
         </div>

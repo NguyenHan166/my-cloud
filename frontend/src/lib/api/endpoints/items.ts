@@ -14,8 +14,16 @@ export const itemsApi = {
      * Get all items with optional filters and pagination
      */
     async getItems(params?: QueryItemsDto): Promise<ItemsListResponse> {
+        // Convert tagIds array to comma-separated string for backend
+        const queryParams = params
+            ? {
+                  ...params,
+                  tagIds: params.tagIds?.join(",") || undefined,
+              }
+            : undefined;
+
         const response = await apiClient.get<ItemsListResponse>("/items", {
-            params,
+            params: queryParams,
         });
         return response.data;
     },
@@ -68,11 +76,15 @@ export const itemsApi = {
             });
         }
 
-        const response = await apiClient.post<ItemResponse>("/items", formData, {
-            headers: {
-                "Content-Type": "multipart/form-data",
-            },
-        });
+        const response = await apiClient.post<ItemResponse>(
+            "/items",
+            formData,
+            {
+                headers: {
+                    "Content-Type": "multipart/form-data",
+                },
+            }
+        );
         return response.data;
     },
 
@@ -92,10 +104,12 @@ export const itemsApi = {
             formData.append("description", data.description);
         if (data.category !== undefined)
             formData.append("category", data.category);
-        if (data.project !== undefined) formData.append("project", data.project);
+        if (data.project !== undefined)
+            formData.append("project", data.project);
         if (data.importance) formData.append("importance", data.importance);
         if (data.url !== undefined) formData.append("url", data.url);
-        if (data.content !== undefined) formData.append("content", data.content);
+        if (data.content !== undefined)
+            formData.append("content", data.content);
 
         // Tag IDs
         if (data.tagIds && data.tagIds.length > 0) {
@@ -139,7 +153,9 @@ export const itemsApi = {
      * Delete item
      */
     async deleteItem(id: string): Promise<MessageResponse> {
-        const response = await apiClient.delete<MessageResponse>(`/items/${id}`);
+        const response = await apiClient.delete<MessageResponse>(
+            `/items/${id}`
+        );
         return response.data;
     },
 
@@ -147,7 +163,9 @@ export const itemsApi = {
      * Toggle pin status
      */
     async togglePin(id: string): Promise<ItemResponse> {
-        const response = await apiClient.patch<ItemResponse>(`/items/${id}/pin`);
+        const response = await apiClient.patch<ItemResponse>(
+            `/items/${id}/pin`
+        );
         return response.data;
     },
 
@@ -169,6 +187,63 @@ export const itemsApi = {
             `/items/${itemId}/files/reorder`,
             { fileIds }
         );
+        return response.data;
+    },
+
+    /**
+     * Move item to trash (soft delete)
+     */
+    async moveToTrash(id: string): Promise<ItemResponse> {
+        const response = await apiClient.patch<ItemResponse>(
+            `/items/${id}/trash`
+        );
+        return response.data;
+    },
+
+    /**
+     * Restore item from trash
+     */
+    async restoreFromTrash(id: string): Promise<ItemResponse> {
+        const response = await apiClient.patch<ItemResponse>(
+            `/items/${id}/restore`
+        );
+        return response.data;
+    },
+
+    /**
+     * Get trash items
+     */
+    async getTrashedItems(params?: QueryItemsDto): Promise<ItemsListResponse> {
+        const response = await apiClient.get<ItemsListResponse>(
+            "/items/trash",
+            { params }
+        );
+        return response.data;
+    },
+
+    /**
+     * Permanently delete item
+     */
+    async permanentlyDeleteItem(id: string): Promise<MessageResponse> {
+        const response = await apiClient.delete<MessageResponse>(
+            `/items/trash/${id}`
+        );
+        return response.data;
+    },
+
+    /**
+     * Empty trash
+     */
+    async emptyTrash(): Promise<{
+        success: boolean;
+        data: { message: string; count: number };
+        timestamp: string;
+    }> {
+        const response = await apiClient.delete<{
+            success: boolean;
+            data: { message: string; count: number };
+            timestamp: string;
+        }>("/items/trash");
         return response.data;
     },
 };

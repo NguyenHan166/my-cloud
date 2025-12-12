@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import {
@@ -214,8 +215,8 @@ export default function CreateItemModal({
         { type: "NOTE", icon: StickyNote, label: "Note" },
     ];
 
-    return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    const modalContent = (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
             {/* Overlay */}
             <div
                 className="absolute inset-0 bg-black/30 backdrop-blur-sm"
@@ -480,4 +481,6 @@ export default function CreateItemModal({
             </div>
         </div>
     );
+
+    return createPortal(modalContent, document.body);
 }

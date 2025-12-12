@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type { ItemType, Importance, QueryItemsDto } from "@/types/item.types";
 import {
     Search,
@@ -14,7 +14,10 @@ import {
     ChevronDown,
     ArrowDownAZ,
     ArrowUpAZ,
+    Tag as TagIcon,
+    Loader2,
 } from "lucide-react";
+import { tagsApi, type Tag } from "@/lib/api/endpoints/tags";
 
 interface LibraryToolbarProps {
     viewMode: "grid" | "list";
@@ -35,6 +38,33 @@ export default function LibraryToolbar({
 }: LibraryToolbarProps) {
     const [searchTerm, setSearchTerm] = useState(filters.search || "");
     const [showFilters, setShowFilters] = useState(false);
+    const [tags, setTags] = useState<Tag[]>([]);
+    const [isLoadingTags, setIsLoadingTags] = useState(true);
+
+    // Fetch tags for filter
+    useEffect(() => {
+        const fetchTags = async () => {
+            try {
+                setIsLoadingTags(true);
+                const response = await tagsApi.getAll();
+                if (response.success) {
+                    setTags(response.data);
+                }
+            } catch (error) {
+                console.error("Failed to fetch tags:", error);
+            } finally {
+                setIsLoadingTags(false);
+            }
+        };
+        fetchTags();
+    }, []);
+
+    // Auto-open filters if tag filter is active from URL
+    useEffect(() => {
+        if (filters.tagIds && filters.tagIds.length > 0) {
+            setShowFilters(true);
+        }
+    }, [filters.tagIds]);
 
     const handleSearchChange = (value: string) => {
         setSearchTerm(value);
@@ -44,10 +74,13 @@ export default function LibraryToolbar({
         return () => clearTimeout(timer);
     };
 
+    const selectedTagId = filters.tagIds?.[0];
+
     const activeFilterCount = [
         filters.type,
         filters.importance,
         filters.isPinned,
+        selectedTagId,
     ].filter(Boolean).length;
 
     const clearAllFilters = () => {
@@ -55,8 +88,15 @@ export default function LibraryToolbar({
             type: undefined,
             importance: undefined,
             isPinned: undefined,
+            tagIds: undefined,
             sortBy: "createdAt",
             sortOrder: "desc",
+        });
+    };
+
+    const handleTagFilter = (tagId: string | undefined) => {
+        onFilterChange({
+            tagIds: tagId ? [tagId] : undefined,
         });
     };
 
@@ -164,6 +204,74 @@ export default function LibraryToolbar({
                                     {label}
                                 </button>
                             ))}
+                        </div>
+                    </div>
+
+                    {/* Tags filter */}
+                    <div className="space-y-1.5">
+                        <span className="text-[10px] font-semibold text-neutral-400 uppercase tracking-wider flex items-center gap-1">
+                            <TagIcon className="w-3 h-3" />
+                            Tags
+                        </span>
+                        <div className="flex gap-1.5 overflow-x-auto pb-1 -mx-1 px-1 scrollbar-hide">
+                            {isLoadingTags ? (
+                                <div className="flex items-center gap-2 text-neutral-400 text-xs px-2">
+                                    <Loader2 className="w-3 h-3 animate-spin" />
+                                    Loading...
+                                </div>
+                            ) : tags.length === 0 ? (
+                                <span className="text-xs text-neutral-400 px-2">
+                                    No tags available
+                                </span>
+                            ) : (
+                                <>
+                                    <button
+                                        onClick={() =>
+                                            handleTagFilter(undefined)
+                                        }
+                                        className={`flex-shrink-0 h-8 px-3 text-xs font-medium rounded-lg transition-all ${
+                                            !selectedTagId
+                                                ? "bg-sky-500 text-white shadow-sm"
+                                                : "bg-white text-neutral-600 border border-neutral-200 hover:bg-neutral-100"
+                                        }`}
+                                    >
+                                        All
+                                    </button>
+                                    {tags.map((tag) => (
+                                        <button
+                                            key={tag.id}
+                                            onClick={() =>
+                                                handleTagFilter(tag.id)
+                                            }
+                                            className={`flex-shrink-0 h-8 px-3 text-xs font-medium rounded-lg transition-all border ${
+                                                selectedTagId === tag.id
+                                                    ? "shadow-sm"
+                                                    : "hover:opacity-80"
+                                            }`}
+                                            style={{
+                                                backgroundColor:
+                                                    selectedTagId === tag.id
+                                                        ? tag.color || "#0ea5e9"
+                                                        : tag.color
+                                                        ? `${tag.color}20`
+                                                        : "#f5f5f5",
+                                                borderColor:
+                                                    tag.color || "#e5e5e5",
+                                                color:
+                                                    selectedTagId === tag.id
+                                                        ? "white"
+                                                        : tag.color ||
+                                                          "#525252",
+                                            }}
+                                        >
+                                            {selectedTagId === tag.id
+                                                ? "#"
+                                                : ""}
+                                            {tag.name}
+                                        </button>
+                                    ))}
+                                </>
+                            )}
                         </div>
                     </div>
 

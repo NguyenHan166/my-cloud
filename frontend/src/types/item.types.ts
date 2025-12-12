@@ -60,6 +60,8 @@ export interface Item {
     project?: string;
     importance: Importance;
     isPinned: boolean;
+    isTrashed?: boolean;
+    trashedAt?: string;
     url?: string; // For LINK type
     domain?: string; // Extracted from URL
     content?: string; // For NOTE type

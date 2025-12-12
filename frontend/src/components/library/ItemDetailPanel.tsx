@@ -8,6 +8,8 @@ import {
     Calendar,
     Clock,
     Edit3,
+    Eye,
+    FolderPlus,
 } from "lucide-react";
 import type { Item } from "@/types/item.types";
 import {
@@ -16,6 +18,8 @@ import {
 } from "@/lib/utils/item.utils";
 import Badge from "@/components/ui/Badge";
 import Button from "@/components/ui/Button";
+import FilePreviewModal from "./FilePreviewModal";
+import { AddToCollectionModal } from "@/components/collections";
 
 interface ItemDetailPanelProps {
     item: Item | null;
@@ -35,18 +39,29 @@ export default function ItemDetailPanel({
     onDelete,
 }: ItemDetailPanelProps) {
     const [isClosing, setIsClosing] = useState(false);
+    const [isVisible, setIsVisible] = useState(false);
+    const [previewOpen, setPreviewOpen] = useState(false);
+    const [previewIndex, setPreviewIndex] = useState(0);
+    const [showAddToCollection, setShowAddToCollection] = useState(false);
 
+    // Handle open/close animation
     useEffect(() => {
-        if (!isOpen) {
+        if (isOpen) {
+            // Small delay for enter animation to work
+            const timer = setTimeout(() => setIsVisible(true), 10);
+            return () => clearTimeout(timer);
+        } else {
+            setIsVisible(false);
             setIsClosing(false);
         }
     }, [isOpen]);
 
     const handleClose = () => {
         setIsClosing(true);
+        setIsVisible(false);
         setTimeout(() => {
             onClose();
-        }, 200);
+        }, 300);
     };
 
     if (!item) return null;
@@ -61,8 +76,8 @@ export default function ItemDetailPanel({
             {/* Overlay */}
             {isOpen && (
                 <div
-                    className={`fixed inset-0 bg-black/40 backdrop-blur-sm z-40 transition-opacity duration-300 ${
-                        isClosing ? "opacity-0" : "opacity-100"
+                    className={`fixed top-14 left-0 right-0 bottom-0 bg-black/40 backdrop-blur-sm z-40 transition-opacity duration-300 ${
+                        isVisible && !isClosing ? "opacity-100" : "opacity-0"
                     }`}
                     onClick={handleClose}
                 />
@@ -70,8 +85,10 @@ export default function ItemDetailPanel({
 
             {/* Panel */}
             <div
-                className={`fixed top-14 sm:top-0 right-0 h-[calc(100%-3.5rem)] sm:h-full w-full sm:w-[480px] bg-gradient-to-b from-slate-50 to-white shadow-2xl z-50 transform transition-transform duration-300 ease-out flex flex-col ${
-                    isOpen && !isClosing ? "translate-x-0" : "translate-x-full"
+                className={`fixed top-14 bottom-0 right-0 w-full sm:w-[480px] bg-gradient-to-b from-slate-50 to-white shadow-2xl z-50 transform transition-transform duration-300 ease-out flex flex-col ${
+                    isVisible && !isClosing
+                        ? "translate-x-0"
+                        : "translate-x-full"
                 }`}
             >
                 {/* Header */}
@@ -168,12 +185,16 @@ export default function ItemDetailPanel({
                                         </span>
                                     </div>
                                     <div className="divide-y divide-neutral-100">
-                                        {item.files.map((itemFile) => {
+                                        {item.files.map((itemFile, index) => {
                                             const file = itemFile.file;
                                             return (
                                                 <div
                                                     key={itemFile.id}
-                                                    className="flex items-center gap-3 px-4 py-3 hover:bg-neutral-50 transition-colors"
+                                                    className="flex items-center gap-3 px-4 py-3 hover:bg-neutral-50 transition-colors cursor-pointer group"
+                                                    onClick={() => {
+                                                        setPreviewIndex(index);
+                                                        setPreviewOpen(true);
+                                                    }}
                                                 >
                                                     {itemFile.isPrimary && (
                                                         <Badge
@@ -184,7 +205,7 @@ export default function ItemDetailPanel({
                                                         </Badge>
                                                     )}
                                                     <div className="flex-1 min-w-0">
-                                                        <p className="text-sm font-medium text-neutral-900 truncate">
+                                                        <p className="text-sm font-medium text-neutral-900 truncate group-hover:text-sky-600 transition-colors">
                                                             {file?.originalName ||
                                                                 "Unnamed"}
                                                         </p>
@@ -192,21 +213,55 @@ export default function ItemDetailPanel({
                                                             {file?.mimeType}
                                                         </p>
                                                     </div>
-                                                    {file?.url && (
-                                                        <a
-                                                            href={file.url}
-                                                            target="_blank"
-                                                            rel="noopener noreferrer"
-                                                            className="p-2 text-sky-600 hover:bg-sky-50 rounded-lg transition-colors"
+                                                    <div className="flex items-center gap-1">
+                                                        <button
+                                                            type="button"
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                setPreviewIndex(
+                                                                    index
+                                                                );
+                                                                setPreviewOpen(
+                                                                    true
+                                                                );
+                                                            }}
+                                                            className="p-2 text-neutral-400 hover:text-sky-600 hover:bg-sky-50 rounded-lg transition-colors"
+                                                            title="Preview"
                                                         >
-                                                            <Download className="w-4 h-4" />
-                                                        </a>
-                                                    )}
+                                                            <Eye className="w-4 h-4" />
+                                                        </button>
+                                                        {file?.url && (
+                                                            <a
+                                                                href={file.url}
+                                                                target="_blank"
+                                                                rel="noopener noreferrer"
+                                                                className="p-2 text-neutral-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+                                                                onClick={(e) =>
+                                                                    e.stopPropagation()
+                                                                }
+                                                                title="Download"
+                                                            >
+                                                                <Download className="w-4 h-4" />
+                                                            </a>
+                                                        )}
+                                                    </div>
                                                 </div>
                                             );
                                         })}
                                     </div>
                                 </div>
+                            )}
+
+                        {/* File Preview Modal */}
+                        {item.type === "FILE" &&
+                            item.files &&
+                            item.files.length > 0 && (
+                                <FilePreviewModal
+                                    files={item.files}
+                                    initialIndex={previewIndex}
+                                    isOpen={previewOpen}
+                                    onClose={() => setPreviewOpen(false)}
+                                />
                             )}
 
                         {/* Metadata Grid */}
@@ -322,12 +377,19 @@ export default function ItemDetailPanel({
                         Edit
                     </Button>
                     <Button
+                        variant="outline"
+                        onClick={() => setShowAddToCollection(true)}
+                        className="py-2.5 px-4"
+                        title="Add to Collection"
+                    >
+                        <FolderPlus className="w-4 h-4" />
+                    </Button>
+                    <Button
                         variant={item.isPinned ? "primary" : "outline"}
                         onClick={() => onPin && onPin(item.id)}
-                        className="flex-1 py-2.5"
+                        className="py-2.5 px-4"
                     >
-                        <Pin className="w-4 h-4 mr-1.5" />
-                        {item.isPinned ? "Unpin" : "Pin"}
+                        <Pin className="w-4 h-4" />
                     </Button>
                     <Button
                         variant="danger"
@@ -342,6 +404,14 @@ export default function ItemDetailPanel({
                     </Button>
                 </div>
             </div>
+
+            {/* Add to Collection Modal */}
+            <AddToCollectionModal
+                isOpen={showAddToCollection}
+                onClose={() => setShowAddToCollection(false)}
+                itemIds={[item.id]}
+                itemTitle={item.title}
+            />
         </>
     );
 }

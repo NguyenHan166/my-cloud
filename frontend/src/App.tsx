@@ -14,10 +14,12 @@ import ResetPasswordPage from "./pages/auth/ResetPasswordPage";
 
 // Protected pages
 import LibraryPage from "./pages/library/LibraryPage";
+import { CollectionsPage } from "./pages/collections";
 import LinksPage from "./pages/links/LinksPage";
 import NotesPage from "./pages/notes/NotesPage";
 import ProfilePage from "./pages/settings/ProfilePage";
 import SettingsPage from "./pages/settings/SettingsPage";
+import TrashPage from "./pages/trash/TrashPage";
 
 const queryClient = new QueryClient({
     defaultOptions: {
@@ -46,7 +48,6 @@ function App() {
                             path="/reset-password"
                             element={<ResetPasswordPage />}
                         />
-
                         {/* Protected routes (with AppLayout) */}
                         <Route
                             path="/library"
@@ -58,25 +59,14 @@ function App() {
                                 </ProtectedRoute>
                             }
                         />
-
                         <Route
                             path="/collections"
                             element={
                                 <ProtectedRoute>
-                                    <AppLayout>
-                                        <div className="container mx-auto px-4 py-8">
-                                            <h1 className="text-3xl font-bold">
-                                                Collections
-                                            </h1>
-                                            <p className="text-neutral-600 mt-2">
-                                                Coming soon...
-                                            </p>
-                                        </div>
-                                    </AppLayout>
+                                    <CollectionsPage />
                                 </ProtectedRoute>
                             }
                         />
-
                         <Route
                             path="/links"
                             element={
@@ -87,7 +77,6 @@ function App() {
                                 </ProtectedRoute>
                             }
                         />
-
                         <Route
                             path="/notes"
                             element={
@@ -98,7 +87,6 @@ function App() {
                                 </ProtectedRoute>
                             }
                         />
-
                         <Route
                             path="/shared-links"
                             element={
@@ -122,19 +110,11 @@ function App() {
                             element={
                                 <ProtectedRoute>
                                     <AppLayout>
-                                        <div className="container mx-auto px-4 py-8">
-                                            <h1 className="text-3xl font-bold">
-                                                Trash
-                                            </h1>
-                                            <p className="text-neutral-600 mt-2">
-                                                Coming soon...
-                                            </p>
-                                        </div>
+                                        <TrashPage />
                                     </AppLayout>
                                 </ProtectedRoute>
                             }
                         />
-
                         <Route
                             path="/profile"
                             element={
@@ -145,7 +125,6 @@ function App() {
                                 </ProtectedRoute>
                             }
                         />
-
                         <Route
                             path="/settings"
                             element={
@@ -156,7 +135,6 @@ function App() {
                                 </ProtectedRoute>
                             }
                         />
-
                         {/* Default redirect */}
                         <Route
                             path="/"
