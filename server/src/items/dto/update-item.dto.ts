@@ -131,5 +131,6 @@ export class UpdateItemDto {
     items: { type: 'string', format: 'binary' },
     description: 'New files to upload (append to existing files)',
   })
+  @IsOptional()
   files?: any[];
 }

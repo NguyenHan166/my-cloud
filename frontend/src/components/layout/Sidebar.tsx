@@ -2,7 +2,6 @@ import { NavLink } from "react-router-dom";
 import {
     BookOpen,
     FolderOpen,
-    Image,
     Link as LinkIcon,
     FileText,
     Share2,
@@ -20,7 +19,6 @@ export interface SidebarProps {
 const navigation = [
     { name: "Library", href: "/library", icon: BookOpen },
     { name: "Collections", href: "/collections", icon: FolderOpen },
-    { name: "Files", href: "/files", icon: Image },
     { name: "Links", href: "/links", icon: LinkIcon },
     { name: "Notes", href: "/notes", icon: FileText },
     { name: "Shared Links", href: "/shared-links", icon: Share2 },

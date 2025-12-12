@@ -18,7 +18,7 @@ export class ItemsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly uploadService: UploadService,
-  ) {}
+  ) { }
 
   /**
    * Response type for item operations with message
@@ -42,9 +42,9 @@ export class ItemsService {
         ...itemFile,
         file: itemFile.file
           ? {
-              ...itemFile.file,
-              url: this.uploadService.getPublicUrl(itemFile.file.storageKey),
-            }
+            ...itemFile.file,
+            url: this.uploadService.getPublicUrl(itemFile.file.storageKey),
+          }
           : itemFile.file,
       })),
     };
@@ -167,8 +167,8 @@ export class ItemsService {
             tagsText,
             itemTags: allTagIds.length
               ? {
-                  create: allTagIds.map((tagId) => ({ tagId })),
-                }
+                create: allTagIds.map((tagId) => ({ tagId })),
+              }
               : undefined,
           },
         });
@@ -395,9 +395,11 @@ export class ItemsService {
       }),
     };
 
-    const orderBy: Prisma.ItemOrderByWithRelationInput = {
-      [sortBy]: sortOrder,
-    };
+    // Sort: pinned items first, then by user-selected field
+    const orderBy: Prisma.ItemOrderByWithRelationInput[] = [
+      { isPinned: 'desc' },
+      { [sortBy]: sortOrder },
+    ];
 
     const total = await this.prisma.item.count({ where });
 

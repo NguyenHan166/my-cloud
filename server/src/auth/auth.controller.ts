@@ -23,8 +23,8 @@ import {
   ResendOtpDto,
   LoginResponseDto,
   TokensResponseDto,
-  MessageResponseDto,
 } from './dto';
+import { MessageResponseDto } from '../common/dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { Public } from '../common/decorators/public.decorator';
 import { GetUser } from '../common/decorators/get-user.decorator';
@@ -32,7 +32,7 @@ import { GetUser } from '../common/decorators/get-user.decorator';
 @ApiTags('auth')
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(private readonly authService: AuthService) { }
 
   @Public()
   @Post('register')

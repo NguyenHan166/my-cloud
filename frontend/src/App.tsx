@@ -14,6 +14,8 @@ import ResetPasswordPage from "./pages/auth/ResetPasswordPage";
 
 // Protected pages
 import LibraryPage from "./pages/library/LibraryPage";
+import LinksPage from "./pages/links/LinksPage";
+import NotesPage from "./pages/notes/NotesPage";
 import ProfilePage from "./pages/settings/ProfilePage";
 import SettingsPage from "./pages/settings/SettingsPage";
 
@@ -76,36 +78,11 @@ function App() {
                         />
 
                         <Route
-                            path="/files"
-                            element={
-                                <ProtectedRoute>
-                                    <AppLayout>
-                                        <div className="container mx-auto px-4 py-8">
-                                            <h1 className="text-3xl font-bold">
-                                                Files
-                                            </h1>
-                                            <p className="text-neutral-600 mt-2">
-                                                Coming soon...
-                                            </p>
-                                        </div>
-                                    </AppLayout>
-                                </ProtectedRoute>
-                            }
-                        />
-
-                        <Route
                             path="/links"
                             element={
                                 <ProtectedRoute>
                                     <AppLayout>
-                                        <div className="container mx-auto px-4 py-8">
-                                            <h1 className="text-3xl font-bold">
-                                                Links
-                                            </h1>
-                                            <p className="text-neutral-600 mt-2">
-                                                Coming soon...
-                                            </p>
-                                        </div>
+                                        <LinksPage />
                                     </AppLayout>
                                 </ProtectedRoute>
                             }
@@ -116,14 +93,7 @@ function App() {
                             element={
                                 <ProtectedRoute>
                                     <AppLayout>
-                                        <div className="container mx-auto px-4 py-8">
-                                            <h1 className="text-3xl font-bold">
-                                                Notes
-                                            </h1>
-                                            <p className="text-neutral-600 mt-2">
-                                                Coming soon...
-                                            </p>
-                                        </div>
+                                        <NotesPage />
                                     </AppLayout>
                                 </ProtectedRoute>
                             }

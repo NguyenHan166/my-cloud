@@ -19,17 +19,17 @@ import { CreateTagDto } from './dto/create-tag.dto';
 import {
   TagResponseDto,
   TagWithMessageResponseDto,
-  MessageResponseDto,
 } from './dto/response';
 import { GetUser } from 'src/common';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
+import { MessageResponseDto } from '../common/dto';
 
 @ApiTags('tags')
 @ApiBearerAuth('JWT-auth')
 @Controller('tags')
 @UseGuards(JwtAuthGuard)
 export class TagsController {
-  constructor(private readonly tagsService: TagsService) {}
+  constructor(private readonly tagsService: TagsService) { }
 
   @Post()
   @ApiOperation({ summary: 'Create a new tag' })

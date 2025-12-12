@@ -151,5 +151,6 @@ export class CreateItemDto {
     items: { type: 'string', format: 'binary' },
     description: 'Files to upload (required if type is FILE)',
   })
+  @IsOptional()
   files?: any[];
 }

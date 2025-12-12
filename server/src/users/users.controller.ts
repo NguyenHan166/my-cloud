@@ -32,16 +32,17 @@ import {
   UsersListResponseDto,
   UpdateProfileResponseDto,
   ToggleStatusResponseDto,
-  MessageResponseDto,
 } from './dto/response';
 import { UserRole } from '@prisma/client';
+
+import { MessageResponseDto } from '../common/dto/message.response.dto';
 
 @ApiTags('users')
 @ApiBearerAuth('JWT-auth')
 @Controller('users')
 @UseGuards(JwtAuthGuard)
 export class UsersController {
-  constructor(private readonly usersService: UsersService) {}
+  constructor(private readonly usersService: UsersService) { }
 
   // ========== USER ENDPOINTS ==========
 

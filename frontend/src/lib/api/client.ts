@@ -44,13 +44,18 @@ apiClient.interceptors.response.use(
         // Handle 401 Unauthorized - try to refresh token
         if (error.response?.status === 401 && !originalRequest._retry) {
             originalRequest._retry = true;
+            console.log("[Auth] 401 detected, attempting token refresh...");
 
             try {
                 const refreshToken = localStorage.getItem("refreshToken");
+                console.log("[Auth] Refresh token exists:", !!refreshToken);
+
                 if (!refreshToken) {
+                    console.log("[Auth] No refresh token, redirecting to login...");
                     throw new Error("No refresh token available");
                 }
 
+                console.log("[Auth] Calling /auth/refresh endpoint...");
                 const response = await axios.post(
                     `${API_BASE_URL}${API_PREFIX}/auth/refresh`,
                     {
@@ -58,17 +63,33 @@ apiClient.interceptors.response.use(
                     }
                 );
 
-                const { accessToken } = response.data;
+                console.log("[Auth] Refresh response:", response.data);
+
+                // Server returns { success, data: { accessToken, refreshToken }, timestamp }
+                const { accessToken, refreshToken: newRefreshToken } = response.data.data;
+
                 localStorage.setItem("accessToken", accessToken);
+                if (newRefreshToken) {
+                    localStorage.setItem("refreshToken", newRefreshToken);
+                }
+                console.log("[Auth] Tokens updated, retrying original request...");
 
                 // Retry original request with new token
                 originalRequest.headers.Authorization = `Bearer ${accessToken}`;
                 return apiClient(originalRequest);
             } catch (refreshError) {
+                console.log("[Auth] Refresh failed:", refreshError);
                 // Refresh failed - clear tokens and redirect to login
                 localStorage.removeItem("accessToken");
                 localStorage.removeItem("refreshToken");
-                window.location.href = "/login";
+                localStorage.removeItem("user");
+
+                // Only redirect if not already on auth pages
+                const currentPath = window.location.pathname;
+                if (!currentPath.startsWith('/login') && !currentPath.startsWith('/register') && !currentPath.startsWith('/forgot-password')) {
+                    console.log("[Auth] Redirecting to login...");
+                    window.location.href = "/login";
+                }
                 return Promise.reject(refreshError);
             }
         }

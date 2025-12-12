@@ -11,8 +11,7 @@ import { Pool } from 'pg';
 @Injectable()
 export class PrismaService
   extends PrismaClient
-  implements OnModuleInit, OnModuleDestroy
-{
+  implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(PrismaService.name);
   private pool: Pool;
 
@@ -41,7 +40,7 @@ export class PrismaService
       adapter,
       log:
         process.env.NODE_ENV !== 'production'
-          ? ['query', 'info', 'warn', 'error']
+          ? ['warn', 'error']
           : ['warn', 'error'],
       errorFormat: 'pretty',
     });

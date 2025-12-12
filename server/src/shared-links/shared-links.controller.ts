@@ -18,7 +18,6 @@ import {
   SharedLinkResponseDto,
   SharedLinksListResponseDto,
   AccessSharedLinkResponseDto,
-  MessageResponseDto,
 } from './dto';
 import {
   ApiTags,
@@ -27,10 +26,12 @@ import {
   ApiBearerAuth,
 } from '@nestjs/swagger';
 
+import { MessageResponseDto } from 'src/common/dto/message.response.dto';
+
 @ApiTags('shared-links')
 @Controller()
 export class SharedLinksController {
-  constructor(private readonly sharedLinksService: SharedLinksService) {}
+  constructor(private readonly sharedLinksService: SharedLinksService) { }
 
   /**
    * Create a share link for an item (Protected)

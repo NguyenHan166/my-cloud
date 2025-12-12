@@ -28,6 +28,7 @@ enum Importance {
   LOW
   MEDIUM
   HIGH
+  URGENT
 }
 
 // BASE MODELS

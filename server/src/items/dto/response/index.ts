@@ -4,4 +4,3 @@ export * from './item-tag.response.dto';
 export * from './item.response.dto';
 export * from './item-with-message.response.dto';
 export * from './items-list.response.dto';
-export * from './message.response.dto';

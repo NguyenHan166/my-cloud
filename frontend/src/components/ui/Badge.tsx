@@ -1,11 +1,19 @@
-import { type ReactNode } from "react";
+import { type ReactNode, type CSSProperties } from "react";
 import { cn } from "@/lib/utils/cn";
 
 export interface BadgeProps {
     children: ReactNode;
-    variant?: "default" | "primary" | "success" | "warning" | "danger" | "info";
+    variant?:
+        | "default"
+        | "primary"
+        | "success"
+        | "warning"
+        | "danger"
+        | "info"
+        | "outline";
     size?: "sm" | "md" | "lg";
     className?: string;
+    style?: CSSProperties;
 }
 
 export default function Badge({
@@ -13,6 +21,7 @@ export default function Badge({
     variant = "default",
     size = "md",
     className,
+    style,
 }: BadgeProps) {
     const baseStyles = "inline-flex items-center font-medium rounded-full";
 
@@ -23,6 +32,7 @@ export default function Badge({
         warning: "bg-yellow-100 text-yellow-700",
         danger: "bg-red-100 text-red-700",
         info: "bg-blue-100 text-blue-700",
+        outline: "border border-neutral-300 text-neutral-700",
     };
 
     const sizes = {
@@ -33,12 +43,8 @@ export default function Badge({
 
     return (
         <span
-            className={cn(
-                baseStyles,
-                variants[variant],
-                sizes[size],
-                className
-            )}
+            className={cn(baseStyles, variants[variant], sizes[size], className)}
+            style={style}
         >
             {children}
         </span>

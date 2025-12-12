@@ -9,8 +9,9 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
-import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
-import { GetUser } from 'src/common';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { GetUser } from '../common';
+import { MessageResponseDto } from '../common/dto';
 import { CollectionsService } from './collections.service';
 import {
   CreateCollectionDto,
@@ -19,7 +20,6 @@ import {
   AddItemsDto,
   CollectionResponseDto,
   CollectionsListResponseDto,
-  MessageResponseDto,
   AddItemsResponseDto,
   RemoveItemsResponseDto,
 } from './dto';
@@ -54,7 +54,7 @@ class PaginationQueryDto {
 @Controller('collections')
 @UseGuards(JwtAuthGuard)
 export class CollectionsController {
-  constructor(private readonly collectionsService: CollectionsService) {}
+  constructor(private readonly collectionsService: CollectionsService) { }
 
   /**
    * Create a new collection

@@ -30,15 +30,16 @@ import {
   ItemResponseDto,
   ItemWithMessageResponseDto,
   ItemsListResponseDto,
-  MessageResponseDto,
 } from './dto';
+
+import { MessageResponseDto } from 'src/common/dto/message.response.dto';
 
 @ApiTags('items')
 @ApiBearerAuth('JWT-auth')
 @Controller('items')
 @UseGuards(JwtAuthGuard)
 export class ItemsController {
-  constructor(private readonly itemsService: ItemsService) {}
+  constructor(private readonly itemsService: ItemsService) { }
 
   /**
    * Create a new item
