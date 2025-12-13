@@ -401,10 +401,10 @@ export default function CollectionsPage() {
                     {/* Header */}
                     <div className="flex items-center justify-between gap-4">
                         <div>
-                            <h1 className="text-xl font-bold text-neutral-900">
+                            <h1 className="text-xl font-bold text-neutral-900 dark:text-neutral-100">
                                 Collections
                             </h1>
-                            <p className="text-xs text-neutral-500 mt-0.5 hidden sm:block">
+                            <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5 hidden sm:block">
                                 Organize items into folders
                             </p>
                         </div>
@@ -454,12 +454,12 @@ export default function CollectionsPage() {
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
                                 placeholder="Search..."
-                                className="w-full pl-9 pr-3 py-2 text-sm border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500/50 focus:border-sky-500"
+                                className="w-full pl-9 pr-3 py-2 text-sm border border-neutral-300 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500/50 focus:border-sky-500"
                             />
                         </div>
 
                         {/* Type Filter */}
-                        <div className="flex bg-neutral-100 p-0.5 rounded-lg">
+                        <div className="flex bg-neutral-100 dark:bg-neutral-800 p-0.5 rounded-lg">
                             {[
                                 { value: "all", label: "All" },
                                 { value: "collections", label: "📁" },
@@ -480,8 +480,8 @@ export default function CollectionsPage() {
                                     className={cn(
                                         "px-2.5 py-1.5 text-xs font-medium rounded-md transition-colors",
                                         typeFilter === option.value
-                                            ? "bg-white text-sky-600 shadow-sm"
-                                            : "text-neutral-600 hover:text-neutral-900"
+                                            ? "bg-white dark:bg-neutral-700 text-sky-600 dark:text-sky-400 shadow-sm"
+                                            : "text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-200"
                                     )}
                                 >
                                     {option.label}
@@ -515,7 +515,7 @@ export default function CollectionsPage() {
                             {/* Collections grid */}
                             {collections.length > 0 && (
                                 <div>
-                                    <h2 className="text-sm font-medium text-neutral-500 mb-3 flex items-center gap-2">
+                                    <h2 className="text-sm font-medium text-neutral-500 dark:text-neutral-400 mb-3 flex items-center gap-2">
                                         <Folder className="w-4 h-4" />
                                         Folders ({collections.length})
                                     </h2>
@@ -541,7 +541,7 @@ export default function CollectionsPage() {
                             {/* Items grid (only when inside a collection) */}
                             {currentFolderId && items.length > 0 && (
                                 <div>
-                                    <h2 className="text-sm font-medium text-neutral-500 mb-3 flex items-center gap-2">
+                                    <h2 className="text-sm font-medium text-neutral-500 dark:text-neutral-400 mb-3 flex items-center gap-2">
                                         <FileIcon className="w-4 h-4" />
                                         Items ({items.length})
                                     </h2>
@@ -578,9 +578,9 @@ export default function CollectionsPage() {
 
                             {/* Empty state */}
                             {collections.length === 0 && items.length === 0 && (
-                                <div className="flex flex-col items-center justify-center py-20 text-neutral-500">
-                                    <Folder className="w-16 h-16 mb-4 text-neutral-300" />
-                                    <p className="text-lg font-medium text-neutral-600">
+                                <div className="flex flex-col items-center justify-center py-20 text-neutral-500 dark:text-neutral-400">
+                                    <Folder className="w-16 h-16 mb-4 text-neutral-300 dark:text-neutral-600" />
+                                    <p className="text-lg font-medium text-neutral-600 dark:text-neutral-300">
                                         {currentFolderId
                                             ? "This folder is empty"
                                             : "No collections yet"}

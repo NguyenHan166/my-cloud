@@ -85,23 +85,23 @@ export default function ItemDetailPanel({
 
             {/* Panel */}
             <div
-                className={`fixed top-14 bottom-0 right-0 w-full sm:w-[480px] bg-gradient-to-b from-slate-50 to-white shadow-2xl z-50 transform transition-transform duration-300 ease-out flex flex-col ${
+                className={`fixed top-14 bottom-0 right-0 w-full sm:w-[480px] bg-gradient-to-b from-slate-50 to-white dark:from-neutral-900 dark:to-neutral-950 shadow-2xl z-50 transform transition-transform duration-300 ease-out flex flex-col ${
                     isVisible && !isClosing
                         ? "translate-x-0"
                         : "translate-x-full"
                 }`}
             >
                 {/* Header */}
-                <div className="flex-shrink-0 bg-white border-b border-neutral-200 px-4 py-3 flex items-center justify-between shadow-sm">
+                <div className="flex-shrink-0 bg-white dark:bg-neutral-900 border-b border-neutral-200 dark:border-neutral-700 px-4 py-3 flex items-center justify-between shadow-sm">
                     <div className="flex items-center gap-3">
-                        <div className="p-2 bg-sky-100 rounded-lg">
-                            <Icon className="w-5 h-5 text-sky-600" />
+                        <div className="p-2 bg-sky-100 dark:bg-sky-900/30 rounded-lg">
+                            <Icon className="w-5 h-5 text-sky-600 dark:text-sky-400" />
                         </div>
                         <div>
-                            <h2 className="text-lg font-bold text-neutral-900 line-clamp-1">
+                            <h2 className="text-lg font-bold text-neutral-900 dark:text-neutral-100 line-clamp-1">
                                 {item.title}
                             </h2>
-                            <span className="text-xs text-neutral-500">
+                            <span className="text-xs text-neutral-500 dark:text-neutral-400">
                                 {item.type}
                             </span>
                         </div>
@@ -109,7 +109,7 @@ export default function ItemDetailPanel({
                     <button
                         type="button"
                         onClick={handleClose}
-                        className="p-2.5 bg-neutral-100 hover:bg-red-100 hover:text-red-600 rounded-full transition-all"
+                        className="p-2.5 bg-neutral-100 dark:bg-neutral-800 hover:bg-red-100 dark:hover:bg-red-900/30 text-neutral-600 dark:text-neutral-300 hover:text-red-600 dark:hover:text-red-400 rounded-full transition-all"
                         aria-label="Close"
                     >
                         <X className="w-5 h-5" />
@@ -133,8 +133,8 @@ export default function ItemDetailPanel({
                     <div className="p-4 space-y-4">
                         {/* Description Card */}
                         {item.description && (
-                            <div className="bg-white rounded-xl p-4 border border-neutral-200 shadow-sm">
-                                <p className="text-neutral-700 leading-relaxed">
+                            <div className="bg-white dark:bg-neutral-800 rounded-xl p-4 border border-neutral-200 dark:border-neutral-700 shadow-sm">
+                                <p className="text-neutral-700 dark:text-neutral-300 leading-relaxed">
                                     {item.description}
                                 </p>
                             </div>
@@ -267,11 +267,11 @@ export default function ItemDetailPanel({
                         {/* Metadata Grid */}
                         <div className="grid grid-cols-2 gap-3">
                             {item.category && (
-                                <div className="bg-white rounded-xl p-3 border border-neutral-200">
-                                    <span className="text-xs text-neutral-500 block mb-1">
+                                <div className="bg-white dark:bg-neutral-800 rounded-xl p-3 border border-neutral-200 dark:border-neutral-700">
+                                    <span className="text-xs text-neutral-500 dark:text-neutral-400 block mb-1">
                                         Category
                                     </span>
-                                    <span className="text-sm font-medium text-neutral-900">
+                                    <span className="text-sm font-medium text-neutral-900 dark:text-neutral-100">
                                         {item.category}
                                     </span>
                                 </div>

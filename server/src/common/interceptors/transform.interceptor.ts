@@ -9,7 +9,7 @@ import { map } from 'rxjs/operators';
 import { ApiResponse } from '../interfaces/api-response.interface';
 
 /**
- * Recursively convert BigInt values to Number for JSON serialization
+ * Recursively convert BigInt values to Number and Date values to ISO strings for JSON serialization
  */
 function serializeBigInt(obj: unknown): unknown {
   if (obj === null || obj === undefined) {
@@ -19,6 +19,11 @@ function serializeBigInt(obj: unknown): unknown {
   if (typeof obj === 'bigint') {
     // Convert to number if within safe range, otherwise string
     return Number(obj);
+  }
+
+  // Convert Date objects to ISO strings
+  if (obj instanceof Date) {
+    return obj.toISOString();
   }
 
   if (Array.isArray(obj)) {
@@ -37,8 +42,10 @@ function serializeBigInt(obj: unknown): unknown {
 }
 
 @Injectable()
-export class TransformInterceptor<T>
-  implements NestInterceptor<T, ApiResponse<T>> {
+export class TransformInterceptor<T> implements NestInterceptor<
+  T,
+  ApiResponse<T>
+> {
   intercept(
     context: ExecutionContext,
     next: CallHandler,
@@ -65,4 +72,3 @@ export class TransformInterceptor<T>
     );
   }
 }
-

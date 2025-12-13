@@ -146,12 +146,12 @@ export default function NotesPage() {
             {/* Header */}
             <div className="flex items-center justify-between mb-6">
                 <div>
-                    <h1 className="text-2xl font-bold text-neutral-900 flex items-center gap-2">
+                    <h1 className="text-2xl font-bold text-neutral-900 dark:text-neutral-100 flex items-center gap-2">
                         <StickyNote className="w-6 h-6 text-amber-500" />
                         Notes
                     </h1>
-                    <p className="text-neutral-500 text-sm mt-1">
-                        {notes.length} notes
+                    <p className="text-neutral-500 dark:text-neutral-400 text-sm mt-1">
+                        {notes.length} not es
                     </p>
                 </div>
                 <button
@@ -175,16 +175,16 @@ export default function NotesPage() {
                         placeholder="Search notes..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full h-9 pl-9 pr-3 text-sm border border-neutral-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
+                        className="w-full h-9 pl-9 pr-3 text-sm border border-neutral-200 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
                     />
                 </div>
-                <div className="flex bg-neutral-100 rounded-lg p-0.5">
+                <div className="flex bg-neutral-100 dark:bg-neutral-800 rounded-lg p-0.5">
                     <button
                         onClick={() => setViewMode("grid")}
                         className={`p-1.5 rounded-md ${
                             viewMode === "grid"
-                                ? "bg-white text-amber-600 shadow-sm"
-                                : "text-neutral-400"
+                                ? "bg-white dark:bg-neutral-700 text-amber-600 shadow-sm"
+                                : "text-neutral-400 dark:text-neutral-500"
                         }`}
                     >
                         <Grid className="w-4 h-4" />
@@ -193,8 +193,8 @@ export default function NotesPage() {
                         onClick={() => setViewMode("list")}
                         className={`p-1.5 rounded-md ${
                             viewMode === "list"
-                                ? "bg-white text-amber-600 shadow-sm"
-                                : "text-neutral-400"
+                                ? "bg-white dark:bg-neutral-700 text-amber-600 shadow-sm"
+                                : "text-neutral-400 dark:text-neutral-500"
                         }`}
                     >
                         <List className="w-4 h-4" />
@@ -219,7 +219,7 @@ export default function NotesPage() {
 
             {/* Filters panel */}
             {showFilters && (
-                <div className="bg-neutral-50/50 border border-neutral-200/80 rounded-xl p-3 mb-4 space-y-3">
+                <div className="bg-neutral-50/50 dark:bg-neutral-800/50 border border-neutral-200/80 dark:border-neutral-700/80 rounded-xl p-3 mb-4 space-y-3">
                     {/* Priority filter */}
                     <div className="space-y-1.5">
                         <span className="text-[10px] font-semibold text-neutral-400 uppercase tracking-wider">
@@ -354,16 +354,16 @@ export default function NotesPage() {
                     {notes.map((note) => (
                         <div
                             key={note.id}
-                            className={`group bg-white border rounded-xl hover:shadow-lg transition-all cursor-pointer ${
+                            className={`group bg-white dark:bg-neutral-850 border rounded-xl hover:shadow-lg transition-all cursor-pointer ${
                                 note.isPinned
-                                    ? "border-amber-200 bg-gradient-to-br from-amber-50 to-orange-50/50 ring-1 ring-amber-200"
-                                    : "border-neutral-200 hover:border-neutral-300"
+                                    ? "border-amber-200 dark:border-amber-800 bg-gradient-to-br from-amber-50 to-orange-50/50 dark:from-amber-950/30 dark:to-orange-950/20 ring-1 ring-amber-200 dark:ring-amber-800"
+                                    : "border-neutral-200 dark:border-neutral-700 hover:border-neutral-300 dark:hover:border-neutral-600"
                             }`}
                             onClick={() => setPreviewNote(note)}
                         >
                             <div className="p-4 pb-2">
                                 <div className="flex items-start justify-between gap-2">
-                                    <h3 className="font-semibold text-neutral-900 line-clamp-2 flex-1">
+                                    <h3 className="font-semibold text-neutral-900 dark:text-neutral-100 line-clamp-2 flex-1">
                                         {note.title}
                                     </h3>
                                     {note.isPinned && (
@@ -372,7 +372,7 @@ export default function NotesPage() {
                                 </div>
                             </div>
                             <div className="px-4 pb-3">
-                                <p className="text-sm text-neutral-600 line-clamp-4 whitespace-pre-wrap">
+                                <p className="text-sm text-neutral-600 dark:text-neutral-400 line-clamp-4 whitespace-pre-wrap">
                                     {note.content}
                                 </p>
                             </div>
@@ -449,10 +449,10 @@ export default function NotesPage() {
                     {notes.map((note) => (
                         <div
                             key={note.id}
-                            className={`group bg-white border rounded-xl p-4 hover:shadow-md transition-all ${
+                            className={`group bg-white dark:bg-neutral-850 border rounded-xl p-4 hover:shadow-md transition-all ${
                                 note.isPinned
-                                    ? "border-amber-200 bg-amber-50/30"
-                                    : "border-neutral-200"
+                                    ? "border-amber-200 dark:border-amber-800 bg-amber-50/30 dark:bg-amber-950/30"
+                                    : "border-neutral-200 dark:border-neutral-700"
                             }`}
                         >
                             <div className="flex items-start gap-3">
@@ -461,14 +461,14 @@ export default function NotesPage() {
                                 </div>
                                 <div className="flex-1 min-w-0">
                                     <div className="flex items-center gap-2">
-                                        <h3 className="font-medium text-neutral-900 truncate">
+                                        <h3 className="font-medium text-neutral-900 dark:text-neutral-100 truncate">
                                             {note.title}
                                         </h3>
                                         {note.isPinned && (
                                             <Pin className="w-3.5 h-3.5 text-amber-500 fill-current flex-shrink-0" />
                                         )}
                                     </div>
-                                    <p className="text-sm text-neutral-500 mt-0.5 line-clamp-2 whitespace-pre-wrap">
+                                    <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-0.5 line-clamp-2 whitespace-pre-wrap">
                                         {note.content}
                                     </p>
                                     <div className="flex items-center gap-2 mt-2 text-xs text-neutral-400">
@@ -542,9 +542,9 @@ export default function NotesPage() {
                         className="absolute inset-0 bg-black/50 backdrop-blur-sm"
                         onClick={() => setPreviewNote(null)}
                     />
-                    <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[80vh] overflow-hidden">
-                        <div className="p-6 border-b border-neutral-200">
-                            <h2 className="text-xl font-bold text-neutral-900">
+                    <div className="relative bg-white dark:bg-neutral-900 rounded-2xl shadow-2xl w-full max-w-2xl max-h-[80vh] overflow-hidden">
+                        <div className="p-6 border-b border-neutral-200 dark:border-neutral-700">
+                            <h2 className="text-xl font-bold text-neutral-900 dark:text-neutral-100">
                                 {previewNote.title}
                             </h2>
                             <p className="text-sm text-neutral-500 mt-1">
@@ -552,7 +552,7 @@ export default function NotesPage() {
                             </p>
                         </div>
                         <div className="p-6 overflow-y-auto max-h-[60vh]">
-                            <p className="text-neutral-700 whitespace-pre-wrap leading-relaxed">
+                            <p className="text-neutral-700 dark:text-neutral-300 whitespace-pre-wrap leading-relaxed">
                                 {previewNote.content}
                             </p>
                         </div>

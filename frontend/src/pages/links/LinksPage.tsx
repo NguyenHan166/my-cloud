@@ -134,11 +134,11 @@ export default function LinksPage() {
             {/* Header */}
             <div className="flex items-center justify-between mb-6">
                 <div>
-                    <h1 className="text-2xl font-bold text-neutral-900 flex items-center gap-2">
+                    <h1 className="text-2xl font-bold text-neutral-900 dark:text-neutral-100 flex items-center gap-2">
                         <LinkIcon className="w-6 h-6 text-sky-500" />
                         Links
                     </h1>
-                    <p className="text-neutral-500 text-sm mt-1">
+                    <p className="text-neutral-500 dark:text-neutral-400 text-sm mt-1">
                         {links.length} saved links
                     </p>
                 </div>
@@ -163,16 +163,16 @@ export default function LinksPage() {
                         placeholder="Search links..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full h-9 pl-9 pr-3 text-sm border border-neutral-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500"
+                        className="w-full h-9 pl-9 pr-3 text-sm border border-neutral-200 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500"
                     />
                 </div>
-                <div className="flex bg-neutral-100 rounded-lg p-0.5">
+                <div className="flex bg-neutral-100 dark:bg-neutral-800 rounded-lg p-0.5">
                     <button
                         onClick={() => setViewMode("list")}
                         className={`p-1.5 rounded-md ${
                             viewMode === "list"
-                                ? "bg-white text-sky-600 shadow-sm"
-                                : "text-neutral-400"
+                                ? "bg-white dark:bg-neutral-700 text-sky-600 shadow-sm"
+                                : "text-neutral-400 dark:text-neutral-500"
                         }`}
                     >
                         <List className="w-4 h-4" />
@@ -181,8 +181,8 @@ export default function LinksPage() {
                         onClick={() => setViewMode("grid")}
                         className={`p-1.5 rounded-md ${
                             viewMode === "grid"
-                                ? "bg-white text-sky-600 shadow-sm"
-                                : "text-neutral-400"
+                                ? "bg-white dark:bg-neutral-700 text-sky-600 shadow-sm"
+                                : "text-neutral-400 dark:text-neutral-500"
                         }`}
                     >
                         <Grid className="w-4 h-4" />
@@ -207,7 +207,7 @@ export default function LinksPage() {
 
             {/* Filters panel */}
             {showFilters && (
-                <div className="bg-neutral-50/50 border border-neutral-200/80 rounded-xl p-3 mb-4 space-y-3">
+                <div className="bg-neutral-50/50 dark:bg-neutral-800/50 border border-neutral-200/80 dark:border-neutral-700/80 rounded-xl p-3 mb-4 space-y-3">
                     {/* Priority filter */}
                     <div className="space-y-1.5">
                         <span className="text-[10px] font-semibold text-neutral-400 uppercase tracking-wider">
@@ -478,7 +478,7 @@ export default function LinksPage() {
                                     <Pin className="w-3 h-3 text-sky-500 fill-current ml-auto" />
                                 )}
                             </div>
-                            <h3 className="font-medium text-neutral-900 line-clamp-2 mb-1">
+                            <h3 className="font-medium text-neutral-900 dark:text-neutral-100 line-clamp-2 mb-1">
                                 {link.title}
                             </h3>
                             <a
