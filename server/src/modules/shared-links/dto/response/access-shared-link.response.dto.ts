@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { ItemResponseDto } from 'src/modules/items/dto';
+import { PublicItemResponseDto } from './public-item.response.dto';
 
 export class AccessLinkInfoDto {
   @ApiProperty({
@@ -17,10 +17,10 @@ export class AccessLinkInfoDto {
 
 export class AccessSharedLinkResponseDto {
   @ApiProperty({
-    description: 'Shared item data',
-    type: ItemResponseDto,
+    description: 'Shared item data (sanitized for public access)',
+    type: PublicItemResponseDto,
   })
-  item: ItemResponseDto;
+  item: PublicItemResponseDto;
 
   @ApiProperty({
     description: 'Link info',

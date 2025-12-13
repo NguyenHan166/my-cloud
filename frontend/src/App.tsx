@@ -12,6 +12,8 @@ import RegisterPage from "./pages/auth/RegisterPage";
 import VerifyOtpPage from "./pages/auth/VerifyOtpPage";
 import ForgotPasswordPage from "./pages/auth/ForgotPasswordPage";
 import ResetPasswordPage from "./pages/auth/ResetPasswordPage";
+import SharedLinkPage from "./pages/shared/SharedLinkPage";
+import MySharesPage from "./pages/shared/MySharesPage";
 
 // Protected pages
 import LibraryPage from "./pages/library/LibraryPage";
@@ -55,6 +57,11 @@ function App() {
                             <Route
                                 path="/reset-password"
                                 element={<ResetPasswordPage />}
+                            />
+                            {/* Public shared link route (no layout, no auth) */}
+                            <Route
+                                path="/s/:token"
+                                element={<SharedLinkPage />}
                             />
                             {/* Protected routes (with AppLayout) */}
                             <Route
@@ -100,14 +107,7 @@ function App() {
                                 element={
                                     <ProtectedRoute>
                                         <AppLayout>
-                                            <div className="container mx-auto px-4 py-8">
-                                                <h1 className="text-3xl font-bold">
-                                                    Shared Links
-                                                </h1>
-                                                <p className="text-neutral-600 mt-2">
-                                                    Coming soon...
-                                                </p>
-                                            </div>
+                                            <MySharesPage />
                                         </AppLayout>
                                     </ProtectedRoute>
                                 }

@@ -27,7 +27,7 @@ export class SharedLinksService {
     private readonly configService: ConfigService,
   ) {
     this.baseUrl =
-      this.configService.get<string>('APP_URL') || 'http://localhost:3000';
+      this.configService.get<string>('APP_URL') || 'http://localhost:5173';
   }
 
   /**
@@ -194,6 +194,121 @@ export class SharedLinksService {
   }
 
   /**
+   * Update a share link (expiration and/or password)
+   */
+  async updateLink(
+    linkId: string,
+    userId: string,
+    updateData: { expiresIn?: number; password?: string | null },
+  ): Promise<any> {
+    const link = await this.prisma.sharedLink.findUnique({
+      where: { id: linkId },
+      include: {
+        item: {
+          select: {
+            id: true,
+            title: true,
+            type: true,
+          },
+        },
+      },
+    });
+
+    if (!link) {
+      throw new NotFoundException('Share link not found');
+    }
+
+    if (link.userId !== userId) {
+      throw new ForbiddenException(
+        'You do not have permission to update this link',
+      );
+    }
+
+    const updateFields: any = {};
+
+    // Update expiration if provided
+    if (updateData.expiresIn !== undefined) {
+      const newExpiresAt = new Date();
+      newExpiresAt.setHours(newExpiresAt.getHours() + updateData.expiresIn);
+      updateFields.expiresAt = newExpiresAt;
+    }
+
+    // Update password if provided
+    if (updateData.password !== undefined) {
+      if (updateData.password === null) {
+        // Remove password
+        updateFields.passwordHash = null;
+      } else {
+        // Set new password
+        updateFields.passwordHash = await this.hashPassword(
+          updateData.password,
+        );
+      }
+    }
+
+    // If the link was revoked, unrevoking it when updating
+    if (link.revoked) {
+      updateFields.revoked = false;
+      this.logger.log(`Share link restored (unrevoked): ${linkId}`);
+    }
+
+    const updatedLink = await this.prisma.sharedLink.update({
+      where: { id: linkId },
+      data: updateFields,
+      include: {
+        item: {
+          select: {
+            id: true,
+            title: true,
+            type: true,
+          },
+        },
+      },
+    });
+
+    this.logger.log(`Share link updated: ${linkId}`);
+
+    return {
+      id: updatedLink.id,
+      token: updatedLink.token,
+      url: `${this.baseUrl}/s/${updatedLink.token}`,
+      expiresAt: updatedLink.expiresAt,
+      hasPassword: !!updatedLink.passwordHash,
+      item: updatedLink.item,
+      createdAt: updatedLink.createdAt,
+    };
+  }
+
+  /**
+   * Permanently delete a share link
+   */
+  async permanentlyDeleteLink(
+    linkId: string,
+    userId: string,
+  ): Promise<{ message: string }> {
+    const link = await this.prisma.sharedLink.findUnique({
+      where: { id: linkId },
+    });
+
+    if (!link) {
+      throw new NotFoundException('Share link not found');
+    }
+
+    if (link.userId !== userId) {
+      throw new ForbiddenException(
+        'You do not have permission to delete this link',
+      );
+    }
+
+    await this.prisma.sharedLink.delete({
+      where: { id: linkId },
+    });
+
+    this.logger.log(`Share link permanently deleted: ${linkId}`);
+    return { message: 'Share link permanently deleted' };
+  }
+
+  /**
    * Access a shared item via token
    */
   async accessSharedLink(
@@ -263,17 +378,30 @@ export class SharedLinksService {
       `Share link accessed: ${token} (count: ${link.accessCount + 1})`,
     );
 
-    // Transform item with file URLs
+    // Transform item to public format - exclude sensitive fields
     const transformedItem = {
-      ...link.item,
+      // Only include safe fields - no id, userId, isPinned, isTrashed, trashedAt, createdAt, updatedAt
+      title: link.item.title,
+      description: link.item.description,
+      type: link.item.type,
+      url: link.item.url,
+      content: link.item.content,
+      category: link.item.category,
+      project: link.item.project,
+      importance: link.item.importance,
+      domain: link.item.domain,
+      // Transform files - exclude file IDs and other sensitive data
       files: link.item.files.map((itemFile: any) => ({
-        ...itemFile,
-        file: itemFile.file
-          ? {
-              ...itemFile.file,
-              url: this.getFileUrl(itemFile.file.storageKey),
-            }
-          : itemFile.file,
+        originalName: itemFile.file.originalName,
+        mimeType: itemFile.file.mimeType,
+        size: Number(itemFile.file.size), // Convert BigInt to Number
+        url: this.getFileUrl(itemFile.file.storageKey),
+        isPrimary: itemFile.isPrimary,
+      })),
+      // Transform tags - only include name and color, no IDs
+      tags: link.item.itemTags.map((it: any) => ({
+        name: it.tag.name,
+        color: it.tag.color,
       })),
     };
 

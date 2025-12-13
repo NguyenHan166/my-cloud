@@ -2,6 +2,7 @@ import {
   Controller,
   Get,
   Post,
+  Patch,
   Delete,
   Param,
   Body,
@@ -15,6 +16,7 @@ import {
   CreateSharedLinkDto,
   QuerySharedLinksDto,
   AccessSharedLinkDto,
+  UpdateSharedLinkDto,
   SharedLinkResponseDto,
   SharedLinksListResponseDto,
   AccessSharedLinkResponseDto,
@@ -84,15 +86,48 @@ export class SharedLinksController {
   }
 
   /**
-   * Revoke a share link (Protected)
+   * Update a share link (Protected)
+   */
+  @Patch('shared-links/:id')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({ summary: 'Update a shared link (expiration/password)' })
+  @ApiResponse({
+    status: 200,
+    description: 'Shared link updated successfully.',
+    type: SharedLinkResponseDto,
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized.',
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Shared link not found.',
+  })
+  async updateLink(
+    @Param('id') id: string,
+    @Body() data: UpdateSharedLinkDto,
+    @GetUser() user: { id: string },
+  ) {
+    return this.sharedLinksService.updateLink(id, user.id, data);
+  }
+
+  /**
+   * Delete a share link (Protected)
+   * Supports both revoke (soft delete) and permanent delete
    */
   @Delete('shared-links/:id')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth('JWT-auth')
-  @ApiOperation({ summary: 'Revoke (delete) a shared link' })
+  @ApiOperation({
+    summary: 'Delete a shared link',
+    description:
+      'Use ?permanent=true to permanently delete, otherwise revokes the link',
+  })
   @ApiResponse({
     status: 200,
-    description: 'Shared link revoked successfully.',
+    description: 'Shared link deleted/revoked successfully.',
     type: MessageResponseDto,
   })
   @ApiResponse({
@@ -103,7 +138,15 @@ export class SharedLinksController {
     status: 404,
     description: 'Shared link not found.',
   })
-  async revokeLink(@Param('id') id: string, @GetUser() user: { id: string }) {
+  async deleteLink(
+    @Param('id') id: string,
+    @Query('permanent') permanent: string,
+    @GetUser() user: { id: string },
+  ) {
+    // If permanent=true, hard delete, otherwise soft delete (revoke)
+    if (permanent === 'true') {
+      return this.sharedLinksService.permanentlyDeleteLink(id, user.id);
+    }
     return this.sharedLinksService.revokeLink(id, user.id);
   }
 

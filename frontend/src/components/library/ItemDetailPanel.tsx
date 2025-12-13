@@ -10,6 +10,7 @@ import {
     Edit3,
     Eye,
     FolderPlus,
+    Share2,
 } from "lucide-react";
 import type { Item } from "@/types/item.types";
 import {
@@ -20,6 +21,7 @@ import Badge from "@/components/ui/Badge";
 import Button from "@/components/ui/Button";
 import FilePreviewModal from "./FilePreviewModal";
 import { AddToCollectionModal } from "@/components/collections";
+import ShareLinkModal from "@/components/shared/ShareLinkModal";
 
 interface ItemDetailPanelProps {
     item: Item | null;
@@ -43,6 +45,7 @@ export default function ItemDetailPanel({
     const [previewOpen, setPreviewOpen] = useState(false);
     const [previewIndex, setPreviewIndex] = useState(0);
     const [showAddToCollection, setShowAddToCollection] = useState(false);
+    const [showShareModal, setShowShareModal] = useState(false);
 
     // Handle open/close animation
     useEffect(() => {
@@ -385,6 +388,14 @@ export default function ItemDetailPanel({
                         <FolderPlus className="w-4 h-4" />
                     </Button>
                     <Button
+                        variant="outline"
+                        onClick={() => setShowShareModal(true)}
+                        className="py-2.5 px-4"
+                        title="Share"
+                    >
+                        <Share2 className="w-4 h-4" />
+                    </Button>
+                    <Button
                         variant={item.isPinned ? "primary" : "outline"}
                         onClick={() => onPin && onPin(item.id)}
                         className="py-2.5 px-4"
@@ -410,6 +421,14 @@ export default function ItemDetailPanel({
                 isOpen={showAddToCollection}
                 onClose={() => setShowAddToCollection(false)}
                 itemIds={[item.id]}
+                itemTitle={item.title}
+            />
+
+            {/* Share Link Modal */}
+            <ShareLinkModal
+                isOpen={showShareModal}
+                onClose={() => setShowShareModal(false)}
+                itemId={item.id}
                 itemTitle={item.title}
             />
         </>
