@@ -17,6 +17,8 @@ import { TagsModule } from './modules/tags/tags.module';
 import { ItemsModule } from './modules/items/items.module';
 import { CollectionsModule } from './modules/collections/collections.module';
 import { SharedLinksModule } from './modules/shared-links/shared-links.module';
+import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
+import { APP_GUARD } from '@nestjs/core';
 
 @Module({
   imports: [
@@ -26,6 +28,13 @@ import { SharedLinksModule } from './modules/shared-links/shared-links.module';
       load: [appConfig, jwtConfig, mailConfig, adminConfig],
       envFilePath: ['.env.local', '.env'],
     }),
+    ThrottlerModule.forRoot([
+      {
+        name: 'default',
+        ttl: 60 * 1000,
+        limit: 30,
+      },
+    ]),
     // Core modules
     LoggerModule,
     PrismaModule,
@@ -41,6 +50,12 @@ import { SharedLinksModule } from './modules/shared-links/shared-links.module';
     SharedLinksModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
+  ],
 })
 export class AppModule {}

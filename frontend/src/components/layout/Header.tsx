@@ -10,6 +10,7 @@ import {
     ChevronDown,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import DarkModeToggle from "@/components/ui/DarkModeToggle";
 import toast from "react-hot-toast";
 
 export interface HeaderProps {
@@ -40,36 +41,41 @@ export default function Header({ onMenuClick }: HeaderProps) {
     };
 
     return (
-        <header className="bg-white/80 backdrop-blur-xl border-b border-neutral-200/50 sticky top-0 z-30">
+        <header className="backdrop-blur-xl border-b sticky top-0 z-30 transition-colors duration-300 bg-white/80 dark:bg-neutral-900/80 border-neutral-200/50 dark:border-neutral-700/50">
             <div className="flex items-center gap-4 px-4 lg:px-6 py-3">
                 {/* Mobile menu button */}
                 <button
                     onClick={onMenuClick}
-                    className="lg:hidden p-2.5 hover:bg-neutral-100 rounded-xl transition-colors"
+                    className="lg:hidden p-2.5 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-xl transition-colors"
                     aria-label="Open menu"
                 >
-                    <Menu className="w-5 h-5 text-neutral-600" />
+                    <Menu className="w-5 h-5 text-neutral-600 dark:text-neutral-300" />
                 </button>
 
                 {/* Search bar */}
                 <form onSubmit={handleSearch} className="flex-1 max-w-2xl">
                     <div className="relative group">
-                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-neutral-400 group-focus-within:text-primary-500 transition-colors" />
+                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-neutral-400 dark:text-neutral-500 group-focus-within:text-primary-500 transition-colors" />
                         <input
                             type="text"
                             placeholder="Search by title, tags, content…"
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className="w-full pl-12 pr-4 py-2.5 bg-neutral-100/50 border border-transparent rounded-xl text-sm
-                       focus:outline-none focus:ring-2 focus:ring-primary-500/50 focus:border-primary-500 focus:bg-white
-                       placeholder-neutral-400 transition-all duration-300"
+                            className="w-full pl-12 pr-4 py-2.5 bg-neutral-100/50 dark:bg-neutral-800/50 border border-transparent rounded-xl text-sm
+                       text-neutral-900 dark:text-neutral-100
+                       focus:outline-none focus:ring-2 focus:ring-primary-500/50 focus:border-primary-500 
+                       focus:bg-white dark:focus:bg-neutral-800
+                       placeholder-neutral-400 dark:placeholder-neutral-500 transition-all duration-300"
                         />
                     </div>
                 </form>
 
+                {/* Dark mode toggle */}
+                <DarkModeToggle />
+
                 {/* Notification button */}
-                <button className="relative p-2.5 hover:bg-neutral-100 rounded-xl transition-colors hidden sm:flex">
-                    <Bell className="w-5 h-5 text-neutral-600" />
+                <button className="relative p-2.5 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-xl transition-colors hidden sm:flex">
+                    <Bell className="w-5 h-5 text-neutral-600 dark:text-neutral-300" />
                     <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-primary-500 rounded-full" />
                 </button>
 
@@ -77,7 +83,7 @@ export default function Header({ onMenuClick }: HeaderProps) {
                 <div className="relative">
                     <button
                         onClick={() => setShowUserMenu(!showUserMenu)}
-                        className="flex items-center gap-2 p-1.5 pr-3 hover:bg-neutral-100 rounded-xl transition-colors"
+                        className="flex items-center gap-2 p-1.5 pr-3 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-xl transition-colors"
                     >
                         {user?.avatar ? (
                             <img
@@ -94,10 +100,10 @@ export default function Header({ onMenuClick }: HeaderProps) {
                                 </span>
                             </div>
                         )}
-                        <span className="hidden md:block text-sm font-medium text-neutral-700 max-w-[120px] truncate">
+                        <span className="hidden md:block text-sm font-medium text-neutral-700 dark:text-neutral-200 max-w-[120px] truncate">
                             {user?.name || user?.email?.split("@")[0]}
                         </span>
-                        <ChevronDown className="w-4 h-4 text-neutral-400 hidden md:block" />
+                        <ChevronDown className="w-4 h-4 text-neutral-400 dark:text-neutral-500 hidden md:block" />
                     </button>
 
                     {/* Dropdown menu */}

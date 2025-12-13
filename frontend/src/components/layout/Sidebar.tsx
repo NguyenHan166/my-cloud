@@ -78,23 +78,24 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                 className={cn(
                     "fixed top-0 left-0 h-full z-50 transition-all duration-300 ease-out",
                     "w-72 flex flex-col",
-                    "bg-gradient-to-b from-neutral-900 via-neutral-900 to-neutral-950",
+                    "bg-white dark:bg-gradient-to-b dark:from-neutral-900 dark:via-neutral-900 dark:to-neutral-950",
+                    "border-r border-neutral-200 dark:border-neutral-800",
                     "lg:translate-x-0 lg:static",
                     isOpen ? "translate-x-0 shadow-2xl" : "-translate-x-full"
                 )}
             >
                 {/* Header */}
-                <div className="p-6 border-b border-white/10">
+                <div className="p-6 border-b border-neutral-200 dark:border-white/10">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
                             <div className="w-10 h-10 bg-gradient-primary rounded-xl flex items-center justify-center shadow-glow">
                                 <Sparkles className="w-5 h-5 text-white" />
                             </div>
                             <div>
-                                <h1 className="text-xl font-bold text-white">
+                                <h1 className="text-xl font-bold text-neutral-900 dark:text-white">
                                     CloudHan
                                 </h1>
-                                <p className="text-xs text-white/50">
+                                <p className="text-xs text-neutral-600 dark:text-white/50">
                                     Personal Cloud
                                 </p>
                             </div>
@@ -102,10 +103,10 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
 
                         <button
                             onClick={onClose}
-                            className="lg:hidden p-2 hover:bg-white/10 rounded-lg transition-colors"
+                            className="lg:hidden p-2 hover:bg-neutral-100 dark:hover:bg-white/10 rounded-lg transition-colors"
                             aria-label="Close sidebar"
                         >
-                            <X className="w-5 h-5 text-white/70" />
+                            <X className="w-5 h-5 text-neutral-600 dark:text-white/70" />
                         </button>
                     </div>
                 </div>
@@ -123,8 +124,8 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                                 cn(
                                     "flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200",
                                     isActive
-                                        ? "bg-gradient-to-r from-primary-500/20 to-accent-500/10 text-white border border-primary-500/30 shadow-lg shadow-primary-500/10"
-                                        : "text-white/70 hover:text-white hover:bg-white/5"
+                                        ? "bg-gradient-to-r from-primary-500/20 to-accent-500/10 border border-primary-500/30 shadow-lg shadow-primary-500/10 text-neutral-900 dark:text-white"
+                                        : "text-neutral-600 dark:text-white/70 hover:text-neutral-900 dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-white/5"
                                 )
                             }
                         >
@@ -135,19 +136,19 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                 </nav>
 
                 {/* Tags section */}
-                <div className="p-4 border-t border-white/10">
-                    <h3 className="text-xs font-semibold text-white/40 uppercase tracking-wider mb-3 px-2 flex items-center gap-2">
+                <div className="p-4 border-t border-neutral-200 dark:border-white/10">
+                    <h3 className="text-xs font-semibold text-neutral-500 dark:text-white/40 uppercase tracking-wider mb-3 px-2 flex items-center gap-2">
                         <TagIcon className="w-3 h-3" />
                         Quick Tags
                     </h3>
                     <div className="flex flex-wrap gap-2">
                         {isLoadingTags ? (
-                            <div className="flex items-center gap-2 text-white/50 text-xs px-2">
+                            <div className="flex items-center gap-2 text-neutral-500 dark:text-white/50 text-xs px-2">
                                 <Loader2 className="w-3 h-3 animate-spin" />
                                 Loading tags...
                             </div>
                         ) : tags.length === 0 ? (
-                            <p className="text-white/40 text-xs px-2">
+                            <p className="text-neutral-500 dark:text-white/40 text-xs px-2">
                                 No tags yet
                             </p>
                         ) : (
@@ -177,12 +178,16 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                 </div>
 
                 {/* Storage indicator (decorative) */}
-                <div className="p-4 mx-4 mb-4 bg-white/5 rounded-xl border border-white/10">
+                <div className="p-4 mx-4 mb-4 bg-neutral-100 dark:bg-white/5 rounded-xl border border-neutral-200 dark:border-white/10">
                     <div className="flex items-center justify-between text-sm mb-2">
-                        <span className="text-white/70">Storage</span>
-                        <span className="text-white/50">2.4 GB / 10 GB</span>
+                        <span className="text-neutral-600 dark:text-white/70">
+                            Storage
+                        </span>
+                        <span className="text-neutral-500 dark:text-white/50">
+                            2.4 GB / 10 GB
+                        </span>
                     </div>
-                    <div className="h-2 bg-white/10 rounded-full overflow-hidden">
+                    <div className="h-2 bg-neutral-200 dark:bg-white/10 rounded-full overflow-hidden">
                         <div
                             className="h-full bg-gradient-to-r from-primary-500 to-accent-500 rounded-full"
                             style={{ width: "24%" }}

@@ -204,10 +204,10 @@ export default function LibraryPage() {
         return (
             <div className="container mx-auto px-4 py-8">
                 <div className="mb-8">
-                    <h1 className="text-3xl font-bold text-neutral-900">
+                    <h1 className="text-3xl font-bold text-neutral-900 dark:text-neutral-100">
                         Library
                     </h1>
-                    <p className="text-neutral-600 mt-2">
+                    <p className="text-neutral-600 dark:text-neutral-400 mt-2">
                         Your personal knowledge base
                     </p>
                 </div>
@@ -221,20 +221,20 @@ export default function LibraryPage() {
     }
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-sky-50/30 to-blue-50/40 relative overflow-hidden">
+        <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-slate-50 via-sky-50/30 to-blue-50/40 dark:from-neutral-950 dark:via-neutral-900 dark:to-neutral-950">
             {/* Decorative background elements */}
             <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                <div className="absolute -top-40 -right-40 w-96 h-96 bg-sky-200/20 rounded-full blur-3xl" />
-                <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-blue-200/20 rounded-full blur-3xl" />
+                <div className="absolute -top-40 -right-40 w-96 h-96 bg-sky-200/20 dark:bg-sky-500/5 rounded-full blur-3xl" />
+                <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-blue-200/20 dark:bg-blue-500/5 rounded-full blur-3xl" />
             </div>
 
             <div className="container mx-auto px-4 py-8 relative z-10">
                 {/* Header */}
                 <div className="mb-8">
-                    <h1 className="text-4xl font-bold bg-gradient-to-r from-sky-600 to-blue-600 bg-clip-text text-transparent mb-2">
+                    <h1 className="text-4xl font-bold bg-gradient-to-r from-sky-600 to-blue-600 dark:from-sky-400 dark:to-blue-400 bg-clip-text text-transparent mb-2">
                         Library
                     </h1>
-                    <p className="text-lg text-neutral-600">
+                    <p className="text-lg text-neutral-600 dark:text-neutral-400">
                         Your personal knowledge base
                     </p>
                 </div>
@@ -253,7 +253,7 @@ export default function LibraryPage() {
 
                 {/* Results count */}
                 {items.length > 0 && (
-                    <div className="mb-4 text-sm text-neutral-600">
+                    <div className="mb-4 text-sm text-neutral-600 dark:text-neutral-400">
                         Showing {items.length} of {pagination.total} items
                     </div>
                 )}
@@ -285,7 +285,7 @@ export default function LibraryPage() {
                         ))}
                     </div>
                 ) : (
-                    <div className="bg-white rounded-lg border border-neutral-200 overflow-hidden">
+                    <div className="bg-white dark:bg-neutral-900 rounded-lg border border-neutral-200 dark:border-neutral-800 overflow-hidden">
                         {items.map((item) => (
                             <ItemListRow
                                 key={item.id}
@@ -310,7 +310,7 @@ export default function LibraryPage() {
                         >
                             Previous
                         </button>
-                        <span className="px-4 py-2 text-neutral-700">
+                        <span className="px-4 py-2 text-neutral-700 dark:text-neutral-300">
                             Page {pagination.page} of {pagination.totalPages}
                         </span>
                         <button

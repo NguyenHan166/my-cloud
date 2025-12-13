@@ -9,13 +9,18 @@ import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import { TransformInterceptor } from './common/interceptors/transform.interceptor';
 import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
 import { AppConfig } from './config/app.config';
+import { NestExpressApplication } from '@nestjs/platform-express';
 
 async function bootstrap() {
   const logger = CustomLogger.create('Bootstrap');
 
-  const app = await NestFactory.create(AppModule, {
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
     bufferLogs: true,
   });
+
+  if (process.env.NODE_ENV === 'production') {
+    app.set('trust proxy', 1); // tin 1 hop proxy
+  }
 
   // Get config service
   const configService = app.get(ConfigService);
