@@ -19,6 +19,7 @@ import { CollectionsModule } from './modules/collections/collections.module';
 import { SharedLinksModule } from './modules/shared-links/shared-links.module';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
+import { SharedCollectionsModule } from './modules/shared-collections/shared-collections.module';
 
 @Module({
   imports: [
@@ -48,6 +49,7 @@ import { APP_GUARD } from '@nestjs/core';
     ItemsModule,
     CollectionsModule,
     SharedLinksModule,
+    SharedCollectionsModule,
   ],
   controllers: [AppController],
   providers: [

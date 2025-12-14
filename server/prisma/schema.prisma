@@ -1,9 +1,6 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -29,6 +26,12 @@ enum Importance {
   MEDIUM
   HIGH
   URGENT
+}
+
+// NEW: permission for sharing collection
+enum CollectionPermission {
+  VIEW
+  EDIT
 }
 
 // BASE MODELS
@@ -67,6 +70,12 @@ model User {
   usage           UserUsage?
   embeddings      Embedding[]
   collectionItems CollectionItem[]
+
+  // NEW: collections shared TO this user
+  sharedCollections CollectionShare[]
+
+  // NEW: audit - shares created BY this user (optional)
+  sharesCreated CollectionShare[] @relation("CollectionSharedBy")
 
   @@index([email])
 }
@@ -195,7 +204,10 @@ model Collection {
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  items CollectionItem[]
+  items  CollectionItem[]
+
+  // NEW: share records for this collection
+  shares CollectionShare[]
 
   @@unique([userId, slugPublic])
   @@index([userId])
@@ -216,6 +228,29 @@ model CollectionItem {
 
   @@unique([collectionId, itemId])
   @@index([userId])
+}
+
+// NEW: share collections between users (NO inheritance to parent/child; enforce via queries)
+model CollectionShare {
+  id           String               @id @default(cuid())
+  collectionId String
+  userId       String               // user được chia sẻ
+  permission   CollectionPermission @default(VIEW)
+
+  // audit + lifecycle
+  sharedById String?   // người share (thường là owner)
+  invitedAt  DateTime  @default(now())
+  acceptedAt DateTime?
+  revokedAt  DateTime?
+
+  collection Collection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sharedBy   User?      @relation("CollectionSharedBy", fields: [sharedById], references: [id], onDelete: SetNull)
+
+  @@unique([collectionId, userId])
+  @@index([collectionId])
+  @@index([userId])
+  @@index([permission])
 }
 
 model SharedLink {
@@ -255,14 +290,10 @@ model UserUsage {
 }
 
 // Semantic search (tuỳ chọn)
-// Lưu vector kiểu Bytes hoặc JSON nếu chưa dùng extension `pgvector`
 model Embedding {
   id        String   @id @default(cuid())
   userId    String
   itemId    String   @unique
-  // Nếu bạn cài pgvector có thể dùng:
-  // vector Unsupported("vector")
-  // còn không thì tạm dùng Bytes hoặc Json:
   vector    Bytes
   createdAt DateTime @default(now())
 

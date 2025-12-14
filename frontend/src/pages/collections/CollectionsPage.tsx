@@ -40,6 +40,9 @@ import ConfirmModal from "@/components/ui/ConfirmModal";
 import DeleteOptionModal from "@/components/library/DeleteOptionModal";
 import AppLayout from "@/components/layout/AppLayout";
 import { cn } from "@/lib/utils/cn";
+import ShareManagementTab from "@/components/collections/ShareManagementTab";
+import SharedWithMeTab from "@/components/collections/SharedWithMeTab";
+import ShareCollectionModal from "@/components/collections/ShareCollectionModal";
 
 export default function CollectionsPage() {
     const queryClient = useQueryClient();
@@ -54,6 +57,9 @@ export default function CollectionsPage() {
         null
     );
     const [moveCollection, setMoveCollection] = useState<Collection | null>(
+        null
+    );
+    const [shareCollection, setShareCollection] = useState<Collection | null>(
         null
     );
     const [showSelectItems, setShowSelectItems] = useState(false);
@@ -71,6 +77,13 @@ export default function CollectionsPage() {
     const [typeFilter, setTypeFilter] = useState<
         "all" | "collections" | "items"
     >("all");
+
+    // Tab state
+    const activeTab =
+        (searchParams.get("tab") as
+            | "my-collections"
+            | "share-management"
+            | "shared-with-me") || "my-collections";
 
     // Breadcrumb state
     const [breadcrumb, setBreadcrumb] = useState<BreadcrumbItem[]>([]);
@@ -282,6 +295,10 @@ export default function CollectionsPage() {
         setSearchParams({ folder: collection.id });
     };
 
+    const handleNavigateToFolderFromShared = (collectionId: string) => {
+        setSearchParams({ folder: collectionId });
+    };
+
     const handleBreadcrumbNavigate = (item: BreadcrumbItem | null) => {
         if (item) {
             setSearchParams({ folder: item.id });
@@ -297,6 +314,10 @@ export default function CollectionsPage() {
 
     const handleMove = (collection: Collection) => {
         setMoveCollection(collection);
+    };
+
+    const handleShare = (collection: Collection) => {
+        setShareCollection(collection);
     };
 
     const handleDelete = (collection: Collection) => {
@@ -438,159 +459,225 @@ export default function CollectionsPage() {
                         </div>
                     </div>
 
-                    {/* Breadcrumb */}
-                    <CollectionBreadcrumb
-                        items={breadcrumb}
-                        onNavigate={handleBreadcrumbNavigate}
-                    />
-
-                    {/* Search and Filter Toolbar */}
-                    <div className="flex gap-2 items-center">
-                        {/* Search */}
-                        <div className="relative flex-1">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400" />
-                            <input
-                                type="text"
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                                placeholder="Search..."
-                                className="w-full pl-9 pr-3 py-2 text-sm border border-neutral-300 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500/50 focus:border-sky-500"
-                            />
-                        </div>
-
-                        {/* Type Filter */}
-                        <div className="flex bg-neutral-100 dark:bg-neutral-800 p-0.5 rounded-lg">
+                    {/* Tab Navigation */}
+                    {!currentFolderId && (
+                        <div className="flex gap-1 bg-neutral-100 dark:bg-neutral-800 p-1 rounded-lg w-fit">
                             {[
-                                { value: "all", label: "All" },
-                                { value: "collections", label: "📁" },
-                                { value: "items", label: "📄" },
-                            ].map((option) => (
+                                {
+                                    id: "my-collections" as const,
+                                    label: "My Collections",
+                                },
+                                {
+                                    id: "share-management" as const,
+                                    label: "Share Management",
+                                },
+                                {
+                                    id: "shared-with-me" as const,
+                                    label: "Shared With Me",
+                                },
+                            ].map((tab) => (
                                 <button
-                                    key={option.value}
+                                    key={tab.id}
                                     onClick={() =>
-                                        setTypeFilter(option.value as any)
-                                    }
-                                    title={
-                                        option.value === "collections"
-                                            ? "Collections"
-                                            : option.value === "items"
-                                            ? "Items"
-                                            : "All"
+                                        setSearchParams({ tab: tab.id })
                                     }
                                     className={cn(
-                                        "px-2.5 py-1.5 text-xs font-medium rounded-md transition-colors",
-                                        typeFilter === option.value
+                                        "px-4 py-2 text-sm font-medium rounded-md transition-colors",
+                                        activeTab === tab.id
                                             ? "bg-white dark:bg-neutral-700 text-sky-600 dark:text-sky-400 shadow-sm"
                                             : "text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-200"
                                     )}
                                 >
-                                    {option.label}
+                                    {tab.label}
                                 </button>
                             ))}
                         </div>
-                    </div>
+                    )}
+
+                    {/* Breadcrumb - Only for My Collections tab */}
+                    {activeTab === "my-collections" && (
+                        <CollectionBreadcrumb
+                            items={breadcrumb}
+                            onNavigate={handleBreadcrumbNavigate}
+                        />
+                    )}
+
+                    {/* Search and Filter Toolbar - Only for My Collections tab */}
+                    {activeTab === "my-collections" && (
+                        <div className="flex gap-2 items-center">
+                            {/* Search */}
+                            <div className="relative flex-1">
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400" />
+                                <input
+                                    type="text"
+                                    value={searchQuery}
+                                    onChange={(e) =>
+                                        setSearchQuery(e.target.value)
+                                    }
+                                    placeholder="Search..."
+                                    className="w-full pl-9 pr-3 py-2 text-sm border border-neutral-300 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500/50 focus:border-sky-500"
+                                />
+                            </div>
+
+                            {/* Type Filter */}
+                            <div className="flex bg-neutral-100 dark:bg-neutral-800 p-0.5 rounded-lg">
+                                {[
+                                    { value: "all", label: "All" },
+                                    { value: "collections", label: "📁" },
+                                    { value: "items", label: "📄" },
+                                ].map((option) => (
+                                    <button
+                                        key={option.value}
+                                        onClick={() =>
+                                            setTypeFilter(option.value as any)
+                                        }
+                                        title={
+                                            option.value === "collections"
+                                                ? "Collections"
+                                                : option.value === "items"
+                                                ? "Items"
+                                                : "All"
+                                        }
+                                        className={cn(
+                                            "px-2.5 py-1.5 text-xs font-medium rounded-md transition-colors",
+                                            typeFilter === option.value
+                                                ? "bg-white dark:bg-neutral-700 text-sky-600 dark:text-sky-400 shadow-sm"
+                                                : "text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-200"
+                                        )}
+                                    >
+                                        {option.label}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    )}
 
                     {/* Content */}
-                    {isLoading ? (
-                        <div className="flex items-center justify-center py-20">
-                            <Loader2 className="w-8 h-8 text-sky-500 animate-spin" />
-                        </div>
-                    ) : collectionsError ? (
-                        <div className="flex flex-col items-center justify-center py-20 text-neutral-500">
-                            <AlertCircle className="w-12 h-12 mb-4 text-red-400" />
-                            <p>Failed to load collections</p>
-                            <button
-                                onClick={() =>
-                                    queryClient.invalidateQueries({
-                                        queryKey: ["collections"],
-                                    })
-                                }
-                                className="mt-2 text-sm text-sky-600 hover:underline"
-                            >
-                                Try again
-                            </button>
-                        </div>
-                    ) : (
+                    {activeTab === "my-collections" ? (
                         <>
-                            {/* Collections grid */}
-                            {collections.length > 0 && (
-                                <div>
-                                    <h2 className="text-sm font-medium text-neutral-500 dark:text-neutral-400 mb-3 flex items-center gap-2">
-                                        <Folder className="w-4 h-4" />
-                                        Folders ({collections.length})
-                                    </h2>
-                                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-                                        {collections.map((collection) => (
-                                            <CollectionCard
-                                                key={collection.id}
-                                                collection={collection}
-                                                onClick={() =>
-                                                    handleNavigateToFolder(
-                                                        collection
+                            {isLoading ? (
+                                <div className="flex items-center justify-center py-20">
+                                    <Loader2 className="w-8 h-8 text-sky-500 animate-spin" />
+                                </div>
+                            ) : collectionsError ? (
+                                <div className="flex flex-col items-center justify-center py-20 text-neutral-500">
+                                    <AlertCircle className="w-12 h-12 mb-4 text-red-400" />
+                                    <p>Failed to load collections</p>
+                                    <button
+                                        onClick={() =>
+                                            queryClient.invalidateQueries({
+                                                queryKey: ["collections"],
+                                            })
+                                        }
+                                        className="mt-2 text-sm text-sky-600 hover:underline"
+                                    >
+                                        Try again
+                                    </button>
+                                </div>
+                            ) : (
+                                <>
+                                    {/* Collections grid */}
+                                    {collections.length > 0 && (
+                                        <div>
+                                            <h2 className="text-sm font-medium text-neutral-500 dark:text-neutral-400 mb-3 flex items-center gap-2">
+                                                <Folder className="w-4 h-4" />
+                                                Folders ({collections.length})
+                                            </h2>
+                                            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                                                {collections.map(
+                                                    (collection) => (
+                                                        <CollectionCard
+                                                            key={collection.id}
+                                                            collection={
+                                                                collection
+                                                            }
+                                                            onClick={() =>
+                                                                handleNavigateToFolder(
+                                                                    collection
+                                                                )
+                                                            }
+                                                            onEdit={handleEdit}
+                                                            onDelete={
+                                                                handleDelete
+                                                            }
+                                                            onMove={handleMove}
+                                                            onShare={
+                                                                handleShare
+                                                            }
+                                                        />
                                                     )
-                                                }
-                                                onEdit={handleEdit}
-                                                onDelete={handleDelete}
-                                                onMove={handleMove}
-                                            />
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* Items grid (only when inside a collection) */}
-                            {currentFolderId && items.length > 0 && (
-                                <div>
-                                    <h2 className="text-sm font-medium text-neutral-500 dark:text-neutral-400 mb-3 flex items-center gap-2">
-                                        <FileIcon className="w-4 h-4" />
-                                        Items ({items.length})
-                                    </h2>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                                        {items.map((item) => (
-                                            <div
-                                                key={item.id}
-                                                className="relative group/item"
-                                            >
-                                                <ItemCard
-                                                    item={item}
-                                                    onClick={() =>
-                                                        setSelectedItem(item)
-                                                    }
-                                                />
-                                                {/* Remove from collection button */}
-                                                <button
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        removeItemMutation.mutate(
-                                                            item.id
-                                                        );
-                                                    }}
-                                                    className="absolute top-12 right-2 p-1.5 bg-red-500 hover:bg-red-600 text-white rounded-lg opacity-0 group-hover/item:opacity-100 transition-opacity z-10 shadow-lg"
-                                                    title="Remove from collection"
-                                                >
-                                                    <X className="w-4 h-4" />
-                                                </button>
+                                                )}
                                             </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
+                                        </div>
+                                    )}
 
-                            {/* Empty state */}
-                            {collections.length === 0 && items.length === 0 && (
-                                <div className="flex flex-col items-center justify-center py-20 text-neutral-500 dark:text-neutral-400">
-                                    <Folder className="w-16 h-16 mb-4 text-neutral-300 dark:text-neutral-600" />
-                                    <p className="text-lg font-medium text-neutral-600 dark:text-neutral-300">
-                                        {currentFolderId
-                                            ? "This folder is empty"
-                                            : "No collections yet"}
-                                    </p>
-                                    <p className="text-sm mt-1">
-                                        Click "New Collection" to create one
-                                    </p>
-                                </div>
+                                    {/* Items grid (only when inside a collection) */}
+                                    {currentFolderId && items.length > 0 && (
+                                        <div>
+                                            <h2 className="text-sm font-medium text-neutral-500 dark:text-neutral-400 mb-3 flex items-center gap-2">
+                                                <FileIcon className="w-4 h-4" />
+                                                Items ({items.length})
+                                            </h2>
+                                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                                                {items.map((item) => (
+                                                    <div
+                                                        key={item.id}
+                                                        className="relative group/item"
+                                                    >
+                                                        <ItemCard
+                                                            item={item}
+                                                            onClick={() =>
+                                                                setSelectedItem(
+                                                                    item
+                                                                )
+                                                            }
+                                                        />
+                                                        {/* Remove from collection button */}
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                removeItemMutation.mutate(
+                                                                    item.id
+                                                                );
+                                                            }}
+                                                            className="absolute top-12 right-2 p-1.5 bg-red-500 hover:bg-red-600 text-white rounded-lg opacity-0 group-hover/item:opacity-100 transition-opacity z-10 shadow-lg"
+                                                            title="Remove from collection"
+                                                        >
+                                                            <X className="w-4 h-4" />
+                                                        </button>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Empty state */}
+                                    {collections.length === 0 &&
+                                        items.length === 0 && (
+                                            <div className="flex flex-col items-center justify-center py-20 text-neutral-500 dark:text-neutral-400">
+                                                <Folder className="w-16 h-16 mb-4 text-neutral-300 dark:text-neutral-600" />
+                                                <p className="text-lg font-medium text-neutral-600 dark:text-neutral-300">
+                                                    {currentFolderId
+                                                        ? "This folder is empty"
+                                                        : "No collections yet"}
+                                                </p>
+                                                <p className="text-sm mt-1">
+                                                    Click "New Collection" to
+                                                    create one
+                                                </p>
+                                            </div>
+                                        )}
+                                </>
                             )}
                         </>
+                    ) : activeTab === "share-management" ? (
+                        <ShareManagementTab />
+                    ) : (
+                        <SharedWithMeTab
+                            onNavigateToCollection={
+                                handleNavigateToFolderFromShared
+                            }
+                        />
                     )}
                 </div>
 
@@ -687,6 +774,16 @@ export default function CollectionsPage() {
                 isTrashing={trashItemMutation.isPending}
                 isDeleting={deleteItemMutation.isPending}
             />
+
+            {/* Share Collection Modal */}
+            {shareCollection && (
+                <ShareCollectionModal
+                    isOpen={!!shareCollection}
+                    onClose={() => setShareCollection(null)}
+                    collectionId={shareCollection.id}
+                    collectionName={shareCollection.name}
+                />
+            )}
         </AppLayout>
     );
 }

@@ -1,6 +1,9 @@
-export { default as CollectionCard } from "./CollectionCard";
+export { default as AddToCollectionModal } from "./AddToCollectionModal";
 export { default as CollectionBreadcrumb } from "./CollectionBreadcrumb";
+export { default as CollectionCard } from "./CollectionCard";
 export { default as CreateCollectionModal } from "./CreateCollectionModal";
 export { default as MoveCollectionModal } from "./MoveCollectionModal";
-export { default as AddToCollectionModal } from "./AddToCollectionModal";
 export { default as SelectItemsModal } from "./SelectItemsModal";
+export { default as ShareManagementTab } from "./ShareManagementTab";
+export { default as SharedWithMeTab } from "./SharedWithMeTab";
+export { default as ShareCollectionModal } from "./ShareCollectionModal";

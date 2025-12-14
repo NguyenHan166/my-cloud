@@ -7,6 +7,7 @@ import {
     Move,
     Globe,
     Lock,
+    Share2,
 } from "lucide-react";
 import { useDraggable, useDroppable } from "@dnd-kit/core";
 import type { Collection } from "@/types/collection.types";
@@ -18,6 +19,7 @@ interface CollectionCardProps {
     onEdit?: (collection: Collection) => void;
     onDelete?: (collection: Collection) => void;
     onMove?: (collection: Collection) => void;
+    onShare?: (collection: Collection) => void;
     isDraggable?: boolean;
     isDroppable?: boolean;
 }
@@ -28,6 +30,7 @@ export default function CollectionCard({
     onEdit,
     onDelete,
     onMove,
+    onShare,
     isDraggable = true,
     isDroppable = true,
 }: CollectionCardProps) {
@@ -197,6 +200,15 @@ export default function CollectionCard({
                                 >
                                     <Move className="w-4 h-4" />
                                     Move
+                                </button>
+                            )}
+                            {onShare && (
+                                <button
+                                    onClick={(e) => handleAction(e, onShare)}
+                                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-neutral-700 hover:bg-neutral-50"
+                                >
+                                    <Share2 className="w-4 h-4" />
+                                    Share
                                 </button>
                             )}
                             {onDelete && (

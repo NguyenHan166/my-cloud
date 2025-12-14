@@ -10,6 +10,11 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import {
+  CollectionAccessGuard,
+  CollectionEditGuard,
+  CollectionOwnerGuard,
+} from '../shared-collections/guards';
 import { GetUser } from '../../common';
 import { MessageResponseDto } from '../../common/dto';
 import { CollectionsService } from './collections.service';
@@ -116,6 +121,7 @@ export class CollectionsController {
    * Get single collection by ID
    */
   @Get(':id')
+  @UseGuards(CollectionAccessGuard)
   @ApiOperation({ summary: 'Get collection by ID' })
   @ApiParam({ name: 'id', description: 'Collection ID' })
   @ApiResponse({
@@ -139,6 +145,7 @@ export class CollectionsController {
    * Get child collections
    */
   @Get(':id/children')
+  @UseGuards(CollectionAccessGuard)
   @ApiOperation({
     summary: 'Get child collections',
     description: 'Get all direct child collections of a specified collection.',
@@ -174,6 +181,7 @@ export class CollectionsController {
    * Get breadcrumb path
    */
   @Get(':id/breadcrumb')
+  @UseGuards(CollectionAccessGuard)
   @ApiOperation({
     summary: 'Get breadcrumb path',
     description:
@@ -213,6 +221,7 @@ export class CollectionsController {
    * Update collection
    */
   @Patch(':id')
+  @UseGuards(CollectionEditGuard)
   @ApiOperation({
     summary: 'Update collection',
     description:
@@ -248,6 +257,7 @@ export class CollectionsController {
    * Move collection to new parent
    */
   @Patch(':id/move')
+  @UseGuards(CollectionEditGuard)
   @ApiOperation({
     summary: 'Move collection to new parent',
     description:
@@ -288,6 +298,7 @@ export class CollectionsController {
    * Delete collection
    */
   @Delete(':id')
+  @UseGuards(CollectionOwnerGuard)
   @ApiOperation({
     summary: 'Delete collection',
     description:
@@ -315,6 +326,7 @@ export class CollectionsController {
    * Add items to collection
    */
   @Post(':id/items')
+  @UseGuards(CollectionEditGuard)
   @ApiOperation({ summary: 'Add items to collection' })
   @ApiParam({ name: 'id', description: 'Collection ID' })
   @ApiResponse({
@@ -346,6 +358,7 @@ export class CollectionsController {
    * Remove items from collection
    */
   @Delete(':id/items')
+  @UseGuards(CollectionEditGuard)
   @ApiOperation({ summary: 'Remove items from collection' })
   @ApiParam({ name: 'id', description: 'Collection ID' })
   @ApiResponse({
@@ -373,6 +386,7 @@ export class CollectionsController {
    * Get items in collection with pagination
    */
   @Get(':id/items')
+  @UseGuards(CollectionAccessGuard)
   @ApiOperation({ summary: 'Get items inside a collection' })
   @ApiParam({ name: 'id', description: 'Collection ID' })
   @ApiResponse({
