@@ -31,6 +31,11 @@ export class PrismaService
       ssl: {
         rejectUnauthorized: false, // Required for Supabase pooler with self-signed cert
       },
+      // Connection pool configuration for performance
+      max: 20, // Maximum connections in pool
+      min: 5, // Minimum connections to maintain
+      idleTimeoutMillis: 30000, // Close idle connections after 30s
+      connectionTimeoutMillis: 5000, // Fail fast if can't connect in 5s
     });
 
     // Use PrismaPg schema option for custom schema support

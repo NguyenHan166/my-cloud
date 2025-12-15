@@ -1,6 +1,6 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { UsersService } from '../modules/users/users.service';
+import { UsersService } from 'src/modules/users/users.service';
 
 @Injectable()
 export class SeedService implements OnModuleInit {
@@ -9,7 +9,7 @@ export class SeedService implements OnModuleInit {
   constructor(
     private readonly configService: ConfigService,
     private readonly usersService: UsersService,
-  ) {}
+  ) { }
 
   async onModuleInit() {
     await this.seedAdminUser();

@@ -1,4 +1,11 @@
-import { ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+    ConflictException,
+    ForbiddenException,
+    Injectable,
+    Logger,
+    NotFoundException,
+} from '@nestjs/common';
+import { RedisCacheService } from 'src/modules/redis';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateTagDto, UpdateTagDto } from './dto';
 import { Tag } from '@prisma/client';
@@ -9,16 +16,43 @@ export interface ServiceResponse<T> {
     message: string;
 }
 
+// Cache key helpers
+const CACHE_KEYS = {
+    userTags: (userId: string) => `tags:user:${userId}`,
+};
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes in milliseconds
+
 @Injectable()
 export class TagsService {
-    constructor(private readonly prisma: PrismaService) { }
+    private readonly logger = new Logger(TagsService.name);
 
-    async createTag(data: CreateTagDto, userId: string): Promise<ServiceResponse<Tag>> {
+    constructor(
+        private readonly prisma: PrismaService,
+        private readonly cache: RedisCacheService,
+    ) { }
+
+    /**
+     * Invalidate user's tags cache
+     */
+    private async invalidateUserTagsCache(userId: string): Promise<void> {
+        const key = CACHE_KEYS.userTags(userId);
+        await this.cache.del(key);
+        this.logger.debug(`Cache invalidated: ${key}`);
+    }
+
+    async createTag(
+        data: CreateTagDto,
+        userId: string,
+    ): Promise<ServiceResponse<Tag>> {
         try {
             const { name, color = '#043fffff' } = data;
             const tag = await this.prisma.tag.create({
-                data: { name, color, userId }
+                data: { name, color, userId },
             });
+
+            // Invalidate cache
+            await this.invalidateUserTagsCache(userId);
+
             return { data: tag, message: `Tag "${name}" created successfully` };
         } catch (error) {
             if (error.code === 'P2002') {
@@ -29,20 +63,37 @@ export class TagsService {
     }
 
     async getAllTags(userId: string) {
+        const cacheKey = CACHE_KEYS.userTags(userId);
+
+        // 1. Check cache first
+        const cached = await this.cache.get(cacheKey);
+        if (cached) {
+            this.logger.debug(`Cache HIT: ${cacheKey}`);
+            return cached;
+        }
+
+        this.logger.debug(`Cache MISS: ${cacheKey}`);
+
+        // 2. Query database
         const tags = await this.prisma.tag.findMany({
             where: { userId },
             include: {
                 _count: {
-                    select: { itemTags: true }
-                }
+                    select: { itemTags: true },
+                },
             },
-            orderBy: { createdAt: 'desc' }
+            orderBy: { createdAt: 'desc' },
         });
 
-        return tags.map(({ _count, ...tag }) => ({
+        const result = tags.map(({ _count, ...tag }) => ({
             ...tag,
-            itemCount: _count.itemTags
+            itemCount: _count.itemTags,
         }));
+
+        // 3. Save to cache
+        await this.cache.set(cacheKey, result, CACHE_TTL);
+
+        return result;
     }
 
     async getTagById(id: string) {
@@ -53,12 +104,20 @@ export class TagsService {
         return existingTag;
     }
 
-    async updateTag(id: string, data: UpdateTagDto, userId: string): Promise<ServiceResponse<Tag>> {
+    async updateTag(
+        id: string,
+        data: UpdateTagDto,
+        userId: string,
+    ): Promise<ServiceResponse<Tag>> {
         const existingTag = await this.getTagById(id);
         if (existingTag.userId !== userId) {
             throw new ForbiddenException('You are not allowed to update this tag');
         }
         const tag = await this.prisma.tag.update({ where: { id }, data });
+
+        // Invalidate cache
+        await this.invalidateUserTagsCache(userId);
+
         return { data: tag, message: `Tag "${tag.name}" updated successfully` };
     }
 
@@ -68,6 +127,11 @@ export class TagsService {
             throw new ForbiddenException('You are not allowed to delete this tag');
         }
         await this.prisma.tag.delete({ where: { id } });
+
+        // Invalidate cache
+        await this.invalidateUserTagsCache(userId);
+
         return { message: `Tag "${existingTag.name}" deleted successfully` };
     }
 }
+

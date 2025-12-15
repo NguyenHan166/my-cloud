@@ -369,6 +369,7 @@ export class ItemsService {
 
   /**
    * Find all items with filters and pagination
+   * OPTIMIZED: Uses parallel queries via $transaction for better performance
    */
   async findAll(
     query: QueryItemsDto,
@@ -416,15 +417,18 @@ export class ItemsService {
       { [sortBy]: sortOrder },
     ];
 
-    const total = await this.prisma.item.count({ where });
-
-    const data = await this.prisma.item.findMany({
-      where,
-      orderBy,
-      skip: (page - 1) * limit,
-      take: limit,
-      include: this.getItemInclude(),
-    });
+    // OPTIMIZATION: Run count and findMany in parallel via $transaction
+    // This reduces 2 sequential round trips to 1 parallel batch
+    const [total, data] = await this.prisma.$transaction([
+      this.prisma.item.count({ where }),
+      this.prisma.item.findMany({
+        where,
+        orderBy,
+        skip: (page - 1) * limit,
+        take: limit,
+        include: this.getItemInclude(),
+      }),
+    ]);
 
     return {
       data: this.transformItemsWithUrls(data),
