@@ -7,6 +7,7 @@ import {
     FileText,
     Share2,
     Trash2,
+    Wrench,
     X,
     Sparkles,
     Loader2,
@@ -27,6 +28,7 @@ const navigation = [
     { name: "Notes", href: "/notes", icon: FileText },
     { name: "Shared Links", href: "/shared-links", icon: Share2 },
     { name: "Trash", href: "/trash", icon: Trash2 },
+    { name: "Tools", href: "/tools", icon: Wrench },
 ];
 
 export default function Sidebar({ isOpen, onClose }: SidebarProps) {

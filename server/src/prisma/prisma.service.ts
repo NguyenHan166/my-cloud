@@ -11,7 +11,8 @@ import { Pool } from 'pg';
 @Injectable()
 export class PrismaService
   extends PrismaClient
-  implements OnModuleInit, OnModuleDestroy {
+  implements OnModuleInit, OnModuleDestroy
+{
   private readonly logger = new Logger(PrismaService.name);
   private pool: Pool;
 
@@ -21,22 +22,34 @@ export class PrismaService
       throw new Error('DATABASE_URL environment variable is not set');
     }
 
-    // SSL config for Supabase Pooler connection
-    // Extract schema from connection string or use default
+    // Parse connection string to extract host and schema
     const url = new URL(connectionString);
     const schema = url.searchParams.get('schema') || 'public';
+    const isLocalhost =
+      url.hostname === 'localhost' || url.hostname === '127.0.0.1';
 
-    const pool = new Pool({
+    console.log(
+      `[PrismaService] Connecting to database at ${url.hostname} (localhost: ${isLocalhost})`,
+    );
+
+    // Configure pool based on connection type
+    const poolConfig: any = {
       connectionString,
-      ssl: {
+      // Higher limits for local, lower for cloud (Supabase pooler)
+      max: isLocalhost ? 10 : 5,
+      min: isLocalhost ? 2 : 1,
+      idleTimeoutMillis: isLocalhost ? 30000 : 10000,
+      connectionTimeoutMillis: 5000,
+    };
+
+    // Only enable SSL for non-localhost connections (cloud databases)
+    if (!isLocalhost) {
+      poolConfig.ssl = {
         rejectUnauthorized: false, // Required for Supabase pooler with self-signed cert
-      },
-      // Connection pool configuration for performance
-      max: 20, // Maximum connections in pool
-      min: 5, // Minimum connections to maintain
-      idleTimeoutMillis: 30000, // Close idle connections after 30s
-      connectionTimeoutMillis: 5000, // Fail fast if can't connect in 5s
-    });
+      };
+    }
+
+    const pool = new Pool(poolConfig);
 
     // Use PrismaPg schema option for custom schema support
     const adapter = new PrismaPg(pool, { schema });

@@ -23,6 +23,13 @@ import NotesPage from "./pages/notes/NotesPage";
 import ProfilePage from "./pages/settings/ProfilePage";
 import SettingsPage from "./pages/settings/SettingsPage";
 import TrashPage from "./pages/trash/TrashPage";
+import ToolsPage from "./pages/tools/ToolsPage";
+import QRGeneratorPage from "./pages/tools/QRGeneratorPage";
+import VietQRPage from "./pages/tools/VietQRPage";
+import CryptoToolboxPage from "./pages/tools/CryptoToolboxPage";
+import LunarCalendarPage from "./pages/tools/LunarCalendarPage";
+import CodeFormatterPage from "./pages/tools/CodeFormatterPage";
+import ColorPickerPage from "./pages/tools/ColorPickerPage";
 
 const queryClient = new QueryClient({
     defaultOptions: {
@@ -139,6 +146,76 @@ function App() {
                                     <ProtectedRoute>
                                         <AppLayout>
                                             <SettingsPage />
+                                        </AppLayout>
+                                    </ProtectedRoute>
+                                }
+                            />
+                            <Route
+                                path="/tools"
+                                element={
+                                    <ProtectedRoute>
+                                        <AppLayout>
+                                            <ToolsPage />
+                                        </AppLayout>
+                                    </ProtectedRoute>
+                                }
+                            />
+                            <Route
+                                path="/tools/qr-generator"
+                                element={
+                                    <ProtectedRoute>
+                                        <AppLayout>
+                                            <QRGeneratorPage />
+                                        </AppLayout>
+                                    </ProtectedRoute>
+                                }
+                            />
+                            <Route
+                                path="/tools/vietqr"
+                                element={
+                                    <ProtectedRoute>
+                                        <AppLayout>
+                                            <VietQRPage />
+                                        </AppLayout>
+                                    </ProtectedRoute>
+                                }
+                            />
+                            <Route
+                                path="/tools/crypto"
+                                element={
+                                    <ProtectedRoute>
+                                        <AppLayout>
+                                            <CryptoToolboxPage />
+                                        </AppLayout>
+                                    </ProtectedRoute>
+                                }
+                            />
+                            <Route
+                                path="/tools/calendar"
+                                element={
+                                    <ProtectedRoute>
+                                        <AppLayout>
+                                            <LunarCalendarPage />
+                                        </AppLayout>
+                                    </ProtectedRoute>
+                                }
+                            />
+                            <Route
+                                path="/tools/formatter"
+                                element={
+                                    <ProtectedRoute>
+                                        <AppLayout>
+                                            <CodeFormatterPage />
+                                        </AppLayout>
+                                    </ProtectedRoute>
+                                }
+                            />
+                            <Route
+                                path="/tools/color-picker"
+                                element={
+                                    <ProtectedRoute>
+                                        <AppLayout>
+                                            <ColorPickerPage />
                                         </AppLayout>
                                     </ProtectedRoute>
                                 }
