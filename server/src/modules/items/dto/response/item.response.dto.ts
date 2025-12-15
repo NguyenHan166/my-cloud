@@ -78,6 +78,12 @@ export class ItemResponseDto {
   content?: string;
 
   @ApiPropertyOptional({
+    description: 'Content type/language for NOTE (e.g., javascript, python, json)',
+    example: 'javascript',
+  })
+  contentType?: string;
+
+  @ApiPropertyOptional({
     description: 'Tags as text for search',
     example: 'Work, Important',
   })

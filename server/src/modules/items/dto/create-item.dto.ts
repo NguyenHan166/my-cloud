@@ -70,6 +70,15 @@ export class CreateItemDto {
   content?: string;
 
   @ApiPropertyOptional({
+    description:
+      'Content type/language for NOTE (e.g., javascript, python, json, markdown)',
+    example: 'javascript',
+  })
+  @IsOptional()
+  @IsString()
+  contentType?: string;
+
+  @ApiPropertyOptional({
     description: 'Optional description',
     example: 'Notes about neural networks',
   })

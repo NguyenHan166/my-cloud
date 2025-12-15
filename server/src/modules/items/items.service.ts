@@ -18,7 +18,7 @@ export class ItemsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly uploadService: UploadService,
-  ) {}
+  ) { }
 
   /**
    * Response type for item operations with message
@@ -42,9 +42,9 @@ export class ItemsService {
         ...itemFile,
         file: itemFile.file
           ? {
-              ...itemFile.file,
-              url: this.uploadService.getPublicUrl(itemFile.file.storageKey),
-            }
+            ...itemFile.file,
+            url: this.uploadService.getPublicUrl(itemFile.file.storageKey),
+          }
           : itemFile.file,
       })),
     };
@@ -104,10 +104,11 @@ export class ItemsService {
           'Content is required for NOTE type items',
         );
       }
-      const item = await this.createNoteItem(itemData, userId, tagIds, newTags);
+      const item = await this.createNoteItem(itemData, userId, tagIds, newTags, files);
+      const attachmentMsg = files?.length ? ` with ${files.length} attachment(s)` : '';
       return this.itemResponse(
         item,
-        `Note "${item.title}" created successfully`,
+        `Note "${item.title}" created successfully${attachmentMsg}`,
       );
     }
 
@@ -167,8 +168,8 @@ export class ItemsService {
             tagsText,
             itemTags: allTagIds.length
               ? {
-                  create: allTagIds.map((tagId) => ({ tagId })),
-                }
+                create: allTagIds.map((tagId) => ({ tagId })),
+              }
               : undefined,
           },
         });
@@ -263,14 +264,17 @@ export class ItemsService {
 
   /**
    * Create NOTE type item with transaction
+   * Supports optional file attachments
    */
   private async createNoteItem(
     data: Omit<CreateItemDto, 'type' | 'tagIds' | 'newTags'>,
     userId: string,
     tagIds?: string[],
     newTags?: NewTagDto[],
+    files?: Express.Multer.File[],
   ): Promise<Item> {
-    return this.prisma.$transaction(async (tx) => {
+    // First create the note item
+    const item = await this.prisma.$transaction(async (tx) => {
       const allTagIds = await this.processTagsInTransaction(
         tx,
         userId,
@@ -284,6 +288,7 @@ export class ItemsService {
           userId,
           type: 'NOTE',
           content: data.content,
+          contentType: data.contentType || 'plaintext',
           title: data.title,
           description: data.description,
           category: data.category,
@@ -297,6 +302,15 @@ export class ItemsService {
         include: this.getItemInclude(),
       });
     });
+
+    // Add files if provided (outside transaction for R2 operations)
+    if (files?.length) {
+      await this.addFilesToItem(item.id, files, userId);
+      // Refetch item with files
+      return this.findById(item.id);
+    }
+
+    return item;
   }
 
   /**
@@ -457,13 +471,13 @@ export class ItemsService {
 
     const { tagIds, newTags, removeFileIds, files, ...updateData } = data;
 
-    // Handle file removal for FILE type (outside transaction for R2 operations)
-    if (removeFileIds?.length && existingItem.type === 'FILE') {
+    // Handle file removal for FILE and NOTE types (outside transaction for R2 operations)
+    if (removeFileIds?.length && (existingItem.type === 'FILE' || existingItem.type === 'NOTE')) {
       await this.removeFilesFromItem(id, removeFileIds, userId);
     }
 
-    // Handle adding new files for FILE type
-    if (newFiles?.length && existingItem.type === 'FILE') {
+    // Handle adding new files for FILE and NOTE types
+    if (newFiles?.length && (existingItem.type === 'FILE' || existingItem.type === 'NOTE')) {
       await this.addFilesToItem(id, newFiles, userId);
     }
 

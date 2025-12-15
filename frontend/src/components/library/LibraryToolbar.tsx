@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import type { ItemType, Importance, QueryItemsDto } from "@/types/item.types";
 import {
     Search,
@@ -40,6 +40,7 @@ export default function LibraryToolbar({
     const [showFilters, setShowFilters] = useState(false);
     const [tags, setTags] = useState<Tag[]>([]);
     const [isLoadingTags, setIsLoadingTags] = useState(true);
+    const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     // Fetch tags for filter
     useEffect(() => {
@@ -66,12 +67,41 @@ export default function LibraryToolbar({
         }
     }, [filters.tagIds]);
 
-    const handleSearchChange = (value: string) => {
-        setSearchTerm(value);
-        const timer = setTimeout(() => {
-            onSearchChange(value);
+    // Debounced search effect
+    useEffect(() => {
+        // Clear previous timer
+        if (debounceTimerRef.current) {
+            clearTimeout(debounceTimerRef.current);
+        }
+
+        // Set new timer for 500ms debounce
+        debounceTimerRef.current = setTimeout(() => {
+            if (searchTerm !== (filters.search || "")) {
+                onSearchChange(searchTerm);
+            }
         }, 500);
-        return () => clearTimeout(timer);
+
+        // Cleanup on unmount or when searchTerm changes
+        return () => {
+            if (debounceTimerRef.current) {
+                clearTimeout(debounceTimerRef.current);
+            }
+        };
+    }, [searchTerm]);
+
+    // Handle immediate search (for Enter key or button click)
+    const handleImmediateSearch = useCallback(() => {
+        if (debounceTimerRef.current) {
+            clearTimeout(debounceTimerRef.current);
+        }
+        onSearchChange(searchTerm);
+    }, [searchTerm, onSearchChange]);
+
+    // Handle Enter key press
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (e.key === "Enter") {
+            handleImmediateSearch();
+        }
     };
 
     const selectedTagId = filters.tagIds?.[0];
@@ -111,9 +141,19 @@ export default function LibraryToolbar({
                         type="text"
                         placeholder="Search..."
                         value={searchTerm}
-                        onChange={(e) => handleSearchChange(e.target.value)}
-                        className="w-full h-9 pl-9 pr-3 text-sm border border-neutral-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500"
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        onKeyDown={handleKeyDown}
+                        className="w-full h-9 pl-9 pr-10 text-sm border border-neutral-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500"
                     />
+                    {/* Search button - visible on mobile */}
+                    <button
+                        type="button"
+                        onClick={handleImmediateSearch}
+                        className="absolute right-1.5 top-1/2 -translate-y-1/2 h-6 w-6 flex items-center justify-center bg-sky-500 text-white rounded-md hover:bg-sky-600 transition-colors sm:hidden"
+                        title="Search"
+                    >
+                        <Search className="w-3.5 h-3.5" />
+                    </button>
                 </div>
 
                 {/* View toggle */}

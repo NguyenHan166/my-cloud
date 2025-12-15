@@ -11,6 +11,7 @@ import {
     Eye,
     FolderPlus,
     Share2,
+    Copy,
 } from "lucide-react";
 import type { Item } from "@/types/item.types";
 import {
@@ -19,6 +20,8 @@ import {
 } from "@/lib/utils/item.utils";
 import Badge from "@/components/ui/Badge";
 import Button from "@/components/ui/Button";
+import MonacoEditor from "@/components/ui/MonacoEditor";
+import { getLanguageLabel } from "@/lib/constants/languageOptions";
 import FilePreviewModal from "./FilePreviewModal";
 import { AddToCollectionModal } from "@/components/collections";
 import ShareLinkModal from "@/components/shared/ShareLinkModal";
@@ -46,6 +49,7 @@ export default function ItemDetailPanel({
     const [previewIndex, setPreviewIndex] = useState(0);
     const [showAddToCollection, setShowAddToCollection] = useState(false);
     const [showShareModal, setShowShareModal] = useState(false);
+    const [noteDisplayMode, setNoteDisplayMode] = useState<string | null>(null);
 
     // Handle open/close animation
     useEffect(() => {
@@ -170,84 +174,186 @@ export default function ItemDetailPanel({
 
                         {/* Content for NOTE type */}
                         {item.type === "NOTE" && item.content && (
-                            <div className="bg-amber-50 rounded-xl p-4 border border-amber-200">
-                                <pre className="whitespace-pre-wrap text-neutral-700 text-sm font-sans leading-relaxed">
-                                    {item.content}
-                                </pre>
+                            <div className="rounded-xl overflow-hidden border border-amber-200 dark:border-amber-800">
+                                <div className="flex items-center justify-between px-3 py-2 bg-amber-50 dark:bg-amber-900/30 border-b border-amber-200 dark:border-amber-800">
+                                    <span className="text-xs font-medium text-amber-700 dark:text-amber-400">
+                                        📝 Note Content
+                                    </span>
+                                    <div className="flex items-center gap-2">
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                navigator.clipboard.writeText(
+                                                    item.content || ""
+                                                );
+                                                // Optional: show a toast notification
+                                            }}
+                                            className="flex items-center gap-1 text-xs text-amber-600 dark:text-amber-400 hover:text-amber-700 dark:hover:text-amber-300 bg-amber-100 dark:bg-amber-900 hover:bg-amber-200 dark:hover:bg-amber-800 px-2 py-1 rounded transition-colors"
+                                            title="Copy content"
+                                        >
+                                            <Copy className="w-3.5 h-3.5" />
+                                            Copy
+                                        </button>
+                                        <span className="text-xs bg-amber-100 dark:bg-amber-900 text-amber-600 dark:text-amber-400 px-2 py-0.5 rounded">
+                                            {getLanguageLabel(
+                                                noteDisplayMode ||
+                                                    item.contentType ||
+                                                    "plaintext"
+                                            )}
+                                        </span>
+                                    </div>
+                                </div>
+                                <MonacoEditor
+                                    value={item.content}
+                                    onChange={() => {}}
+                                    language={
+                                        noteDisplayMode ||
+                                        item.contentType ||
+                                        "plaintext"
+                                    }
+                                    onLanguageChange={setNoteDisplayMode}
+                                    height="300px"
+                                    readOnly={true}
+                                />
                             </div>
                         )}
 
-                        {/* Files List */}
-                        {item.type === "FILE" &&
+                        {/* Attachments for NOTE type */}
+                        {item.type === "NOTE" &&
                             item.files &&
                             item.files.length > 0 && (
-                                <div className="bg-white rounded-xl border border-neutral-200 shadow-sm overflow-hidden">
-                                    <div className="px-4 py-3 bg-neutral-50 border-b border-neutral-200">
-                                        <span className="text-sm font-semibold text-neutral-700">
-                                            📁 Files ({item.files.length})
+                                <div className="bg-white dark:bg-neutral-800 rounded-xl border border-neutral-200 dark:border-neutral-700 shadow-sm overflow-hidden">
+                                    <div className="px-4 py-3 bg-neutral-50 dark:bg-neutral-900 border-b border-neutral-200 dark:border-neutral-700">
+                                        <span className="text-sm font-semibold text-neutral-700 dark:text-neutral-300">
+                                            📎 Attachments ({item.files.length})
                                         </span>
                                     </div>
-                                    <div className="divide-y divide-neutral-100">
+                                    <div className="p-3 grid grid-cols-2 gap-2">
                                         {item.files.map((itemFile, index) => {
                                             const file = itemFile.file;
+                                            const isImage =
+                                                file?.mimeType?.startsWith(
+                                                    "image/"
+                                                );
                                             return (
                                                 <div
                                                     key={itemFile.id}
-                                                    className="flex items-center gap-3 px-4 py-3 hover:bg-neutral-50 transition-colors cursor-pointer group"
+                                                    className="relative group cursor-pointer rounded-lg overflow-hidden border border-neutral-200 dark:border-neutral-700"
                                                     onClick={() => {
                                                         setPreviewIndex(index);
                                                         setPreviewOpen(true);
                                                     }}
                                                 >
-                                                    {itemFile.isPrimary && (
-                                                        <Badge
-                                                            variant="primary"
-                                                            size="sm"
-                                                        >
-                                                            ★
-                                                        </Badge>
-                                                    )}
-                                                    <div className="flex-1 min-w-0">
-                                                        <p className="text-sm font-medium text-neutral-900 truncate group-hover:text-sky-600 transition-colors">
-                                                            {file?.originalName ||
-                                                                "Unnamed"}
-                                                        </p>
-                                                        <p className="text-xs text-neutral-500">
-                                                            {file?.mimeType}
-                                                        </p>
-                                                    </div>
-                                                    <div className="flex items-center gap-1">
-                                                        <button
-                                                            type="button"
-                                                            onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                setPreviewIndex(
-                                                                    index
-                                                                );
-                                                                setPreviewOpen(
-                                                                    true
-                                                                );
-                                                            }}
-                                                            className="p-2 text-neutral-400 hover:text-sky-600 hover:bg-sky-50 rounded-lg transition-colors"
-                                                            title="Preview"
-                                                        >
-                                                            <Eye className="w-4 h-4" />
-                                                        </button>
-                                                        {file?.url && (
-                                                            <a
-                                                                href={file.url}
-                                                                target="_blank"
-                                                                rel="noopener noreferrer"
-                                                                className="p-2 text-neutral-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors"
-                                                                onClick={(e) =>
-                                                                    e.stopPropagation()
+                                                    {isImage && file?.url ? (
+                                                        <img
+                                                            src={file.url}
+                                                            alt={
+                                                                file.originalName
+                                                            }
+                                                            className="w-full h-24 object-cover group-hover:scale-105 transition-transform"
+                                                        />
+                                                    ) : (
+                                                        <div className="w-full h-24 bg-neutral-100 dark:bg-neutral-700 flex items-center justify-center">
+                                                            <span className="text-xs text-neutral-500">
+                                                                {
+                                                                    file?.originalName
                                                                 }
-                                                                title="Download"
-                                                            >
-                                                                <Download className="w-4 h-4" />
-                                                            </a>
-                                                        )}
+                                                            </span>
+                                                        </div>
+                                                    )}
+                                                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center">
+                                                        <Eye className="w-5 h-5 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
                                                     </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            )}
+
+                        {/* File Preview Modal for NOTE attachments */}
+                        {item.type === "NOTE" &&
+                            item.files &&
+                            item.files.length > 0 && (
+                                <FilePreviewModal
+                                    files={item.files}
+                                    initialIndex={previewIndex}
+                                    isOpen={previewOpen}
+                                    onClose={() => setPreviewOpen(false)}
+                                />
+                            )}
+
+                        {/* Files Gallery */}
+                        {item.type === "FILE" &&
+                            item.files &&
+                            item.files.length > 0 && (
+                                <div className="bg-white dark:bg-neutral-800 rounded-xl border border-neutral-200 dark:border-neutral-700 shadow-sm overflow-hidden">
+                                    <div className="px-4 py-3 bg-neutral-50 dark:bg-neutral-900 border-b border-neutral-200 dark:border-neutral-700">
+                                        <span className="text-sm font-semibold text-neutral-700 dark:text-neutral-300">
+                                            📁 Files ({item.files.length})
+                                        </span>
+                                    </div>
+                                    <div className="p-3 grid grid-cols-2 gap-2">
+                                        {item.files.map((itemFile, index) => {
+                                            const file = itemFile.file;
+                                            const isImage =
+                                                file?.mimeType?.startsWith(
+                                                    "image/"
+                                                );
+                                            const isVideo =
+                                                file?.mimeType?.startsWith(
+                                                    "video/"
+                                                );
+                                            return (
+                                                <div
+                                                    key={itemFile.id}
+                                                    className="relative group cursor-pointer rounded-lg overflow-hidden border border-neutral-200 dark:border-neutral-700"
+                                                    onClick={() => {
+                                                        setPreviewIndex(index);
+                                                        setPreviewOpen(true);
+                                                    }}
+                                                >
+                                                    {isImage && file?.url ? (
+                                                        <img
+                                                            src={file.url}
+                                                            alt={
+                                                                file.originalName
+                                                            }
+                                                            className="w-full h-28 object-cover group-hover:scale-105 transition-transform"
+                                                        />
+                                                    ) : isVideo && file?.url ? (
+                                                        <video
+                                                            src={file.url}
+                                                            className="w-full h-28 object-cover"
+                                                            muted
+                                                        />
+                                                    ) : (
+                                                        <div className="w-full h-28 bg-neutral-100 dark:bg-neutral-700 flex flex-col items-center justify-center gap-1">
+                                                            <Download className="w-6 h-6 text-neutral-400" />
+                                                            <span className="text-xs text-neutral-500 px-2 text-center truncate w-full">
+                                                                {file?.mimeType
+                                                                    ?.split(
+                                                                        "/"
+                                                                    )[1]
+                                                                    ?.toUpperCase() ||
+                                                                    "FILE"}
+                                                            </span>
+                                                        </div>
+                                                    )}
+                                                    {/* Primary badge */}
+                                                    {itemFile.isPrimary && (
+                                                        <div className="absolute top-1 left-1 bg-sky-500 text-white text-xs px-1.5 py-0.5 rounded">
+                                                            ★
+                                                        </div>
+                                                    )}
+                                                    {/* Hover overlay */}
+                                                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex items-center justify-center gap-2">
+                                                        <Eye className="w-5 h-5 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                                                    </div>
+                                                    {/* Filename */}
+                                                    <p className="absolute bottom-0 left-0 right-0 bg-black/60 text-white text-xs p-1.5 truncate">
+                                                        {file?.originalName}
+                                                    </p>
                                                 </div>
                                             );
                                         })}

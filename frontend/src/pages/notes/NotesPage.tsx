@@ -27,6 +27,8 @@ import ErrorState from "@/components/ui/ErrorState";
 import CreateItemModal from "@/components/library/CreateItemModal";
 import ConfirmModal from "@/components/ui/ConfirmModal";
 import Badge from "@/components/ui/Badge";
+import MonacoEditor from "@/components/ui/MonacoEditor";
+import { getLanguageLabel } from "@/lib/constants/languageOptions";
 
 export default function NotesPage() {
     const queryClient = useQueryClient();
@@ -43,6 +45,9 @@ export default function NotesPage() {
     const [editItem, setEditItem] = useState<Item | null>(null);
     const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
     const [previewNote, setPreviewNote] = useState<Item | null>(null);
+    const [previewDisplayMode, setPreviewDisplayMode] = useState<string | null>(
+        null
+    );
 
     // Fetch notes only
     const filters: QueryItemsDto = {
@@ -540,28 +545,62 @@ export default function NotesPage() {
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
                     <div
                         className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-                        onClick={() => setPreviewNote(null)}
+                        onClick={() => {
+                            setPreviewNote(null);
+                            setPreviewDisplayMode(null);
+                        }}
                     />
-                    <div className="relative bg-white dark:bg-neutral-900 rounded-2xl shadow-2xl w-full max-w-2xl max-h-[80vh] overflow-hidden">
+                    <div className="relative bg-white dark:bg-neutral-900 rounded-2xl shadow-2xl w-full max-w-3xl max-h-[85vh] overflow-hidden">
                         <div className="p-6 border-b border-neutral-200 dark:border-neutral-700">
-                            <h2 className="text-xl font-bold text-neutral-900 dark:text-neutral-100">
-                                {previewNote.title}
-                            </h2>
-                            <p className="text-sm text-neutral-500 mt-1">
-                                {formatDate(previewNote.createdAt)}
-                            </p>
+                            <div className="flex items-start justify-between">
+                                <div>
+                                    <h2 className="text-xl font-bold text-neutral-900 dark:text-neutral-100">
+                                        {previewNote.title}
+                                    </h2>
+                                    <div className="flex items-center gap-3 mt-1">
+                                        <span className="text-sm text-neutral-500">
+                                            {formatDate(previewNote.createdAt)}
+                                        </span>
+                                        <span className="text-xs bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400 px-2 py-0.5 rounded">
+                                            {getLanguageLabel(
+                                                previewDisplayMode ||
+                                                    previewNote.contentType ||
+                                                    "plaintext"
+                                            )}
+                                        </span>
+                                    </div>
+                                </div>
+                                <button
+                                    onClick={() => {
+                                        setPreviewNote(null);
+                                        setPreviewDisplayMode(null);
+                                    }}
+                                    className="p-2 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-lg"
+                                >
+                                    <X className="w-5 h-5 text-neutral-500" />
+                                </button>
+                            </div>
                         </div>
-                        <div className="p-6 overflow-y-auto max-h-[60vh]">
-                            <p className="text-neutral-700 dark:text-neutral-300 whitespace-pre-wrap leading-relaxed">
-                                {previewNote.content}
-                            </p>
+                        <div className="overflow-y-auto max-h-[60vh]">
+                            <MonacoEditor
+                                value={previewNote.content || ""}
+                                onChange={() => {}}
+                                language={
+                                    previewDisplayMode ||
+                                    previewNote.contentType ||
+                                    "plaintext"
+                                }
+                                onLanguageChange={setPreviewDisplayMode}
+                                height="400px"
+                                readOnly={true}
+                            />
                         </div>
-                        <div className="p-4 border-t border-neutral-200 flex justify-end gap-2">
+                        <div className="p-4 border-t border-neutral-200 dark:border-neutral-700 flex justify-end gap-2">
                             <button
                                 onClick={() =>
                                     copyContent(previewNote.content || "")
                                 }
-                                className="px-4 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-100 rounded-lg"
+                                className="px-4 py-2 text-sm font-medium text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-lg"
                             >
                                 <Copy className="w-4 h-4 inline mr-2" /> Copy
                             </button>
@@ -570,6 +609,7 @@ export default function NotesPage() {
                                     setEditItem(previewNote);
                                     setIsCreateModalOpen(true);
                                     setPreviewNote(null);
+                                    setPreviewDisplayMode(null);
                                 }}
                                 className="px-4 py-2 text-sm font-medium text-white bg-amber-500 hover:bg-amber-600 rounded-lg"
                             >

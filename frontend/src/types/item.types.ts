@@ -65,6 +65,7 @@ export interface Item {
     url?: string; // For LINK type
     domain?: string; // Extracted from URL
     content?: string; // For NOTE type
+    contentType?: string; // Language/format for NOTE content
     tagsText?: string; // For search
     files: ItemFile[];
     itemTags: ItemTag[];
@@ -78,6 +79,7 @@ export interface CreateItemDto {
     title: string;
     url?: string; // Required if type === LINK
     content?: string; // Required if type === NOTE
+    contentType?: string; // Language/format for NOTE
     description?: string;
     category?: string;
     project?: string;
@@ -102,6 +104,7 @@ export interface UpdateItemDto {
     removeFileIds?: string[]; // File IDs to remove
     url?: string; // For LINK type
     content?: string; // For NOTE type
+    contentType?: string; // Language/format for NOTE
 }
 
 export interface QueryItemsDto {

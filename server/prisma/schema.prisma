@@ -108,6 +108,7 @@ model Item {
   type        ItemType   @default(FILE)
   url         String? // Neu type = LINK
   content     String?    @db.Text // Noi dung note (neu type = NOTE)
+  contentType String?    @default("plaintext") // Language identifier for NOTE: "javascript", "python", "json"...
   title       String
   description String?
   thumbnail   String? // URL thumbnail cho preview (link/video)

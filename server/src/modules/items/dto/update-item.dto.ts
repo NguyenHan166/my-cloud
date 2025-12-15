@@ -56,6 +56,13 @@ export class UpdateItemDto {
   @IsString()
   content?: string;
 
+  @ApiPropertyOptional({
+    description: 'Update content type/language (e.g., javascript, python, json)',
+  })
+  @IsOptional()
+  @IsString()
+  contentType?: string;
+
   @ApiPropertyOptional({ description: 'Update description' })
   @IsOptional()
   @IsString()

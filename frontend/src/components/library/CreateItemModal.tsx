@@ -15,6 +15,7 @@ import { itemsApi } from "@/lib/api/endpoints/items";
 import { tagsApi } from "@/lib/api/endpoints/tags";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
+import MonacoEditor from "@/components/ui/MonacoEditor";
 import FileUploader from "./FileUploader";
 import TagSelector from "./TagSelector";
 
@@ -38,6 +39,7 @@ export default function CreateItemModal({
     const [description, setDescription] = useState("");
     const [url, setUrl] = useState("");
     const [content, setContent] = useState("");
+    const [contentType, setContentType] = useState("plaintext");
     const [category, setCategory] = useState("");
     const [project, setProject] = useState("");
     const [importance, setImportance] = useState<Importance>("MEDIUM");
@@ -56,6 +58,7 @@ export default function CreateItemModal({
             setDescription(editItem.description || "");
             setUrl(editItem.url || "");
             setContent(editItem.content || "");
+            setContentType(editItem.contentType || "plaintext");
             setCategory(editItem.category || "");
             setProject(editItem.project || "");
             setImportance(editItem.importance || "MEDIUM");
@@ -87,12 +90,15 @@ export default function CreateItemModal({
                 importance,
                 url: type === "LINK" ? url : undefined,
                 content: type === "NOTE" ? content : undefined,
+                contentType: type === "NOTE" ? contentType : undefined,
                 tagIds: selectedTagIds.length > 0 ? selectedTagIds : undefined,
             };
 
             return itemsApi.createItem(
                 itemData,
-                type === "FILE" && files.length > 0 ? files : undefined
+                (type === "FILE" || type === "NOTE") && files.length > 0
+                    ? files
+                    : undefined
             );
         },
         onSuccess: () => {
@@ -122,6 +128,7 @@ export default function CreateItemModal({
                     importance,
                     url: type === "LINK" ? url : undefined,
                     content: type === "NOTE" ? content : undefined,
+                    contentType: type === "NOTE" ? contentType : undefined,
                     tagIds:
                         selectedTagIds.length > 0 ? selectedTagIds : undefined,
                     removeFileIds:
@@ -163,6 +170,7 @@ export default function CreateItemModal({
         setDescription("");
         setUrl("");
         setContent("");
+        setContentType("plaintext");
         setCategory("");
         setProject("");
         setImportance("MEDIUM");
@@ -360,18 +368,91 @@ export default function CreateItemModal({
                     )}
 
                     {type === "NOTE" && (
-                        <div>
-                            <label className="block text-sm font-semibold text-neutral-700 mb-2">
-                                Content <span className="text-red-500">*</span>
-                            </label>
-                            <textarea
-                                value={content}
-                                onChange={(e) => setContent(e.target.value)}
-                                placeholder="Write your note..."
-                                rows={6}
-                                required
-                                className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500 resize-none"
-                            />
+                        <div className="space-y-4">
+                            <div>
+                                <label className="block text-sm font-semibold text-neutral-700 dark:text-neutral-300 mb-2">
+                                    Content{" "}
+                                    <span className="text-red-500">*</span>
+                                </label>
+                                <MonacoEditor
+                                    value={content}
+                                    onChange={setContent}
+                                    language={contentType}
+                                    onLanguageChange={setContentType}
+                                    height="300px"
+                                />
+                            </div>
+
+                            {/* Attachments for NOTE */}
+                            <div>
+                                <label className="block text-sm font-semibold text-neutral-700 dark:text-neutral-300 mb-2">
+                                    📎 Attachments (Images)
+                                </label>
+
+                                {/* Existing attachments (edit mode) */}
+                                {isEditMode && existingFiles.length > 0 && (
+                                    <div className="mb-3">
+                                        <p className="text-xs text-neutral-500 mb-2">
+                                            Current attachments:
+                                        </p>
+                                        <div className="grid grid-cols-3 gap-2">
+                                            {existingFiles.map((itemFile) => {
+                                                const file = itemFile.file;
+                                                const isImage =
+                                                    file?.mimeType?.startsWith(
+                                                        "image/"
+                                                    );
+                                                return (
+                                                    <div
+                                                        key={itemFile.id}
+                                                        className="relative group rounded-lg overflow-hidden border border-neutral-200 dark:border-neutral-700"
+                                                    >
+                                                        {isImage &&
+                                                        file?.url ? (
+                                                            <img
+                                                                src={file.url}
+                                                                alt={
+                                                                    file.originalName
+                                                                }
+                                                                className="w-full h-20 object-cover"
+                                                            />
+                                                        ) : (
+                                                            <div className="w-full h-20 bg-neutral-100 dark:bg-neutral-700 flex items-center justify-center">
+                                                                <File className="w-6 h-6 text-neutral-400" />
+                                                            </div>
+                                                        )}
+                                                        <button
+                                                            type="button"
+                                                            onClick={() =>
+                                                                handleRemoveExistingFile(
+                                                                    itemFile.fileId
+                                                                )
+                                                            }
+                                                            className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                                                            title="Remove"
+                                                        >
+                                                            <Trash2 className="w-3 h-3" />
+                                                        </button>
+                                                        <p className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-xs p-1 truncate">
+                                                            {file?.originalName}
+                                                        </p>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+                                )}
+
+                                <FileUploader
+                                    files={files}
+                                    onFilesChange={setFiles}
+                                    accept="image/*"
+                                    maxFiles={10}
+                                />
+                                <p className="text-xs text-neutral-500 mt-1">
+                                    Drag & drop images or click to upload
+                                </p>
+                            </div>
                         </div>
                     )}
 
