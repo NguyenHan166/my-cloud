@@ -118,14 +118,23 @@ export class ChunkedUploader {
                 size: this.file.size,
             });
 
+            console.log("[ChunkedUploader] Raw response:", response);
+            console.log("[ChunkedUploader] response.data:", response.data);
+            console.log(
+                "[ChunkedUploader] response.data.data:",
+                response.data.data
+            );
+
             // Backend wraps response in {success, data, timestamp}
             this.session = response.data.data;
+            console.log("[ChunkedUploader] Extracted session:", this.session);
+
             if (!this.session) {
                 throw new Error("Failed to create upload session");
             }
             this.saveSession();
             console.log(
-                `[ChunkedUploader] Started new upload: ${this.session.totalParts} parts`
+                `[ChunkedUploader] Started new upload: sessionId=${this.session.sessionId}, totalParts=${this.session.totalParts}`
             );
         }
     }
@@ -253,12 +262,24 @@ export class ChunkedUploader {
     private async complete(): Promise<{ key: string; url: string }> {
         if (!this.session) throw new Error("No upload session");
 
+        console.log(
+            "[ChunkedUploader] Completing upload, session:",
+            this.session
+        );
+        console.log("[ChunkedUploader] sessionId:", this.session.sessionId);
+        console.log(
+            "[ChunkedUploader] uploadedParts size:",
+            this.uploadedParts.size
+        );
+
         const parts = Array.from(this.uploadedParts.entries())
             .map(([partNumber, etag]) => ({
                 PartNumber: partNumber,
                 ETag: etag,
             }))
             .sort((a, b) => a.PartNumber - b.PartNumber);
+
+        console.log("[ChunkedUploader] Completing with", parts.length, "parts");
 
         const response = await apiClient.post(
             `/upload/chunked/${this.session.sessionId}/complete`,
