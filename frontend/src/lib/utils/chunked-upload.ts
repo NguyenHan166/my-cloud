@@ -205,9 +205,54 @@ export class ChunkedUploader {
     }
 
     /**
-     * Upload a single part
+     * Upload a single part with retry logic
      */
     private async uploadPart(partNumber: number): Promise<void> {
+        const maxRetries = 5;
+        let lastError: Error | null = null;
+
+        for (let attempt = 0; attempt <= maxRetries; attempt++) {
+            try {
+                await this.uploadPartAttempt(partNumber);
+                return; // Success!
+            } catch (error) {
+                lastError = error as Error;
+
+                // Check if error is retryable
+                const is429 =
+                    error instanceof Error && error.message.includes("429");
+                const isTimeout =
+                    error instanceof Error && error.name === "AbortError";
+                const isNetworkError =
+                    error instanceof Error &&
+                    (error.message.includes("fetch") ||
+                        error.message.includes("network") ||
+                        error.message.includes("Failed to upload"));
+
+                const isRetryable = is429 || isTimeout || isNetworkError;
+
+                if (!isRetryable || attempt === maxRetries) {
+                    throw error; // Non-retryable or max retries reached
+                }
+
+                // Exponential backoff: 1s, 2s, 4s, 8s, 16s
+                const delayMs = Math.min(1000 * Math.pow(2, attempt), 16000);
+                console.warn(
+                    `[ChunkedUploader] Part ${partNumber} failed (attempt ${attempt + 1}/${maxRetries + 1}), retrying in ${delayMs / 1000}s...`,
+                    error
+                );
+
+                await new Promise((resolve) => setTimeout(resolve, delayMs));
+            }
+        }
+
+        throw lastError || new Error(`Failed to upload part ${partNumber}`);
+    }
+
+    /**
+     * Single upload attempt for a part
+     */
+    private async uploadPartAttempt(partNumber: number): Promise<void> {
         if (!this.session) throw new Error("No upload session");
 
         const { chunkSize } = this.session;
