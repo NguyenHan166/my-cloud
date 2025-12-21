@@ -12,7 +12,7 @@
     "start:dev": "nest start --watch",
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/main.js",
-    "railway:start": "npm run build && npx prisma migrate deploy && node dist/main.js",
+    "railway:start": "npm run build && echo '--- DIST TREE ---' && ls -la dist && find dist -maxdepth 4 -name main.js -print && npx prisma migrate deploy && node dist/main.js",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
     "test": "jest",
     "test:watch": "jest --watch",
