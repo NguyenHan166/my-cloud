@@ -414,7 +414,7 @@ export class ItemsService {
             itemTags: allTagIds.length
               ? { create: allTagIds.map((tagId) => ({ tagId })) }
               : undefined,
-            itemFiles: {
+            files: {
               create: {
                 fileId: fileRecord.id,
                 position: 0,
