@@ -1,6 +1,6 @@
 # Nixpacks configuration for Railway
 [phases.setup]
-nixPkgs = ["nodejs_18", "npm"]
+nixPkgs = ["nodejs_20", "npm"]
 
 [phases.install]
 cmds = ["npm ci --omit=dev", "npm install --save-dev prisma typescript"]
