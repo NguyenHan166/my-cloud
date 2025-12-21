@@ -32,6 +32,7 @@ import {
   UsersListResponseDto,
   UpdateProfileResponseDto,
   ToggleStatusResponseDto,
+  StorageUsageResponseDto,
 } from './dto/response';
 import { UserRole } from '@prisma/client';
 
@@ -94,6 +95,21 @@ export class UsersController {
       message: 'Thông tin đã được cập nhật',
       user: this.usersService.sanitize(updated),
     };
+  }
+
+  @Get('me/storage')
+  @ApiOperation({ summary: 'Get current user storage usage' })
+  @ApiResponse({
+    status: 200,
+    description: 'Storage usage retrieved successfully.',
+    type: StorageUsageResponseDto,
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized - Invalid or missing token.',
+  })
+  async getStorageUsage(@GetUser() user: { id: string }) {
+    return this.usersService.getStorageUsage(user.id);
   }
 
   // ========== ADMIN ENDPOINTS ==========

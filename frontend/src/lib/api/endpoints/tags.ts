@@ -29,7 +29,7 @@ export interface TagWithMessageResponse {
     success: boolean;
     data: {
         message: string;
-        tag: Tag;
+        data: Tag;
     };
     timestamp: string;
 }

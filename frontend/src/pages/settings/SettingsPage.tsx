@@ -93,7 +93,7 @@ export default function SettingsPage() {
                 name: newTagName.trim().toLowerCase(),
                 color: newTagColor,
             });
-            setTags([...tags, response.data.tag]);
+            setTags([...tags, response.data.data]);
             setNewTagName("");
             setNewTagColor(TAG_COLORS[0]);
             setIsAddingTag(false);
@@ -126,7 +126,9 @@ export default function SettingsPage() {
                 color: editingTagColor,
             });
             setTags(
-                tags.map((t) => (t.id === editingTagId ? response.data.tag : t))
+                tags.map((t) =>
+                    t.id === editingTagId ? response.data.data : t
+                )
             );
             setEditingTagId(null);
             toast.success(response.data.message || "Tag updated successfully");
@@ -708,10 +710,10 @@ export default function SettingsPage() {
                                             newPassword !== confirmPassword
                                                 ? "border-red-500 focus:ring-red-500"
                                                 : confirmPassword &&
-                                                  newPassword ===
-                                                      confirmPassword
-                                                ? "border-green-500 focus:ring-green-500"
-                                                : "border-neutral-200 focus:ring-primary-500"
+                                                    newPassword ===
+                                                        confirmPassword
+                                                  ? "border-green-500 focus:ring-green-500"
+                                                  : "border-neutral-200 focus:ring-primary-500"
                                         }`}
                                     />
                                     <button

@@ -234,6 +234,9 @@ function App() {
                         {/* Toast notifications */}
                         <Toaster
                             position="top-right"
+                            containerStyle={{
+                                zIndex: 9999, // Ensure toasts appear above modals (z-50 = 50)
+                            }}
                             toastOptions={{
                                 duration: 3000,
                                 style: {

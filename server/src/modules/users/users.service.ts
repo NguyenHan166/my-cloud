@@ -286,4 +286,150 @@ export class UsersService {
       where: { id },
     });
   }
+
+  // ========== STORAGE USAGE METHODS ==========
+
+  private readonly DEFAULT_MAX_STORAGE_BYTES = BigInt(5 * 1024 * 1024 * 1024); // 5GB
+
+  /**
+   * Format bytes to GB string (always in GB for consistency)
+   */
+  private formatBytes(bytes: bigint | number): string {
+    const bytesNum = typeof bytes === 'bigint' ? Number(bytes) : bytes;
+    const gb = bytesNum / (1024 * 1024 * 1024);
+
+    // Format based on size for appropriate precision
+    if (gb >= 10) {
+      return `${gb.toFixed(1)} GB`;
+    } else if (gb >= 1) {
+      return `${gb.toFixed(2)} GB`;
+    } else if (gb >= 0.01) {
+      return `${gb.toFixed(2)} GB`;
+    } else {
+      return `${gb.toFixed(3)} GB`;
+    }
+  }
+
+  /**
+   * Get storage usage for a user
+   * Calculates actual storage from File table
+   */
+  async getStorageUsage(userId: string): Promise<{
+    usedStorageBytes: number;
+    maxStorageBytes: number;
+    usedPercentage: number;
+    itemCount: number;
+    collectionCount: number;
+    formattedUsed: string;
+    formattedMax: string;
+  }> {
+    // Get or create UserUsage record
+    let usage = await this.prisma.userUsage.findUnique({
+      where: { userId },
+    });
+
+    if (!usage) {
+      // Initialize usage record if not exists
+      usage = await this.initializeUserUsage(userId);
+    }
+
+    // Calculate actual storage from files
+    const storageResult = await this.prisma.file.aggregate({
+      where: { userId },
+      _sum: { size: true },
+    });
+
+    const usedBytes = storageResult._sum.size || BigInt(0);
+    const maxBytes = usage.maxStorageBytes || this.DEFAULT_MAX_STORAGE_BYTES;
+
+    // Get counts
+    const [itemCount, collectionCount] = await Promise.all([
+      this.prisma.item.count({ where: { userId, isTrashed: false } }),
+      this.prisma.collection.count({ where: { userId } }),
+    ]);
+
+    // Calculate percentage
+    const usedPercentage =
+      maxBytes > 0
+        ? Math.min(
+            100,
+            Math.round((Number(usedBytes) / Number(maxBytes)) * 100),
+          )
+        : 0;
+
+    return {
+      usedStorageBytes: Number(usedBytes),
+      maxStorageBytes: Number(maxBytes),
+      usedPercentage,
+      itemCount,
+      collectionCount,
+      formattedUsed: this.formatBytes(usedBytes),
+      formattedMax: this.formatBytes(maxBytes),
+    };
+  }
+
+  /**
+   * Initialize UserUsage record for a user
+   */
+  async initializeUserUsage(userId: string) {
+    return this.prisma.userUsage.create({
+      data: {
+        userId,
+        usedStorageBytes: BigInt(0),
+        maxStorageBytes: this.DEFAULT_MAX_STORAGE_BYTES,
+        itemCount: 0,
+        maxItems: 0,
+        collectionCount: 0,
+        maxCollections: 0,
+      },
+    });
+  }
+
+  /**
+   * Update storage usage after file operations (upload/delete)
+   * Should be called by ItemsService after file changes
+   */
+  async updateStorageUsage(userId: string): Promise<void> {
+    try {
+      // Calculate actual storage from files
+      const storageResult = await this.prisma.file.aggregate({
+        where: { userId },
+        _sum: { size: true },
+      });
+
+      const usedBytes = storageResult._sum.size || BigInt(0);
+
+      // Get counts
+      const [itemCount, collectionCount] = await Promise.all([
+        this.prisma.item.count({ where: { userId, isTrashed: false } }),
+        this.prisma.collection.count({ where: { userId } }),
+      ]);
+
+      // Upsert UserUsage record
+      await this.prisma.userUsage.upsert({
+        where: { userId },
+        create: {
+          userId,
+          usedStorageBytes: usedBytes,
+          maxStorageBytes: this.DEFAULT_MAX_STORAGE_BYTES,
+          itemCount,
+          collectionCount,
+        },
+        update: {
+          usedStorageBytes: usedBytes,
+          itemCount,
+          collectionCount,
+        },
+      });
+
+      this.logger.debug(
+        `Storage usage updated for user ${userId}: ${this.formatBytes(usedBytes)}`,
+      );
+    } catch (error) {
+      this.logger.error(
+        `Failed to update storage usage for user ${userId}:`,
+        error,
+      );
+    }
+  }
 }

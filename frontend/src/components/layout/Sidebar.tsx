@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
 import { tagsApi, type Tag } from "@/lib/api/endpoints/tags";
+import { storageApi, type StorageUsage } from "@/lib/api/endpoints/storage";
 
 export interface SidebarProps {
     isOpen: boolean;
@@ -35,6 +36,8 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
     const navigate = useNavigate();
     const [tags, setTags] = useState<Tag[]>([]);
     const [isLoadingTags, setIsLoadingTags] = useState(true);
+    const [storageUsage, setStorageUsage] = useState<StorageUsage | null>(null);
+    const [isLoadingStorage, setIsLoadingStorage] = useState(true);
 
     // Fetch tags from API
     useEffect(() => {
@@ -54,6 +57,25 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
         };
 
         fetchTags();
+    }, []);
+
+    // Fetch storage usage from API
+    useEffect(() => {
+        const fetchStorage = async () => {
+            try {
+                setIsLoadingStorage(true);
+                const response = await storageApi.getUsage();
+                if (response.success) {
+                    setStorageUsage(response.data);
+                }
+            } catch (error) {
+                console.error("Failed to fetch storage usage:", error);
+            } finally {
+                setIsLoadingStorage(false);
+            }
+        };
+
+        fetchStorage();
     }, []);
 
     const handleTagClick = (tag: Tag) => {
@@ -179,20 +201,38 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                     </div>
                 </div>
 
-                {/* Storage indicator (decorative) */}
+                {/* Storage indicator */}
                 <div className="p-4 mx-4 mb-4 bg-neutral-100 dark:bg-white/5 rounded-xl border border-neutral-200 dark:border-white/10">
                     <div className="flex items-center justify-between text-sm mb-2">
                         <span className="text-neutral-600 dark:text-white/70">
                             Storage
                         </span>
                         <span className="text-neutral-500 dark:text-white/50">
-                            2.4 GB / 10 GB
+                            {isLoadingStorage ? (
+                                <Loader2 className="w-3 h-3 animate-spin inline" />
+                            ) : storageUsage ? (
+                                `${storageUsage.formattedUsed} / ${storageUsage.formattedMax}`
+                            ) : (
+                                "-- / --"
+                            )}
                         </span>
                     </div>
                     <div className="h-2 bg-neutral-200 dark:bg-white/10 rounded-full overflow-hidden">
                         <div
-                            className="h-full bg-gradient-to-r from-primary-500 to-accent-500 rounded-full"
-                            style={{ width: "24%" }}
+                            className={cn(
+                                "h-full bg-gradient-to-r rounded-full transition-all duration-500",
+                                storageUsage && storageUsage.usedPercentage > 90
+                                    ? "from-red-500 to-red-600"
+                                    : storageUsage &&
+                                        storageUsage.usedPercentage > 75
+                                      ? "from-yellow-500 to-orange-500"
+                                      : "from-primary-500 to-accent-500"
+                            )}
+                            style={{
+                                width: storageUsage
+                                    ? `${storageUsage.usedPercentage}%`
+                                    : "0%",
+                            }}
                         />
                     </div>
                 </div>

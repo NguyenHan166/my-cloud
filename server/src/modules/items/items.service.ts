@@ -7,6 +7,7 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { UploadService } from 'src/modules/upload/upload.service';
+import { UsersService } from 'src/modules/users/users.service';
 import { CreateItemDto, UpdateItemDto, QueryItemsDto, NewTagDto } from './dto';
 import { PaginatedResult } from './interfaces';
 import { Item, Prisma } from '@prisma/client';
@@ -18,7 +19,17 @@ export class ItemsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly uploadService: UploadService,
-  ) { }
+    private readonly usersService: UsersService,
+  ) {}
+
+  /**
+   * Trigger storage usage update (non-blocking)
+   */
+  private triggerStorageUpdate(userId: string): void {
+    this.usersService.updateStorageUsage(userId).catch((err) => {
+      this.logger.error(`Failed to update storage usage: ${err.message}`);
+    });
+  }
 
   /**
    * Response type for item operations with message
@@ -42,9 +53,9 @@ export class ItemsService {
         ...itemFile,
         file: itemFile.file
           ? {
-            ...itemFile.file,
-            url: this.uploadService.getPublicUrl(itemFile.file.storageKey),
-          }
+              ...itemFile.file,
+              url: this.uploadService.getPublicUrl(itemFile.file.storageKey),
+            }
           : itemFile.file,
       })),
     };
@@ -84,6 +95,8 @@ export class ItemsService {
         newTags,
       );
       const fileCount = files.length;
+      // Trigger storage update after file upload
+      this.triggerStorageUpdate(userId);
       return this.itemResponse(
         item,
         `Item "${item.title}" created with ${fileCount} file(s)`,
@@ -104,8 +117,20 @@ export class ItemsService {
           'Content is required for NOTE type items',
         );
       }
-      const item = await this.createNoteItem(itemData, userId, tagIds, newTags, files);
-      const attachmentMsg = files?.length ? ` with ${files.length} attachment(s)` : '';
+      const item = await this.createNoteItem(
+        itemData,
+        userId,
+        tagIds,
+        newTags,
+        files,
+      );
+      const attachmentMsg = files?.length
+        ? ` with ${files.length} attachment(s)`
+        : '';
+      // Trigger storage update if note has attachments
+      if (files?.length) {
+        this.triggerStorageUpdate(userId);
+      }
       return this.itemResponse(
         item,
         `Note "${item.title}" created successfully${attachmentMsg}`,
@@ -168,8 +193,8 @@ export class ItemsService {
             tagsText,
             itemTags: allTagIds.length
               ? {
-                create: allTagIds.map((tagId) => ({ tagId })),
-              }
+                  create: allTagIds.map((tagId) => ({ tagId })),
+                }
               : undefined,
           },
         });
@@ -476,12 +501,18 @@ export class ItemsService {
     const { tagIds, newTags, removeFileIds, files, ...updateData } = data;
 
     // Handle file removal for FILE and NOTE types (outside transaction for R2 operations)
-    if (removeFileIds?.length && (existingItem.type === 'FILE' || existingItem.type === 'NOTE')) {
+    if (
+      removeFileIds?.length &&
+      (existingItem.type === 'FILE' || existingItem.type === 'NOTE')
+    ) {
       await this.removeFilesFromItem(id, removeFileIds, userId);
     }
 
     // Handle adding new files for FILE and NOTE types
-    if (newFiles?.length && (existingItem.type === 'FILE' || existingItem.type === 'NOTE')) {
+    if (
+      newFiles?.length &&
+      (existingItem.type === 'FILE' || existingItem.type === 'NOTE')
+    ) {
       await this.addFilesToItem(id, newFiles, userId);
     }
 
@@ -520,6 +551,15 @@ export class ItemsService {
         include: this.getItemInclude(),
       });
     });
+
+    // Trigger storage update if files were added or removed
+    const hadFileChanges = removeFileIds?.length || newFiles?.length;
+    if (
+      hadFileChanges &&
+      (existingItem.type === 'FILE' || existingItem.type === 'NOTE')
+    ) {
+      this.triggerStorageUpdate(userId);
+    }
 
     return this.itemResponse(item, `"${item.title}" updated successfully`);
   }
@@ -705,6 +745,11 @@ export class ItemsService {
 
       await tx.item.delete({ where: { id } });
     });
+
+    // Trigger storage update after file deletion
+    if (item.type === 'FILE') {
+      this.triggerStorageUpdate(userId);
+    }
 
     return { message: 'Item deleted successfully' };
   }
