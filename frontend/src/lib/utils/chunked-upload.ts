@@ -225,29 +225,60 @@ export class ChunkedUploader {
         // Backend wraps response in {success, data, timestamp}
         const { presignedUrl } = urlResponse.data.data;
 
-        // Upload chunk directly to R2
-        const response = await fetch(presignedUrl, {
-            method: "PUT",
-            body: chunk,
-            headers: {
-                "Content-Type": this.file.type,
-            },
-        });
+        console.log(`[ChunkedUploader] Uploading part ${partNumber} to R2...`);
 
-        if (!response.ok) {
-            throw new Error(
-                `Failed to upload part ${partNumber}: ${response.statusText}`
+        // Upload chunk directly to R2 with timeout
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 60000); // 60s timeout
+
+        try {
+            const response = await fetch(presignedUrl, {
+                method: "PUT",
+                body: chunk,
+                headers: {
+                    "Content-Type": this.file.type,
+                },
+                signal: controller.signal,
+            });
+
+            clearTimeout(timeoutId);
+
+            console.log(
+                `[ChunkedUploader] Part ${partNumber} response:`,
+                response.status,
+                response.statusText
             );
-        }
 
-        const etag = response.headers.get("ETag");
-        if (!etag) {
-            throw new Error(`No ETag returned for part ${partNumber}`);
-        }
+            if (!response.ok) {
+                const errorText = await response.text().catch(() => "");
+                throw new Error(
+                    `Failed to upload part ${partNumber}: ${response.status} ${response.statusText}. ${errorText}`
+                );
+            }
 
-        // Save ETag
-        this.uploadedParts.set(partNumber, etag);
-        this.saveSession();
+            const etag = response.headers.get("ETag");
+            console.log(`[ChunkedUploader] Part ${partNumber} ETag:`, etag);
+
+            if (!etag) {
+                throw new Error(`No ETag returned for part ${partNumber}`);
+            }
+
+            // Save ETag
+            this.uploadedParts.set(partNumber, etag);
+            this.saveSession();
+
+            console.log(
+                `[ChunkedUploader] Part ${partNumber}/${this.session.totalParts} uploaded successfully`
+            );
+        } catch (error) {
+            clearTimeout(timeoutId);
+            if (error instanceof Error && error.name === "AbortError") {
+                throw new Error(
+                    `Upload timeout for part ${partNumber} (60s exceeded)`
+                );
+            }
+            throw error;
+        }
 
         // Update progress
         const progress =
