@@ -321,13 +321,45 @@ export class ChunkedUploader {
 
         try {
             const data = JSON.parse(saved);
+
             // Check if session is not expired (24 hours)
             if (Date.now() - data.timestamp > 24 * 60 * 60 * 1000) {
                 localStorage.removeItem(key);
                 return null;
             }
-            return data;
-        } catch {
+
+            // MIGRATION: Handle old format where session was wrapped in response envelope
+            let session = data.session;
+            if (session && typeof session === "object" && "data" in session) {
+                // Old format: {session: {success, data, timestamp}, ...}
+                console.warn("[ChunkedUploader] Migrating old session format");
+                session = session.data; // Extract actual session from wrapper
+            }
+
+            // Validate session has required fields
+            if (
+                !session ||
+                !session.sessionId ||
+                !session.uploadId ||
+                !session.key
+            ) {
+                console.warn(
+                    "[ChunkedUploader] Invalid session in localStorage, clearing..."
+                );
+                localStorage.removeItem(key);
+                return null;
+            }
+
+            return {
+                session,
+                uploadedParts: data.uploadedParts || [],
+            };
+        } catch (error) {
+            console.error(
+                "[ChunkedUploader] Failed to parse saved session:",
+                error
+            );
+            localStorage.removeItem(key);
             return null;
         }
     }
