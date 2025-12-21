@@ -2,7 +2,6 @@ import { Link } from "react-router-dom";
 import {
     QrCode,
     Palette,
-    Calculator,
     FileCode,
     CreditCard,
     Key,

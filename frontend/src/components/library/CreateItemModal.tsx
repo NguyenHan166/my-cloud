@@ -156,7 +156,7 @@ export default function CreateItemModal({
             tagsApi.create({ name, color }),
         onSuccess: (response) => {
             queryClient.invalidateQueries({ queryKey: ["tags"] });
-            const newTag = response.data.tag;
+            const newTag = response.data.data;
             setSelectedTagIds([...selectedTagIds, newTag.id]);
             toast.success("Tag created!");
         },
@@ -555,8 +555,8 @@ export default function CreateItemModal({
                                 ? "Updating..."
                                 : "Creating..."
                             : isEditMode
-                            ? "Update Item"
-                            : "Create Item"}
+                              ? "Update Item"
+                              : "Create Item"}
                     </Button>
                 </div>
             </div>

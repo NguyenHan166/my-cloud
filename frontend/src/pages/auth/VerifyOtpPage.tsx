@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation, Link } from "react-router-dom";
-import { Mail, ArrowLeft, RefreshCw, Sparkles } from "lucide-react";
+import { Mail, ArrowLeft, RefreshCw } from "lucide-react";
 import { authApi } from "@/lib/api/endpoints/auth";
 import OtpInput from "@/components/ui/OtpInput";
 import toast from "react-hot-toast";
