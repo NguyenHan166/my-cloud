@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import {
     Camera,
@@ -12,6 +12,7 @@ import {
     Loader2,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { uploadApi } from "@/lib/api/endpoints/upload";
 import toast from "react-hot-toast";
 
 export default function ProfilePage() {
@@ -23,6 +24,10 @@ export default function ProfilePage() {
     // Form state
     const [name, setName] = useState(user?.name || "");
     const [phone, setPhone] = useState(user?.phone || "");
+
+    // Avatar upload
+    const fileInputRef = useRef<HTMLInputElement>(null);
+    const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
 
     const handleSave = async () => {
         setIsLoading(true);
@@ -46,6 +51,44 @@ export default function ProfilePage() {
             month: "long",
             day: "numeric",
         });
+    };
+
+    const handleAvatarClick = () => {
+        fileInputRef.current?.click();
+    };
+
+    const handleAvatarChange = async (
+        e: React.ChangeEvent<HTMLInputElement>
+    ) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        // Validate file type
+        if (!file.type.startsWith("image/")) {
+            toast.error("Vui lòng chọn file ảnh");
+            return;
+        }
+
+        // Validate file size (max 5MB)
+        if (file.size > 5 * 1024 * 1024) {
+            toast.error("Kích thước ảnh tối đa 5MB");
+            return;
+        }
+
+        setIsUploadingAvatar(true);
+        try {
+            await uploadApi.uploadAvatar(file);
+            toast.success("Avatar đã được cập nhật!");
+            await refreshUser();
+        } catch (error: any) {
+            toast.error(error.message || "Không thể upload avatar");
+        } finally {
+            setIsUploadingAvatar(false);
+            // Reset input value to allow uploading the same file again
+            if (e.target) {
+                e.target.value = "";
+            }
+        }
     };
 
     return (
@@ -90,8 +133,24 @@ export default function ProfilePage() {
                                         </span>
                                     </div>
                                 )}
-                                <button className="absolute bottom-0 right-0 p-1.5 bg-white rounded-lg shadow-md hover:bg-neutral-50 transition-colors">
-                                    <Camera className="w-4 h-4 text-neutral-600" />
+                                {/* Hidden file input */}
+                                <input
+                                    ref={fileInputRef}
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={handleAvatarChange}
+                                    className="hidden"
+                                />
+                                <button
+                                    onClick={handleAvatarClick}
+                                    disabled={isUploadingAvatar}
+                                    className="absolute bottom-0 right-0 p-1.5 bg-white rounded-lg shadow-md hover:bg-neutral-50 transition-colors disabled:opacity-50"
+                                >
+                                    {isUploadingAvatar ? (
+                                        <Loader2 className="w-4 h-4 text-primary-500 animate-spin" />
+                                    ) : (
+                                        <Camera className="w-4 h-4 text-neutral-600" />
+                                    )}
                                 </button>
                             </div>
                         </div>
