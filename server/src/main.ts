@@ -13,6 +13,16 @@ import { NestExpressApplication } from '@nestjs/platform-express';
 
 async function bootstrap() {
   const logger = CustomLogger.create('Bootstrap');
+  console.log(
+    'ENV keys:',
+    Object.keys(process.env).filter((k) => k.includes('DATABASE')),
+  );
+  console.log(
+    'DATABASE_URL exists?',
+    'DATABASE_URL' in process.env,
+    !!process.env.DATABASE_URL,
+  );
+  console.log('DATABASE_URL raw:', JSON.stringify(process.env.DATABASE_URL));
 
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
     bufferLogs: true,
