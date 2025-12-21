@@ -161,9 +161,9 @@ export class ChunkedUploader {
 
         // Upload chunks with concurrency control
         const queue = [...pendingParts];
-        const activeUploads: Promise<void>[] = [];
+        const activeUploads = new Map<number, Promise<void>>();
 
-        while (queue.length > 0 || activeUploads.length > 0) {
+        while (queue.length > 0 || activeUploads.size > 0) {
             // Check pause/abort
             if (this.isPaused) {
                 await new Promise<void>((resolve) => {
@@ -182,27 +182,24 @@ export class ChunkedUploader {
 
             // Start new uploads up to concurrency limit
             while (
-                activeUploads.length < this.options.concurrency &&
+                activeUploads.size < this.options.concurrency &&
                 queue.length > 0
             ) {
                 const partNumber = queue.shift()!;
-                const uploadPromise = this.uploadPart(partNumber);
-                activeUploads.push(uploadPromise);
+                const uploadPromise = this.uploadPart(partNumber)
+                    .then(() => {
+                        activeUploads.delete(partNumber);
+                    })
+                    .catch((error) => {
+                        activeUploads.delete(partNumber);
+                        throw error;
+                    });
+                activeUploads.set(partNumber, uploadPromise);
             }
 
             // Wait for at least one upload to complete
-            if (activeUploads.length > 0) {
-                await Promise.race(activeUploads);
-                // Remove completed uploads
-                for (let i = activeUploads.length - 1; i >= 0; i--) {
-                    const settled = await Promise.race([
-                        activeUploads[i].then(() => true),
-                        Promise.resolve(false),
-                    ]);
-                    if (settled) {
-                        activeUploads.splice(i, 1);
-                    }
-                }
+            if (activeUploads.size > 0) {
+                await Promise.race(activeUploads.values());
             }
         }
     }
