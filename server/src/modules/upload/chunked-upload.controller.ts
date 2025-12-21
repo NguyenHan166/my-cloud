@@ -14,19 +14,59 @@ import {
   ApiResponse,
   ApiBearerAuth,
   ApiBody,
+  ApiProperty,
 } from '@nestjs/swagger';
+import {
+  IsString,
+  IsNumber,
+  IsArray,
+  ValidateNested,
+  IsInt,
+} from 'class-validator';
+import { Type } from 'class-transformer';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { GetUser } from '../../common/decorators/get-user.decorator';
 import { UploadService } from './upload.service';
 
+class PartDto {
+  @ApiProperty({ description: 'Part number (1-indexed)' })
+  @IsInt()
+  PartNumber: number;
+
+  @ApiProperty({ description: 'ETag returned from R2 after uploading part' })
+  @IsString()
+  ETag: string;
+}
+
 class InitiateUploadDto {
+  @ApiProperty({ description: 'Original filename', example: 'video.mp4' })
+  @IsString()
   filename: string;
+
+  @ApiProperty({
+    description: 'MIME type of the file',
+    example: 'video/mp4',
+  })
+  @IsString()
   mimetype: string;
+
+  @ApiProperty({
+    description: 'Total file size in bytes',
+    example: 187494855,
+  })
+  @IsNumber()
   size: number;
 }
 
 class CompleteUploadDto {
-  parts: Array<{ PartNumber: number; ETag: string }>;
+  @ApiProperty({
+    description: 'Array of uploaded parts with PartNumber and ETag',
+    type: [PartDto],
+  })
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => PartDto)
+  parts: PartDto[];
 }
 
 @ApiTags('upload')
