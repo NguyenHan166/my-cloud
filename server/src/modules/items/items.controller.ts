@@ -79,7 +79,7 @@ export class ItemsController {
    */
   @Post('from-chunked-upload')
   @ApiOperation({ summary: 'Create FILE item from chunked upload result' })
-  @ApiConsumes('multipart/form-data')
+  @ApiConsumes('application/json')
   @ApiBody({
     description: 'Item data with upload key from completed chunked upload',
     schema: {
@@ -99,7 +99,17 @@ export class ItemsController {
           description: 'Storage key from completed upload',
         },
         tagIds: { type: 'array', items: { type: 'string' } },
-        newTags: { type: 'string', description: 'JSON array of new tags' },
+        newTags: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              name: { type: 'string' },
+              color: { type: 'string' },
+            },
+          },
+          description: 'Array of new tags to create',
+        },
       },
       required: ['type', 'title', 'uploadKey'],
     },

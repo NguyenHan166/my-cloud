@@ -271,36 +271,21 @@ export const itemsApi = {
         console.log(`[ItemsAPI] Upload complete:`, uploadResult);
 
         // 2. Create item with uploaded file metadata
-        const formData = new FormData();
-        formData.append("type", "FILE");
-        formData.append("title", data.title);
-        formData.append("uploadKey", uploadResult.key);
-
-        if (data.description) formData.append("description", data.description);
-        if (data.category) formData.append("category", data.category);
-        if (data.project) formData.append("project", data.project);
-        if (data.importance) formData.append("importance", data.importance);
-
-        // Add tag IDs
-        if (data.tagIds && data.tagIds.length > 0) {
-            data.tagIds.forEach((tagId) => {
-                formData.append("tagIds[]", tagId);
-            });
-        }
-
-        // Add new tags
-        if (data.newTags && data.newTags.length > 0) {
-            formData.append("newTags", JSON.stringify(data.newTags));
-        }
+        const payload = {
+            type: "FILE" as const,
+            title: data.title,
+            uploadKey: uploadResult.key,
+            description: data.description,
+            category: data.category,
+            project: data.project,
+            importance: data.importance,
+            tagIds: data.tagIds,
+            newTags: data.newTags,
+        };
 
         const response = await apiClient.post<ItemResponse>(
             "/items/from-chunked-upload",
-            formData,
-            {
-                headers: {
-                    "Content-Type": "multipart/form-data",
-                },
-            }
+            payload
         );
 
         return response.data;
