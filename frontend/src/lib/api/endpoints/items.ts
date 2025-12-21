@@ -1,4 +1,5 @@
 import apiClient from "../client";
+import { ChunkedUploader } from "@/lib/utils/chunked-upload";
 import type {
     Item,
     QueryItemsDto,
@@ -244,6 +245,64 @@ export const itemsApi = {
             data: { message: string; count: number };
             timestamp: string;
         }>("/items/trash");
+        return response.data;
+    },
+
+    /**
+     * Create FILE item using chunked upload (for large files)
+     * Automatically uses chunked upload for files > 10MB
+     */
+    async createItemWithChunkedUpload(
+        data: Omit<CreateItemDto, "type">,
+        file: File,
+        onProgress?: (progress: number) => void,
+        onChunkComplete?: (chunk: number, total: number) => void
+    ): Promise<ItemResponse> {
+        // 1. Upload file using chunked uploader
+        const uploader = new ChunkedUploader({
+            file,
+            onProgress,
+            onChunkComplete,
+            concurrency: 3,
+        });
+
+        console.log(`[ItemsAPI] Starting chunked upload for: ${file.name}`);
+        const uploadResult = await uploader.start();
+        console.log(`[ItemsAPI] Upload complete:`, uploadResult);
+
+        // 2. Create item with uploaded file metadata
+        const formData = new FormData();
+        formData.append("type", "FILE");
+        formData.append("title", data.title);
+        formData.append("uploadKey", uploadResult.key);
+
+        if (data.description) formData.append("description", data.description);
+        if (data.category) formData.append("category", data.category);
+        if (data.project) formData.append("project", data.project);
+        if (data.importance) formData.append("importance", data.importance);
+
+        // Add tag IDs
+        if (data.tagIds && data.tagIds.length > 0) {
+            data.tagIds.forEach((tagId) => {
+                formData.append("tagIds[]", tagId);
+            });
+        }
+
+        // Add new tags
+        if (data.newTags && data.newTags.length > 0) {
+            formData.append("newTags", JSON.stringify(data.newTags));
+        }
+
+        const response = await apiClient.post<ItemResponse>(
+            "/items/from-chunked-upload",
+            formData,
+            {
+                headers: {
+                    "Content-Type": "multipart/form-data",
+                },
+            }
+        );
+
         return response.data;
     },
 };

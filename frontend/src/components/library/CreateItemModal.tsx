@@ -18,6 +18,7 @@ import Input from "@/components/ui/Input";
 import MonacoEditor from "@/components/ui/MonacoEditor";
 import FileUploader from "./FileUploader";
 import TagSelector from "./TagSelector";
+import { UploadProgress } from "@/components/upload/UploadProgress";
 
 interface CreateItemModalProps {
     isOpen: boolean;
@@ -49,6 +50,12 @@ export default function CreateItemModal({
     // Existing files management (for edit mode)
     const [existingFiles, setExistingFiles] = useState<ItemFile[]>([]);
     const [removeFileIds, setRemoveFileIds] = useState<string[]>([]);
+
+    // Chunked upload progress
+    const [uploadProgress, setUploadProgress] = useState(0);
+    const [uploadChunk, setUploadChunk] = useState(0);
+    const [uploadTotalChunks, setUploadTotalChunks] = useState(0);
+    const [isUploading, setIsUploading] = useState(false);
 
     // Initialize form with editItem data
     useEffect(() => {
@@ -94,6 +101,31 @@ export default function CreateItemModal({
                 tagIds: selectedTagIds.length > 0 ? selectedTagIds : undefined,
             };
 
+            // Auto-detect large files and use chunked upload
+            const LARGE_FILE_THRESHOLD = 10 * 1024 * 1024; // 10MB
+
+            if (
+                type === "FILE" &&
+                files.length === 1 &&
+                files[0].size > LARGE_FILE_THRESHOLD
+            ) {
+                setIsUploading(true);
+                console.log(
+                    `[CreateItemModal] Using chunked upload for ${files[0].name} (${(files[0].size / 1024 / 1024).toFixed(2)}MB)`
+                );
+
+                return itemsApi.createItemWithChunkedUpload(
+                    itemData,
+                    files[0],
+                    (progress) => setUploadProgress(progress),
+                    (chunk, total) => {
+                        setUploadChunk(chunk);
+                        setUploadTotalChunks(total);
+                    }
+                );
+            }
+
+            // Use regular upload for small files or multiple files
             return itemsApi.createItem(
                 itemData,
                 (type === "FILE" || type === "NOTE") && files.length > 0
@@ -102,12 +134,20 @@ export default function CreateItemModal({
             );
         },
         onSuccess: () => {
+            setIsUploading(false);
+            setUploadProgress(0);
+            setUploadChunk(0);
+            setUploadTotalChunks(0);
             queryClient.invalidateQueries({ queryKey: ["items"] });
             toast.success("Item created successfully!");
             resetForm();
             onClose();
         },
         onError: (error: any) => {
+            setIsUploading(false);
+            setUploadProgress(0);
+            setUploadChunk(0);
+            setUploadTotalChunks(0);
             toast.error(
                 error.response?.data?.message || "Failed to create item"
             );
@@ -348,6 +388,19 @@ export default function CreateItemModal({
                                     files={files}
                                     onFilesChange={setFiles}
                                 />
+
+                                {/* Upload Progress */}
+                                {isUploading && files.length > 0 && (
+                                    <div className="mt-4">
+                                        <UploadProgress
+                                            filename={files[0].name}
+                                            progress={uploadProgress}
+                                            status="uploading"
+                                            currentChunk={uploadChunk}
+                                            totalChunks={uploadTotalChunks}
+                                        />
+                                    </div>
+                                )}
                             </div>
                         </div>
                     )}

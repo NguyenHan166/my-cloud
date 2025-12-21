@@ -75,6 +75,48 @@ export class ItemsController {
   }
 
   /**
+   * Create FILE item from completed chunked upload
+   */
+  @Post('from-chunked-upload')
+  @ApiOperation({ summary: 'Create FILE item from chunked upload result' })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    description: 'Item data with upload key from completed chunked upload',
+    schema: {
+      type: 'object',
+      properties: {
+        type: { type: 'string', enum: ['FILE'] },
+        title: { type: 'string' },
+        description: { type: 'string' },
+        category: { type: 'string' },
+        project: { type: 'string' },
+        importance: {
+          type: 'string',
+          enum: ['LOW', 'MEDIUM', 'HIGH', 'URGENT'],
+        },
+        uploadKey: {
+          type: 'string',
+          description: 'Storage key from completed upload',
+        },
+        tagIds: { type: 'array', items: { type: 'string' } },
+        newTags: { type: 'string', description: 'JSON array of new tags' },
+      },
+      required: ['type', 'title', 'uploadKey'],
+    },
+  })
+  @ApiResponse({
+    status: 201,
+    description: 'Item created successfully from chunked upload',
+    type: ItemWithMessageResponseDto,
+  })
+  async createItemFromChunkedUpload(
+    @Body() data: any,
+    @GetUser() user: { id: string },
+  ) {
+    return this.itemsService.createItemFromChunkedUpload(data, user.id);
+  }
+
+  /**
    * Get all items with filters and pagination
    */
   @Get()

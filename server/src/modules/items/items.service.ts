@@ -339,6 +339,111 @@ export class ItemsService {
   }
 
   /**
+   * Create FILE item from completed chunked upload
+   * File already uploaded to R2, just need to create DB records
+   */
+  async createItemFromChunkedUpload(
+    data: any,
+    userId: string,
+  ): Promise<{ item: Item; message: string }> {
+    const { uploadKey, tagIds, newTags, ...itemData } = data;
+
+    if (!uploadKey) {
+      throw new BadRequestException('Upload key is required');
+    }
+
+    // Get file info from R2 key (format: uploads/xxx.ext)
+    const filename = uploadKey.split('/').pop() || 'unknown';
+    const ext = filename.split('.').pop() || '';
+
+    // Infer mimetype from extension
+    const mimetypeMap: Record<string, string> = {
+      mp4: 'video/mp4',
+      mov: 'video/quicktime',
+      avi: 'video/x-msvideo',
+      zip: 'application/zip',
+      pdf: 'application/pdf',
+      jpg: 'image/jpeg',
+      jpeg: 'image/jpeg',
+      png: 'image/png',
+      gif: 'image/gif',
+    };
+    const mimetype =
+      mimetypeMap[ext.toLowerCase()] || 'application/octet-stream';
+
+    // Note: We don't have file size from chunked upload result
+    // We'll need to fetch it from R2 or store it during upload completion
+    // For now, set to 0 as placeholder
+    const fileSize = 0;
+
+    this.logger.log(`Creating item from chunked upload: ${uploadKey}`);
+
+    try {
+      return await this.prisma.$transaction(async (tx) => {
+        // 1. Process tags
+        const allTagIds = await this.processTagsInTransaction(
+          tx,
+          userId,
+          tagIds,
+          newTags,
+        );
+        const tagsText = await this.buildTagsTextInTransaction(tx, allTagIds);
+
+        // 2. Create File record
+        const fileRecord = await tx.file.create({
+          data: {
+            userId,
+            storageKey: uploadKey,
+            originalName: filename,
+            mimeType: mimetype,
+            size: fileSize,
+          },
+        });
+
+        // 3. Create Item
+        const item = await tx.item.create({
+          data: {
+            userId,
+            type: 'FILE',
+            title: itemData.title,
+            description: itemData.description,
+            category: itemData.category,
+            project: itemData.project,
+            importance: itemData.importance || 'MEDIUM',
+            tagsText,
+            itemTags: allTagIds.length
+              ? { create: allTagIds.map((tagId) => ({ tagId })) }
+              : undefined,
+            itemFiles: {
+              create: {
+                fileId: fileRecord.id,
+                position: 0,
+                isPrimary: true,
+              },
+            },
+          },
+          include: this.getItemInclude(),
+        });
+
+        this.logger.log(`Item created from chunked upload: ${item.id}`);
+
+        // Trigger storage update
+        this.triggerStorageUpdate(userId);
+
+        return this.itemResponse(
+          item,
+          `File "${item.title}" uploaded successfully`,
+        );
+      });
+    } catch (error) {
+      this.logger.error(
+        `Error creating item from chunked upload: ${error.message}`,
+      );
+      throw error;
+    }
+  }
+
+  /**
    * Process existing tagIds + create new tags in transaction
    */
   private async processTagsInTransaction(

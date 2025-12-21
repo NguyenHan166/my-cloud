@@ -34,6 +34,14 @@ enum CollectionPermission {
   EDIT
 }
 
+// Upload session status for chunked uploads
+enum UploadStatus {
+  IN_PROGRESS
+  COMPLETED
+  ABORTED
+  FAILED
+}
+
 // BASE MODELS
 
 model User {
@@ -76,6 +84,9 @@ model User {
 
   // NEW: audit - shares created BY this user (optional)
   sharesCreated CollectionShare[] @relation("CollectionSharedBy")
+
+  // Upload sessions for chunked uploads
+  uploadSessions UploadSession[]
 
   @@index([email])
 }
@@ -205,7 +216,7 @@ model Collection {
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  items  CollectionItem[]
+  items CollectionItem[]
 
   // NEW: share records for this collection
   shares CollectionShare[]
@@ -235,11 +246,11 @@ model CollectionItem {
 model CollectionShare {
   id           String               @id @default(cuid())
   collectionId String
-  userId       String               // user được chia sẻ
+  userId       String // user được chia sẻ
   permission   CollectionPermission @default(VIEW)
 
   // audit + lifecycle
-  sharedById String?   // người share (thường là owner)
+  sharedById String? // người share (thường là owner)
   invitedAt  DateTime  @default(now())
   acceptedAt DateTime?
   revokedAt  DateTime?
@@ -302,4 +313,32 @@ model Embedding {
   item Item @relation(fields: [itemId], references: [id], onDelete: Cascade)
 
   @@index([userId])
+}
+
+// Chunked upload session tracking
+model UploadSession {
+  id         String @id @default(cuid())
+  uploadId   String @unique // R2 multipart upload ID
+  key        String // R2 object key (uploads/xxx.ext)
+  filename   String // Original filename
+  mimetype   String
+  size       BigInt // Total file size in bytes
+  chunkSize  Int    @default(5242880) // 5MB default chunk size
+  totalParts Int // Total number of parts
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Status tracking
+  status        UploadStatus @default(IN_PROGRESS)
+  uploadedParts Json? // Array of {partNumber: number, etag: string}
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  expiresAt DateTime // Auto-cleanup after 24 hours
+
+  @@index([userId, status])
+  @@index([expiresAt])
+  @@index([uploadId])
 }
