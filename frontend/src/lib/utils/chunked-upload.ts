@@ -118,7 +118,8 @@ export class ChunkedUploader {
                 size: this.file.size,
             });
 
-            this.session = response.data;
+            // Backend wraps response in {success, data, timestamp}
+            this.session = response.data.data;
             if (!this.session) {
                 throw new Error("Failed to create upload session");
             }
@@ -212,7 +213,8 @@ export class ChunkedUploader {
         const urlResponse = await apiClient.get(
             `/upload/chunked/${this.session.sessionId}/part/${partNumber}`
         );
-        const { presignedUrl } = urlResponse.data;
+        // Backend wraps response in {success, data, timestamp}
+        const { presignedUrl } = urlResponse.data.data;
 
         // Upload chunk directly to R2
         const response = await fetch(presignedUrl, {
@@ -263,7 +265,8 @@ export class ChunkedUploader {
             { parts }
         );
 
-        return response.data;
+        // Backend wraps response in {success, data, timestamp}
+        return response.data.data;
     }
 
     /**
