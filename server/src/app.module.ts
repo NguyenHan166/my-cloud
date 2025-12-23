@@ -40,7 +40,7 @@ import { SharedCollectionsModule } from './modules/shared-collections/shared-col
       {
         name: 'default',
         ttl: 60 * 1000,
-        limit: 30,
+        limit: 100,
       },
     ]),
     // Core modules
@@ -67,5 +67,4 @@ import { SharedCollectionsModule } from './modules/shared-collections/shared-col
     },
   ],
 })
-export class AppModule { }
-
+export class AppModule {}

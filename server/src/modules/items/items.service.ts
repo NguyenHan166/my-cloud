@@ -352,29 +352,49 @@ export class ItemsService {
       throw new BadRequestException('Upload key is required');
     }
 
-    // Get file info from R2 key (format: uploads/xxx.ext)
-    const filename = uploadKey.split('/').pop() || 'unknown';
-    const ext = filename.split('.').pop() || '';
+    // Try to get file metadata from UploadSession (most accurate)
+    const uploadSession = await this.prisma.uploadSession.findFirst({
+      where: {
+        key: uploadKey,
+        userId,
+        status: 'COMPLETED',
+      },
+    });
 
-    // Infer mimetype from extension
-    const mimetypeMap: Record<string, string> = {
-      mp4: 'video/mp4',
-      mov: 'video/quicktime',
-      avi: 'video/x-msvideo',
-      zip: 'application/zip',
-      pdf: 'application/pdf',
-      jpg: 'image/jpeg',
-      jpeg: 'image/jpeg',
-      png: 'image/png',
-      gif: 'image/gif',
-    };
-    const mimetype =
-      mimetypeMap[ext.toLowerCase()] || 'application/octet-stream';
+    let filename: string;
+    let mimetype: string;
+    let fileSize: bigint;
 
-    // Note: We don't have file size from chunked upload result
-    // We'll need to fetch it from R2 or store it during upload completion
-    // For now, set to 0 as placeholder
-    const fileSize = 0;
+    if (uploadSession) {
+      // Use accurate data from upload session
+      filename = uploadSession.filename;
+      mimetype = uploadSession.mimetype;
+      fileSize = uploadSession.size;
+      this.logger.log(
+        `Found upload session: ${filename} (${(Number(fileSize) / 1024 / 1024).toFixed(2)}MB)`,
+      );
+    } else {
+      // Fallback: Infer from key (less accurate, size unknown)
+      this.logger.warn(
+        `Upload session not found for key: ${uploadKey}, using fallback metadata`,
+      );
+      filename = uploadKey.split('/').pop() || 'unknown';
+      const ext = filename.split('.').pop() || '';
+
+      const mimetypeMap: Record<string, string> = {
+        mp4: 'video/mp4',
+        mov: 'video/quicktime',
+        avi: 'video/x-msvideo',
+        zip: 'application/zip',
+        pdf: 'application/pdf',
+        jpg: 'image/jpeg',
+        jpeg: 'image/jpeg',
+        png: 'image/png',
+        gif: 'image/gif',
+      };
+      mimetype = mimetypeMap[ext.toLowerCase()] || 'application/octet-stream';
+      fileSize = BigInt(0); // Unknown size
+    }
 
     this.logger.log(`Creating item from chunked upload: ${uploadKey}`);
 
