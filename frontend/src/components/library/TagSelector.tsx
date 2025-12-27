@@ -3,8 +3,6 @@ import { useQuery } from "@tanstack/react-query";
 import { X, Plus } from "lucide-react";
 import type { Tag } from "@/types/item.types";
 import { tagsApi } from "@/lib/api/endpoints/tags";
-import Badge from "@/components/ui/Badge";
-import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
 
 interface TagSelectorProps {
