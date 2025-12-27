@@ -27,8 +27,8 @@ export default function ItemListRow({
         <div
             className={`group transition-all duration-200 cursor-pointer ${
                 item.isPinned
-                    ? "bg-gradient-to-r from-sky-50 to-transparent border-l-4 border-sky-500"
-                    : "bg-white border-b border-neutral-200 hover:bg-gradient-to-r hover:from-sky-50/50 hover:to-transparent hover:border-sky-300"
+                    ? "bg-gradient-to-r from-sky-50 dark:from-sky-900/30 to-transparent border-l-4 border-sky-500 dark:border-sky-600"
+                    : "bg-white dark:bg-neutral-800 border-b border-neutral-200 dark:border-neutral-700 hover:bg-gradient-to-r hover:from-sky-50/50 dark:hover:from-sky-900/20 hover:to-transparent hover:border-sky-300 dark:hover:border-sky-700"
             }`}
             onClick={onClick}
         >
@@ -36,23 +36,23 @@ export default function ItemListRow({
                 {/* Type Icon */}
                 <div className="flex-shrink-0">
                     <div className="relative">
-                        <div className="absolute inset-0 bg-sky-500/10 blur-xl group-hover:bg-sky-500/20 transition-colors" />
-                        <Icon className="relative w-5 h-5 text-sky-500 group-hover:text-sky-600 transition-colors" />
+                        <div className="absolute inset-0 bg-sky-500/10 dark:bg-sky-400/10 blur-xl group-hover:bg-sky-500/20 dark:group-hover:bg-sky-400/20 transition-colors" />
+                        <Icon className="relative w-5 h-5 text-sky-500 dark:text-sky-400 group-hover:text-sky-600 dark:group-hover:text-sky-300 transition-colors" />
                     </div>
                 </div>
 
                 {/* Title */}
                 <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                        <h3 className="font-medium text-neutral-900 truncate">
+                        <h3 className="font-medium text-neutral-900 dark:text-neutral-100 truncate">
                             {item.title}
                         </h3>
                         {item.isPinned && (
-                            <Pin className="w-4 h-4 text-sky-600 fill-sky-600 flex-shrink-0" />
+                            <Pin className="w-4 h-4 text-sky-600 dark:text-sky-400 fill-sky-600 dark:fill-sky-400 flex-shrink-0" />
                         )}
                     </div>
                     {item.description && (
-                        <p className="text-sm text-neutral-600 truncate mt-0.5">
+                        <p className="text-sm text-neutral-600 dark:text-neutral-400 truncate mt-0.5">
                             {item.description}
                         </p>
                     )}
@@ -83,7 +83,7 @@ export default function ItemListRow({
                 </div>
 
                 {/* Metadata */}
-                <div className="hidden lg:flex items-center gap-4 text-sm text-neutral-600">
+                <div className="hidden lg:flex items-center gap-4 text-sm text-neutral-600 dark:text-neutral-400">
                     <span>{new Date(item.createdAt).toLocaleDateString()}</span>
                     {fileData?.size && (
                         <span>{formatFileSize(fileData.size)}</span>
@@ -110,7 +110,7 @@ export default function ItemListRow({
                     className={`flex-shrink-0 p-2 rounded-lg transition-all ${
                         item.isPinned
                             ? "bg-sky-500 text-white hover:bg-sky-600"
-                            : "bg-neutral-100 text-neutral-600 hover:bg-sky-100 hover:text-sky-600"
+                            : "bg-neutral-100 dark:bg-neutral-700 text-neutral-600 dark:text-neutral-300 hover:bg-sky-100 dark:hover:bg-sky-900/30 hover:text-sky-600 dark:hover:text-sky-400"
                     }`}
                     aria-label={item.isPinned ? "Unpin" : "Pin"}
                     title={item.isPinned ? "Click to unpin" : "Click to pin"}

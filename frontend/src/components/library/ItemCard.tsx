@@ -20,15 +20,15 @@ export default function ItemCard({ item, onClick, onPin }: ItemCardProps) {
 
     return (
         <div
-            className={`group relative bg-white rounded-xl border transition-all duration-300 cursor-pointer overflow-hidden ${
+            className={`group relative bg-white dark:bg-neutral-800 rounded-xl border transition-all duration-300 cursor-pointer overflow-hidden ${
                 item.isPinned
-                    ? "border-sky-300 shadow-lg shadow-sky-100"
-                    : "border-neutral-200 hover:border-sky-400 hover:shadow-2xl"
+                    ? "border-sky-300 dark:border-sky-700 shadow-lg shadow-sky-100 dark:shadow-sky-900/50"
+                    : "border-neutral-200 dark:border-neutral-700 hover:border-sky-400 dark:hover:border-sky-600 hover:shadow-2xl dark:hover:shadow-xl dark:hover:shadow-sky-900/30"
             }`}
             onClick={onClick}
         >
             {/* Thumbnail or Icon */}
-            <div className="relative h-40 bg-gradient-to-br from-neutral-50 to-neutral-100 flex items-center justify-center overflow-hidden">
+            <div className="relative h-40 bg-gradient-to-br from-neutral-50 to-neutral-100 dark:from-neutral-700 dark:to-neutral-800 flex items-center justify-center overflow-hidden">
                 {showThumbnail && fileData?.url ? (
                     <>
                         <img
@@ -48,8 +48,8 @@ export default function ItemCard({ item, onClick, onPin }: ItemCardProps) {
                 {/* Type badge and Pin button in header */}
                 <div className="absolute top-2 left-2 right-2 flex items-start justify-between gap-2">
                     {/* Type badge */}
-                    <div className="bg-white/90 backdrop-blur-sm px-2 py-1 rounded-lg shadow-sm">
-                        <span className="text-xs font-medium text-neutral-700">
+                    <div className="bg-white/90 dark:bg-neutral-800/90 backdrop-blur-sm px-2 py-1 rounded-lg shadow-sm">
+                        <span className="text-xs font-medium text-neutral-700 dark:text-neutral-300">
                             {item.type}
                         </span>
                     </div>
@@ -64,7 +64,7 @@ export default function ItemCard({ item, onClick, onPin }: ItemCardProps) {
                         className={`rounded-lg p-1.5 shadow-md transition-all ${
                             item.isPinned
                                 ? "bg-sky-500 hover:bg-sky-600"
-                                : "bg-white/90 backdrop-blur-sm hover:bg-white hover:shadow-lg"
+                                : "bg-white/90 dark:bg-neutral-800/90 backdrop-blur-sm hover:bg-white dark:hover:bg-neutral-700 hover:shadow-lg"
                         }`}
                         aria-label={item.isPinned ? "Unpin" : "Pin"}
                         title={
@@ -75,7 +75,7 @@ export default function ItemCard({ item, onClick, onPin }: ItemCardProps) {
                             className={`w-3.5 h-3.5 transition-colors ${
                                 item.isPinned
                                     ? "text-white fill-white"
-                                    : "text-neutral-600 hover:text-sky-600"
+                                    : "text-neutral-600 dark:text-neutral-300 hover:text-sky-600 dark:hover:text-sky-400"
                             }`}
                         />
                     </button>
@@ -85,13 +85,13 @@ export default function ItemCard({ item, onClick, onPin }: ItemCardProps) {
             {/* Content */}
             <div className="p-4">
                 {/* Title */}
-                <h3 className="font-semibold text-neutral-900 mb-2 line-clamp-2 group-hover:text-sky-600 transition-colors">
+                <h3 className="font-semibold text-neutral-900 dark:text-neutral-100 mb-2 line-clamp-2 group-hover:text-sky-600 dark:group-hover:text-sky-400 transition-colors">
                     {item.title}
                 </h3>
 
                 {/* Description */}
                 {item.description && (
-                    <p className="text-sm text-neutral-600 mb-3 line-clamp-2">
+                    <p className="text-sm text-neutral-600 dark:text-neutral-400 mb-3 line-clamp-2">
                         {item.description}
                     </p>
                 )}
@@ -125,7 +125,7 @@ export default function ItemCard({ item, onClick, onPin }: ItemCardProps) {
 
                 {/* Meta Info */}
                 <div className="flex items-center justify-between text-xs">
-                    <span className="text-neutral-500">
+                    <span className="text-neutral-500 dark:text-neutral-400">
                         {new Date(item.createdAt).toLocaleDateString()}
                     </span>
                     <Badge

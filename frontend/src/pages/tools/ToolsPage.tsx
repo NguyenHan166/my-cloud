@@ -81,15 +81,6 @@ const tools: Tool[] = [
 export default function ToolsPage() {
     return (
         <div className="min-h-screen bg-neutral-50 dark:bg-neutral-950">
-            {/* Header */}
-            <div className="sticky top-0 z-10 bg-white/90 dark:bg-neutral-900/90 backdrop-blur-lg border-b border-neutral-200 dark:border-neutral-800">
-                <div className="max-w-6xl mx-auto px-4 py-3">
-                    <h1 className="text-lg font-semibold text-neutral-900 dark:text-white">
-                        Tools
-                    </h1>
-                </div>
-            </div>
-
             {/* Tools Grid */}
             <div className="max-w-6xl mx-auto px-4 py-6">
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">

@@ -38,18 +38,15 @@ export default function LibraryPage() {
     const [editItem, setEditItem] = useState<Item | null>(null);
     const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
 
-    // Sync URL params with filters (for tags) - only on initial load
+    // Sync URL params with filters (for tags)
     useEffect(() => {
         const tagsParam = searchParams.get("tags");
-        if (tagsParam) {
-            setFilters((prev) => ({
-                ...prev,
-                tagIds: [tagsParam],
-                page: 1,
-            }));
-        }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []); // Only run on mount
+        setFilters((prev) => ({
+            ...prev,
+            tagIds: tagsParam ? [tagsParam] : undefined,
+            page: 1,
+        }));
+    }, [searchParams]); // Re-run when URL params change
 
     // Clear tags param from URL when filter is cleared
     const handleFilterChange = (newFilters: Partial<QueryItemsDto>) => {

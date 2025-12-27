@@ -9,7 +9,6 @@ import {
     Trash2,
     Wrench,
     X,
-    Sparkles,
     Loader2,
     Tag as TagIcon,
 } from "lucide-react";
@@ -109,13 +108,21 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                 )}
             >
                 {/* Header */}
-                <div className="p-6 border-b border-neutral-200 dark:border-white/10">
+                <div className="px-6 py-3 border-b border-neutral-200 dark:border-white/10">
                     <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 bg-gradient-primary rounded-xl flex items-center justify-center shadow-glow">
-                                <Sparkles className="w-5 h-5 text-white" />
-                            </div>
-                            <div>
+                        <button
+                            onClick={() => {
+                                navigate("/");
+                                if (window.innerWidth < 1024) onClose();
+                            }}
+                            className="flex items-center gap-3 hover:opacity-80 transition-opacity"
+                        >
+                            <img
+                                src="/CloudHan.png"
+                                alt="CloudHan Logo"
+                                className="w-10 h-10 rounded-xl shadow-glow"
+                            />
+                            <div className="text-left">
                                 <h1 className="text-xl font-bold text-neutral-900 dark:text-white">
                                     CloudHan
                                 </h1>
@@ -123,7 +130,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                                     Personal Cloud
                                 </p>
                             </div>
-                        </div>
+                        </button>
 
                         <button
                             onClick={onClose}

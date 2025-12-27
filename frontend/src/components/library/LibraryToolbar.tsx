@@ -157,13 +157,13 @@ export default function LibraryToolbar({
                 </div>
 
                 {/* View toggle */}
-                <div className="flex-shrink-0 flex bg-neutral-100 rounded-lg p-0.5">
+                <div className="flex-shrink-0 flex bg-neutral-100 dark:bg-neutral-800 rounded-lg p-0.5">
                     <button
                         onClick={() => onViewModeChange("grid")}
                         className={`p-1.5 rounded-md transition-all ${
                             viewMode === "grid"
-                                ? "bg-white text-sky-600 shadow-sm"
-                                : "text-neutral-400 hover:text-neutral-600"
+                                ? "bg-white dark:bg-neutral-700 text-sky-600 dark:text-sky-400 shadow-sm"
+                                : "text-neutral-400 dark:text-neutral-500 hover:text-neutral-600 dark:hover:text-neutral-300"
                         }`}
                     >
                         <Grid className="w-4 h-4" />
@@ -172,8 +172,8 @@ export default function LibraryToolbar({
                         onClick={() => onViewModeChange("list")}
                         className={`p-1.5 rounded-md transition-all ${
                             viewMode === "list"
-                                ? "bg-white text-sky-600 shadow-sm"
-                                : "text-neutral-400 hover:text-neutral-600"
+                                ? "bg-white dark:bg-neutral-700 text-sky-600 dark:text-sky-400 shadow-sm"
+                                : "text-neutral-400 dark:text-neutral-500 hover:text-neutral-600 dark:hover:text-neutral-300"
                         }`}
                     >
                         <List className="w-4 h-4" />
@@ -185,8 +185,8 @@ export default function LibraryToolbar({
                     onClick={() => setShowFilters(!showFilters)}
                     className={`flex-shrink-0 relative h-9 w-9 flex items-center justify-center rounded-lg border transition-all ${
                         showFilters
-                            ? "bg-sky-50 border-sky-200 text-sky-700"
-                            : "bg-white border-neutral-200 text-neutral-600 hover:bg-neutral-50"
+                            ? "bg-sky-50 dark:bg-sky-900/30 border-sky-200 dark:border-sky-800 text-sky-700 dark:text-sky-400"
+                            : "bg-white dark:bg-neutral-800 border-neutral-200 dark:border-neutral-700 text-neutral-600 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-700"
                     }`}
                 >
                     <SlidersHorizontal className="w-4 h-4" />
@@ -209,10 +209,10 @@ export default function LibraryToolbar({
 
             {/* Filters panel - Mobile responsive */}
             {showFilters && (
-                <div className="bg-neutral-50/50 border border-neutral-200/80 rounded-xl p-3 space-y-3 overflow-hidden">
+                <div className="bg-neutral-50/50 dark:bg-neutral-800/50 border border-neutral-200/80 dark:border-neutral-700/80 rounded-xl p-3 space-y-3 overflow-hidden">
                     {/* Type filter - horizontal scroll on mobile */}
                     <div className="space-y-1.5">
-                        <span className="text-[10px] font-semibold text-neutral-400 uppercase tracking-wider">
+                        <span className="text-[10px] font-semibold text-neutral-400 dark:text-neutral-500 uppercase tracking-wider">
                             Type
                         </span>
                         <div className="flex gap-1.5 overflow-x-auto pb-1 -mx-1 px-1 scrollbar-hide">
@@ -237,7 +237,7 @@ export default function LibraryToolbar({
                                     className={`flex-shrink-0 h-8 px-3 flex items-center gap-1.5 text-xs font-medium rounded-lg transition-all ${
                                         (filters.type || "") === val
                                             ? "bg-sky-500 text-white shadow-sm"
-                                            : "bg-white text-neutral-600 border border-neutral-200 hover:bg-neutral-100"
+                                            : "bg-white dark:bg-neutral-700 text-neutral-600 dark:text-neutral-300 border border-neutral-200 dark:border-neutral-600 hover:bg-neutral-100 dark:hover:bg-neutral-600"
                                     }`}
                                 >
                                     {Icon && <Icon className="w-3.5 h-3.5" />}
@@ -249,18 +249,18 @@ export default function LibraryToolbar({
 
                     {/* Tags filter */}
                     <div className="space-y-1.5">
-                        <span className="text-[10px] font-semibold text-neutral-400 uppercase tracking-wider flex items-center gap-1">
+                        <span className="text-[10px] font-semibold text-neutral-400 dark:text-neutral-500 uppercase tracking-wider flex items-center gap-1">
                             <TagIcon className="w-3 h-3" />
                             Tags
                         </span>
                         <div className="flex gap-1.5 overflow-x-auto pb-1 -mx-1 px-1 scrollbar-hide">
                             {isLoadingTags ? (
-                                <div className="flex items-center gap-2 text-neutral-400 text-xs px-2">
+                                <div className="flex items-center gap-2 text-neutral-400 dark:text-neutral-500 text-xs px-2">
                                     <Loader2 className="w-3 h-3 animate-spin" />
                                     Loading...
                                 </div>
                             ) : tags.length === 0 ? (
-                                <span className="text-xs text-neutral-400 px-2">
+                                <span className="text-xs text-neutral-400 dark:text-neutral-500 px-2">
                                     No tags available
                                 </span>
                             ) : (
@@ -272,7 +272,7 @@ export default function LibraryToolbar({
                                         className={`flex-shrink-0 h-8 px-3 text-xs font-medium rounded-lg transition-all ${
                                             !selectedTagId
                                                 ? "bg-sky-500 text-white shadow-sm"
-                                                : "bg-white text-neutral-600 border border-neutral-200 hover:bg-neutral-100"
+                                                : "bg-white dark:bg-neutral-700 text-neutral-600 dark:text-neutral-300 border border-neutral-200 dark:border-neutral-600 hover:bg-neutral-100 dark:hover:bg-neutral-600"
                                         }`}
                                     >
                                         All
@@ -293,8 +293,8 @@ export default function LibraryToolbar({
                                                     selectedTagId === tag.id
                                                         ? tag.color || "#0ea5e9"
                                                         : tag.color
-                                                        ? `${tag.color}20`
-                                                        : "#f5f5f5",
+                                                          ? `${tag.color}20`
+                                                          : "#f5f5f5",
                                                 borderColor:
                                                     tag.color || "#e5e5e5",
                                                 color:
@@ -317,7 +317,7 @@ export default function LibraryToolbar({
 
                     {/* Priority filter - horizontal scroll on mobile */}
                     <div className="space-y-1.5">
-                        <span className="text-[10px] font-semibold text-neutral-400 uppercase tracking-wider">
+                        <span className="text-[10px] font-semibold text-neutral-400 dark:text-neutral-500 uppercase tracking-wider">
                             Priority
                         </span>
                         <div className="flex gap-1.5 overflow-x-auto pb-1 -mx-1 px-1 scrollbar-hide">
@@ -380,7 +380,7 @@ export default function LibraryToolbar({
                     </div>
 
                     {/* Sort row - wrap on mobile */}
-                    <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-neutral-200/60">
+                    <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-neutral-200/60 dark:border-neutral-700/60">
                         {/* Sort dropdown */}
                         <div className="relative">
                             <select
@@ -391,14 +391,14 @@ export default function LibraryToolbar({
                                             .value as QueryItemsDto["sortBy"],
                                     })
                                 }
-                                className="h-8 pl-2.5 pr-7 text-xs font-medium bg-white border border-neutral-200 rounded-lg appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-sky-500/20"
+                                className="h-8 pl-2.5 pr-7 text-xs font-medium bg-white dark:bg-neutral-700 text-neutral-900 dark:text-neutral-200 border border-neutral-200 dark:border-neutral-600 rounded-lg appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-sky-500/20"
                             >
                                 <option value="createdAt">Created</option>
                                 <option value="updatedAt">Modified</option>
                                 <option value="title">Title</option>
                                 <option value="importance">Priority</option>
                             </select>
-                            <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3 h-3 text-neutral-400 pointer-events-none" />
+                            <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3 h-3 text-neutral-400 dark:text-neutral-500 pointer-events-none" />
                         </div>
 
                         {/* Sort order */}
@@ -411,7 +411,7 @@ export default function LibraryToolbar({
                                             : "desc",
                                 })
                             }
-                            className="h-8 px-2.5 flex items-center gap-1 text-xs font-medium bg-white border border-neutral-200 rounded-lg hover:bg-neutral-50"
+                            className="h-8 px-2.5 flex items-center gap-1 text-xs font-medium bg-white dark:bg-neutral-700 text-neutral-900 dark:text-neutral-200 border border-neutral-200 dark:border-neutral-600 rounded-lg hover:bg-neutral-50 dark:hover:bg-neutral-600"
                         >
                             {filters.sortOrder === "desc" ? (
                                 <>
@@ -436,7 +436,7 @@ export default function LibraryToolbar({
                             className={`h-8 px-2.5 flex items-center gap-1 text-xs font-medium rounded-lg transition-all ${
                                 filters.isPinned
                                     ? "bg-amber-500 text-white shadow-sm"
-                                    : "bg-white text-neutral-600 border border-neutral-200 hover:bg-neutral-50"
+                                    : "bg-white dark:bg-neutral-700 text-neutral-600 dark:text-neutral-300 border border-neutral-200 dark:border-neutral-600 hover:bg-neutral-50 dark:hover:bg-neutral-600"
                             }`}
                         >
                             <Pin
@@ -454,7 +454,7 @@ export default function LibraryToolbar({
                         {activeFilterCount > 0 && (
                             <button
                                 onClick={clearAllFilters}
-                                className="h-8 px-2.5 flex items-center gap-1 text-xs font-medium text-red-600 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100 transition-colors"
+                                className="h-8 px-2.5 flex items-center gap-1 text-xs font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
                             >
                                 <X className="w-3 h-3" />
                                 Clear

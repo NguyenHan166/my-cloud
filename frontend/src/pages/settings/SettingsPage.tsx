@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { tagsApi, type Tag } from "@/lib/api/endpoints/tags";
 import { usersApi } from "@/lib/api/endpoints/users";
+import { useTheme } from "@/contexts/ThemeContext";
 import toast from "react-hot-toast";
 
 const TAG_COLORS = [
@@ -36,6 +37,7 @@ const TAG_COLORS = [
 
 export default function SettingsPage() {
     const navigate = useNavigate();
+    const { theme, toggleTheme } = useTheme();
 
     // Tags state
     const [tags, setTags] = useState<Tag[]>([]);
@@ -187,279 +189,292 @@ export default function SettingsPage() {
     };
 
     return (
-        <div className="min-h-full bg-neutral-50 py-8">
-            <div className="max-w-3xl mx-auto px-4 sm:px-6">
+        <div className="min-h-full bg-neutral-50 dark:bg-neutral-900 py-4 sm:py-8">
+            <div className="max-w-3xl mx-auto px-3 sm:px-4 lg:px-6">
                 {/* Header */}
-                <div className="flex items-center gap-4 mb-8">
+                <div className="flex items-center gap-3 mb-4 sm:mb-8">
                     <button
                         onClick={() => navigate(-1)}
-                        className="p-2 hover:bg-neutral-100 rounded-xl transition-colors"
+                        className="p-1.5 sm:p-2 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-lg sm:rounded-xl transition-colors"
                     >
-                        <ArrowLeft className="w-5 h-5 text-neutral-600" />
+                        <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5 text-neutral-600 dark:text-neutral-300" />
                     </button>
                     <div>
-                        <h1 className="text-2xl font-bold text-neutral-900">
+                        <h1 className="text-xl sm:text-2xl font-bold text-neutral-900 dark:text-neutral-100">
                             Settings
                         </h1>
-                        <p className="text-neutral-600">
+                        <p className="text-sm sm:text-base text-neutral-600 dark:text-neutral-400">
                             Manage your preferences
                         </p>
                     </div>
                 </div>
 
                 {/* Settings Sections */}
-                <div className="space-y-6">
+                <div className="space-y-4 sm:space-y-6">
                     {/* Tags Section */}
-                    <div className="bg-white rounded-2xl border border-neutral-200 overflow-hidden shadow-sm">
-                        <div className="p-6 border-b border-neutral-100">
+                    <div className="bg-white dark:bg-neutral-800 rounded-xl sm:rounded-2xl border border-neutral-200 dark:border-neutral-700 overflow-hidden shadow-sm">
+                        <div className="p-4 sm:p-6 border-b border-neutral-100 dark:border-neutral-700">
                             <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-3">
-                                    <div className="p-2 bg-primary-50 rounded-xl">
-                                        <Tags className="w-5 h-5 text-primary-500" />
+                                <div className="flex items-center gap-2 sm:gap-3">
+                                    <div className="p-1.5 sm:p-2 bg-primary-50 dark:bg-primary-900/30 rounded-lg sm:rounded-xl">
+                                        <Tags className="w-4 h-4 sm:w-5 sm:h-5 text-primary-500 dark:text-primary-400" />
                                     </div>
                                     <div>
-                                        <h2 className="text-lg font-semibold text-neutral-900">
+                                        <h2 className="text-base sm:text-lg font-semibold text-neutral-900 dark:text-neutral-100">
                                             Tags
                                         </h2>
-                                        <p className="text-sm text-neutral-500">
-                                            Manage your tags for organizing
-                                            items
+                                        <p className="text-xs sm:text-sm text-neutral-500 dark:text-neutral-400">
+                                            {tags.length} tags
                                         </p>
                                     </div>
                                 </div>
-                                <button
-                                    onClick={() => setIsAddingTag(true)}
-                                    className="flex items-center gap-2 px-4 py-2 bg-primary-500 text-white rounded-xl font-medium hover:bg-primary-600 transition-colors"
-                                >
-                                    <Plus className="w-4 h-4" />
-                                    Add Tag
-                                </button>
+                                {!isAddingTag && (
+                                    <button
+                                        onClick={() => setIsAddingTag(true)}
+                                        className="flex items-center gap-1.5 px-3 py-1.5 sm:px-4 sm:py-2 bg-primary-500 text-white rounded-lg sm:rounded-xl text-sm font-medium hover:bg-primary-600 transition-colors shadow-sm"
+                                    >
+                                        <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                                        <span className="hidden xs:inline">
+                                            New
+                                        </span>
+                                    </button>
+                                )}
                             </div>
                         </div>
 
-                        <div className="p-6">
-                            {/* Add new tag form */}
+                        <div className="p-4 sm:p-6">
+                            {/* Add new tag form - Inline compact */}
                             {isAddingTag && (
-                                <div className="mb-6 p-4 bg-neutral-50 rounded-xl border border-neutral-200">
-                                    <div className="flex items-center gap-4 mb-4">
-                                        <input
-                                            type="text"
-                                            value={newTagName}
-                                            onChange={(e) =>
-                                                setNewTagName(e.target.value)
-                                            }
-                                            placeholder="Enter tag name"
-                                            className="flex-1 px-4 py-2 bg-white border border-neutral-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500"
-                                            autoFocus
-                                            disabled={isSavingTag}
-                                        />
-                                    </div>
-
-                                    {/* Color picker */}
-                                    <div className="mb-4">
-                                        <p className="text-sm text-neutral-600 mb-2">
-                                            Choose color
-                                        </p>
-                                        <div className="flex gap-2">
-                                            {TAG_COLORS.map((color) => (
-                                                <button
-                                                    key={color}
-                                                    onClick={() =>
-                                                        setNewTagColor(color)
+                                <div className="mb-3 sm:mb-4 p-3 sm:p-4 bg-gradient-to-br from-primary-50 to-accent-50 dark:from-primary-900/20 dark:to-accent-900/20 rounded-lg sm:rounded-xl border border-primary-200 dark:border-primary-800">
+                                    <div className="flex items-start gap-2 sm:gap-3">
+                                        <div className="flex-1 space-y-2 sm:space-y-3">
+                                            <input
+                                                type="text"
+                                                value={newTagName}
+                                                onChange={(e) =>
+                                                    setNewTagName(
+                                                        e.target.value
+                                                    )
+                                                }
+                                                onKeyPress={(e) => {
+                                                    if (
+                                                        e.key === "Enter" &&
+                                                        !isSavingTag
+                                                    ) {
+                                                        handleAddTag();
                                                     }
-                                                    disabled={isSavingTag}
-                                                    className={`w-8 h-8 rounded-full transition-transform hover:scale-110 ${
-                                                        newTagColor === color
-                                                            ? "ring-2 ring-offset-2 ring-primary-500"
-                                                            : ""
-                                                    }`}
-                                                    style={{
-                                                        backgroundColor: color,
-                                                    }}
-                                                />
-                                            ))}
+                                                }}
+                                                placeholder="Tag name"
+                                                className="w-full px-2.5 py-1.5 sm:px-3 sm:py-2 bg-white dark:bg-neutral-700 border border-neutral-200 dark:border-neutral-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 dark:text-neutral-100"
+                                                autoFocus
+                                                disabled={isSavingTag}
+                                            />
+                                            <div className="flex gap-1 sm:gap-1.5 flex-wrap">
+                                                {TAG_COLORS.map((color) => (
+                                                    <button
+                                                        key={color}
+                                                        onClick={() =>
+                                                            setNewTagColor(
+                                                                color
+                                                            )
+                                                        }
+                                                        disabled={isSavingTag}
+                                                        className={`w-6 h-6 sm:w-7 sm:h-7 rounded-md sm:rounded-lg transition-all ${
+                                                            newTagColor ===
+                                                            color
+                                                                ? "ring-2 ring-offset-1 sm:ring-offset-2 dark:ring-offset-neutral-800 ring-primary-500 scale-110"
+                                                                : "hover:scale-105 opacity-70 hover:opacity-100"
+                                                        }`}
+                                                        style={{
+                                                            backgroundColor:
+                                                                color,
+                                                        }}
+                                                        title={color}
+                                                    />
+                                                ))}
+                                            </div>
+                                        </div>
+                                        <div className="flex flex-col gap-1.5 sm:gap-2">
+                                            <button
+                                                onClick={handleAddTag}
+                                                disabled={
+                                                    isSavingTag ||
+                                                    !newTagName.trim()
+                                                }
+                                                className="p-1.5 sm:p-2 bg-primary-500 text-white rounded-md sm:rounded-lg hover:bg-primary-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                                title="Create"
+                                            >
+                                                {isSavingTag ? (
+                                                    <Loader2 className="w-4 h-4 sm:w-5 sm:h-5 animate-spin" />
+                                                ) : (
+                                                    <Check className="w-4 h-4 sm:w-5 sm:h-5" />
+                                                )}
+                                            </button>
+                                            <button
+                                                onClick={() => {
+                                                    setIsAddingTag(false);
+                                                    setNewTagName("");
+                                                    setNewTagColor(
+                                                        TAG_COLORS[0]
+                                                    );
+                                                }}
+                                                disabled={isSavingTag}
+                                                className="p-1.5 sm:p-2 bg-neutral-200 dark:bg-neutral-700 text-neutral-700 dark:text-neutral-300 rounded-md sm:rounded-lg hover:bg-neutral-300 dark:hover:bg-neutral-600 transition-colors"
+                                                title="Cancel"
+                                            >
+                                                <X className="w-4 h-4 sm:w-5 sm:h-5" />
+                                            </button>
                                         </div>
                                     </div>
-
-                                    {/* Preview */}
-                                    <div className="flex items-center justify-between">
-                                        <div className="flex items-center gap-2">
-                                            <span className="text-sm text-neutral-500">
+                                    {newTagName && (
+                                        <div className="mt-2 sm:mt-3 pt-2 sm:pt-3 border-t border-primary-200 dark:border-primary-800/50 flex items-center gap-1.5 sm:gap-2">
+                                            <span className="text-[10px] sm:text-xs text-neutral-600 dark:text-neutral-400">
                                                 Preview:
                                             </span>
                                             <span
-                                                className="px-3 py-1 rounded-full text-sm font-medium text-white"
+                                                className="px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full text-[10px] sm:text-xs font-medium text-white shadow-sm"
                                                 style={{
                                                     backgroundColor:
                                                         newTagColor,
                                                 }}
                                             >
-                                                #{newTagName || "tag"}
+                                                #{newTagName}
                                             </span>
                                         </div>
-                                        <div className="flex gap-2">
-                                            <button
-                                                onClick={() => {
-                                                    setIsAddingTag(false);
-                                                    setNewTagName("");
-                                                }}
-                                                disabled={isSavingTag}
-                                                className="px-4 py-2 bg-neutral-100 text-neutral-700 rounded-xl font-medium hover:bg-neutral-200 transition-colors disabled:opacity-50"
-                                            >
-                                                Cancel
-                                            </button>
-                                            <button
-                                                onClick={handleAddTag}
-                                                disabled={isSavingTag}
-                                                className="px-4 py-2 bg-primary-500 text-white rounded-xl font-medium hover:bg-primary-600 transition-colors disabled:opacity-50 flex items-center gap-2"
-                                            >
-                                                {isSavingTag && (
-                                                    <Loader2 className="w-4 h-4 animate-spin" />
-                                                )}
-                                                Create Tag
-                                            </button>
-                                        </div>
-                                    </div>
+                                    )}
                                 </div>
                             )}
 
-                            {/* Tags list */}
+                            {/* Tags list - Grid layout */}
                             {isLoadingTags ? (
-                                <div className="flex items-center justify-center py-8">
+                                <div className="flex items-center justify-center py-12">
                                     <Loader2 className="w-6 h-6 animate-spin text-primary-500" />
                                 </div>
+                            ) : tags.length === 0 ? (
+                                <div className="text-center py-12 text-neutral-500 dark:text-neutral-400">
+                                    <Tags className="w-12 h-12 mx-auto mb-3 text-neutral-300 dark:text-neutral-600" />
+                                    <p className="font-medium">No tags yet</p>
+                                    <p className="text-sm mt-1">
+                                        Create your first tag to organize items
+                                    </p>
+                                </div>
                             ) : (
-                                <div className="space-y-2">
-                                    {tags.length === 0 ? (
-                                        <div className="text-center py-8 text-neutral-500">
-                                            <Tags className="w-12 h-12 mx-auto mb-3 text-neutral-300" />
-                                            <p>
-                                                No tags yet. Create your first
-                                                tag!
-                                            </p>
-                                        </div>
-                                    ) : (
-                                        tags.map((tag) => (
-                                            <div
-                                                key={tag.id}
-                                                className="flex items-center justify-between p-3 bg-neutral-50 rounded-xl hover:bg-neutral-100 transition-colors"
-                                            >
-                                                {editingTagId === tag.id ? (
-                                                    <>
-                                                        <div className="flex items-center gap-3 flex-1">
-                                                            <input
-                                                                type="text"
-                                                                value={
-                                                                    editingTagName
-                                                                }
-                                                                onChange={(e) =>
-                                                                    setEditingTagName(
-                                                                        e.target
-                                                                            .value
-                                                                    )
-                                                                }
-                                                                disabled={
-                                                                    isSavingTag
-                                                                }
-                                                                className="flex-1 max-w-[200px] px-3 py-1 bg-white border border-neutral-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-                                                            />
-                                                            <div className="flex gap-1">
-                                                                {TAG_COLORS.map(
-                                                                    (color) => (
-                                                                        <button
-                                                                            key={
-                                                                                color
-                                                                            }
-                                                                            onClick={() =>
-                                                                                setEditingTagColor(
-                                                                                    color
-                                                                                )
-                                                                            }
-                                                                            disabled={
-                                                                                isSavingTag
-                                                                            }
-                                                                            className={`w-6 h-6 rounded-full transition-transform hover:scale-110 ${
-                                                                                editingTagColor ===
-                                                                                color
-                                                                                    ? "ring-2 ring-offset-1 ring-primary-500"
-                                                                                    : ""
-                                                                            }`}
-                                                                            style={{
-                                                                                backgroundColor:
-                                                                                    color,
-                                                                            }}
-                                                                        />
-                                                                    )
-                                                                )}
-                                                            </div>
-                                                        </div>
-                                                        <div className="flex gap-1">
-                                                            <button
-                                                                onClick={() =>
-                                                                    setEditingTagId(
-                                                                        null
-                                                                    )
-                                                                }
-                                                                disabled={
-                                                                    isSavingTag
-                                                                }
-                                                                className="p-2 hover:bg-neutral-200 rounded-lg"
-                                                            >
-                                                                <X className="w-4 h-4 text-neutral-500" />
-                                                            </button>
-                                                            <button
-                                                                onClick={
-                                                                    handleSaveEdit
-                                                                }
-                                                                disabled={
-                                                                    isSavingTag
-                                                                }
-                                                                className="p-2 hover:bg-green-100 rounded-lg"
-                                                            >
-                                                                {isSavingTag ? (
-                                                                    <Loader2 className="w-4 h-4 animate-spin text-green-600" />
-                                                                ) : (
-                                                                    <Check className="w-4 h-4 text-green-600" />
-                                                                )}
-                                                            </button>
-                                                        </div>
-                                                    </>
-                                                ) : (
-                                                    <>
-                                                        <div className="flex items-center gap-3">
-                                                            <div
-                                                                className="w-4 h-4 rounded-full"
-                                                                style={{
-                                                                    backgroundColor:
-                                                                        tag.color ||
-                                                                        TAG_COLORS[0],
-                                                                }}
-                                                            />
-                                                            <span
-                                                                className="px-3 py-1 rounded-full text-sm font-medium text-white"
-                                                                style={{
-                                                                    backgroundColor:
-                                                                        tag.color ||
-                                                                        TAG_COLORS[0],
-                                                                }}
-                                                            >
-                                                                #{tag.name}
-                                                            </span>
-                                                        </div>
-                                                        <div className="flex gap-1">
+                                <div className="grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3">
+                                    {tags.map((tag) => (
+                                        <div
+                                            key={tag.id}
+                                            className="group relative bg-neutral-50 dark:bg-neutral-700/50 rounded-lg sm:rounded-xl p-2.5 sm:p-3 hover:shadow-md transition-all border border-neutral-200 dark:border-neutral-600"
+                                        >
+                                            {editingTagId === tag.id ? (
+                                                <div className="space-y-2">
+                                                    <input
+                                                        type="text"
+                                                        value={editingTagName}
+                                                        onChange={(e) =>
+                                                            setEditingTagName(
+                                                                e.target.value
+                                                            )
+                                                        }
+                                                        onKeyPress={(e) => {
+                                                            if (
+                                                                e.key ===
+                                                                    "Enter" &&
+                                                                !isSavingTag
+                                                            ) {
+                                                                handleSaveEdit();
+                                                            } else if (
+                                                                e.key ===
+                                                                "Escape"
+                                                            ) {
+                                                                setEditingTagId(
+                                                                    null
+                                                                );
+                                                            }
+                                                        }}
+                                                        disabled={isSavingTag}
+                                                        className="w-full px-2 py-1.5 text-sm bg-white dark:bg-neutral-600 border border-neutral-300 dark:border-neutral-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 dark:text-neutral-100"
+                                                        autoFocus
+                                                    />
+                                                    <div className="flex gap-1 flex-wrap">
+                                                        {TAG_COLORS.map(
+                                                            (color) => (
+                                                                <button
+                                                                    key={color}
+                                                                    onClick={() =>
+                                                                        setEditingTagColor(
+                                                                            color
+                                                                        )
+                                                                    }
+                                                                    disabled={
+                                                                        isSavingTag
+                                                                    }
+                                                                    className={`w-6 h-6 rounded-md transition-all ${
+                                                                        editingTagColor ===
+                                                                        color
+                                                                            ? "ring-2 ring-offset-1 dark:ring-offset-neutral-700 ring-primary-500 scale-110"
+                                                                            : "hover:scale-105 opacity-60 hover:opacity-100"
+                                                                    }`}
+                                                                    style={{
+                                                                        backgroundColor:
+                                                                            color,
+                                                                    }}
+                                                                />
+                                                            )
+                                                        )}
+                                                    </div>
+                                                    <div className="flex gap-1.5 pt-1">
+                                                        <button
+                                                            onClick={
+                                                                handleSaveEdit
+                                                            }
+                                                            disabled={
+                                                                isSavingTag
+                                                            }
+                                                            className="flex-1 px-2 py-1.5 text-xs bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors disabled:opacity-50 font-medium"
+                                                        >
+                                                            {isSavingTag
+                                                                ? "Saving..."
+                                                                : "Save"}
+                                                        </button>
+                                                        <button
+                                                            onClick={() =>
+                                                                setEditingTagId(
+                                                                    null
+                                                                )
+                                                            }
+                                                            disabled={
+                                                                isSavingTag
+                                                            }
+                                                            className="px-2 py-1.5 text-xs bg-neutral-200 dark:bg-neutral-600 text-neutral-700 dark:text-neutral-300 rounded-lg hover:bg-neutral-300 dark:hover:bg-neutral-500 transition-colors"
+                                                        >
+                                                            Cancel
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                <>
+                                                    <div className="flex items-center justify-between mb-1.5 sm:mb-2">
+                                                        <span
+                                                            className="inline-flex px-2 py-1 sm:px-3 sm:py-1.5 rounded-md sm:rounded-lg text-xs sm:text-sm font-medium text-white shadow-sm truncate max-w-[120px] sm:max-w-none"
+                                                            style={{
+                                                                backgroundColor:
+                                                                    tag.color ||
+                                                                    TAG_COLORS[0],
+                                                            }}
+                                                        >
+                                                            #{tag.name}
+                                                        </span>
+                                                        <div className="flex gap-0.5 sm:gap-1">
                                                             <button
                                                                 onClick={() =>
                                                                     handleEditTag(
                                                                         tag
                                                                     )
                                                                 }
-                                                                disabled={
-                                                                    deletingTagId ===
-                                                                    tag.id
-                                                                }
-                                                                className="p-2 hover:bg-neutral-200 rounded-lg disabled:opacity-50"
+                                                                className="p-1 sm:p-1.5 hover:bg-neutral-200 dark:hover:bg-neutral-600 rounded transition-colors"
+                                                                title="Edit"
                                                             >
-                                                                <Edit2 className="w-4 h-4 text-neutral-500" />
+                                                                <Edit2 className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-neutral-600 dark:text-neutral-400" />
                                                             </button>
                                                             <button
                                                                 onClick={() =>
@@ -471,64 +486,91 @@ export default function SettingsPage() {
                                                                     deletingTagId ===
                                                                     tag.id
                                                                 }
-                                                                className="p-2 hover:bg-red-100 rounded-lg disabled:opacity-50"
+                                                                className="p-1 sm:p-1.5 hover:bg-red-100 dark:hover:bg-red-900/30 rounded transition-colors"
+                                                                title="Delete"
                                                             >
                                                                 {deletingTagId ===
                                                                 tag.id ? (
-                                                                    <Loader2 className="w-4 h-4 animate-spin text-red-500" />
+                                                                    <Loader2 className="w-3 h-3 sm:w-3.5 sm:h-3.5 animate-spin text-red-600 dark:text-red-400" />
                                                                 ) : (
-                                                                    <Trash2 className="w-4 h-4 text-red-500" />
+                                                                    <Trash2 className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-red-600 dark:text-red-400" />
                                                                 )}
                                                             </button>
                                                         </div>
-                                                    </>
-                                                )}
-                                            </div>
-                                        ))
-                                    )}
+                                                    </div>
+                                                    <div className="flex items-center gap-1.5 sm:gap-2 text-[10px] sm:text-xs text-neutral-500 dark:text-neutral-400">
+                                                        <div
+                                                            className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full shadow-sm flex-shrink-0"
+                                                            style={{
+                                                                backgroundColor:
+                                                                    tag.color ||
+                                                                    TAG_COLORS[0],
+                                                            }}
+                                                        />
+                                                        <span className="truncate">
+                                                            Color
+                                                        </span>
+                                                    </div>
+                                                </>
+                                            )}
+                                        </div>
+                                    ))}
                                 </div>
                             )}
                         </div>
                     </div>
 
                     {/* Appearance Section */}
-                    <div className="bg-white rounded-2xl border border-neutral-200 overflow-hidden shadow-sm">
+                    <div className="bg-white dark:bg-neutral-800 rounded-2xl border border-neutral-200 dark:border-neutral-700 overflow-hidden shadow-sm">
                         <div className="p-6">
                             <div className="flex items-center gap-3 mb-4">
-                                <div className="p-2 bg-purple-50 rounded-xl">
-                                    <Palette className="w-5 h-5 text-purple-500" />
+                                <div className="p-2 bg-purple-50 dark:bg-purple-900/30 rounded-xl">
+                                    <Palette className="w-5 h-5 text-purple-500 dark:text-purple-400" />
                                 </div>
                                 <div>
-                                    <h2 className="text-lg font-semibold text-neutral-900">
+                                    <h2 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100">
                                         Appearance
                                     </h2>
-                                    <p className="text-sm text-neutral-500">
+                                    <p className="text-sm text-neutral-500 dark:text-neutral-400">
                                         Customize the look and feel
                                     </p>
                                 </div>
                             </div>
 
                             <div className="space-y-4">
-                                <div className="flex items-center justify-between p-4 bg-neutral-50 rounded-xl">
+                                <div className="flex items-center justify-between p-4 bg-neutral-50 dark:bg-neutral-700 rounded-xl">
                                     <div className="flex items-center gap-3">
-                                        <Moon className="w-5 h-5 text-neutral-500" />
-                                        <span className="font-medium text-neutral-700">
+                                        <Moon className="w-5 h-5 text-neutral-500 dark:text-neutral-400" />
+                                        <span className="font-medium text-neutral-700 dark:text-neutral-200">
                                             Dark Mode
                                         </span>
                                     </div>
-                                    <button className="relative w-12 h-6 bg-neutral-200 rounded-full transition-colors">
-                                        <span className="absolute left-1 top-1 w-4 h-4 bg-white rounded-full shadow transition-transform" />
+                                    <button
+                                        onClick={toggleTheme}
+                                        className={`relative w-12 h-6 rounded-full transition-colors ${
+                                            theme === "dark"
+                                                ? "bg-primary-500"
+                                                : "bg-neutral-200 dark:bg-neutral-600"
+                                        }`}
+                                    >
+                                        <span
+                                            className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-transform ${
+                                                theme === "dark"
+                                                    ? "right-1"
+                                                    : "left-1"
+                                            }`}
+                                        />
                                     </button>
                                 </div>
 
-                                <div className="flex items-center justify-between p-4 bg-neutral-50 rounded-xl">
+                                <div className="flex items-center justify-between p-4 bg-neutral-50 dark:bg-neutral-700 rounded-xl">
                                     <div className="flex items-center gap-3">
-                                        <Globe className="w-5 h-5 text-neutral-500" />
-                                        <span className="font-medium text-neutral-700">
+                                        <Globe className="w-5 h-5 text-neutral-500 dark:text-neutral-400" />
+                                        <span className="font-medium text-neutral-700 dark:text-neutral-200">
                                             Language
                                         </span>
                                     </div>
-                                    <select className="px-3 py-1.5 bg-white border border-neutral-200 rounded-lg text-neutral-700 focus:outline-none focus:ring-2 focus:ring-primary-500">
+                                    <select className="px-3 py-1.5 bg-white dark:bg-neutral-600 border border-neutral-200 dark:border-neutral-500 rounded-lg text-neutral-700 dark:text-neutral-200 focus:outline-none focus:ring-2 focus:ring-primary-500">
                                         <option value="en">English</option>
                                         <option value="vi">Tiếng Việt</option>
                                     </select>
@@ -538,29 +580,29 @@ export default function SettingsPage() {
                     </div>
 
                     {/* Notifications Section */}
-                    <div className="bg-white rounded-2xl border border-neutral-200 overflow-hidden shadow-sm">
+                    <div className="bg-white dark:bg-neutral-800 rounded-2xl border border-neutral-200 dark:border-neutral-700 overflow-hidden shadow-sm">
                         <div className="p-6">
                             <div className="flex items-center gap-3 mb-4">
-                                <div className="p-2 bg-orange-50 rounded-xl">
-                                    <Bell className="w-5 h-5 text-orange-500" />
+                                <div className="p-2 bg-orange-50 dark:bg-orange-900/30 rounded-xl">
+                                    <Bell className="w-5 h-5 text-orange-500 dark:text-orange-400" />
                                 </div>
                                 <div>
-                                    <h2 className="text-lg font-semibold text-neutral-900">
+                                    <h2 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100">
                                         Notifications
                                     </h2>
-                                    <p className="text-sm text-neutral-500">
+                                    <p className="text-sm text-neutral-500 dark:text-neutral-400">
                                         Manage notification preferences
                                     </p>
                                 </div>
                             </div>
 
                             <div className="space-y-4">
-                                <div className="flex items-center justify-between p-4 bg-neutral-50 rounded-xl">
+                                <div className="flex items-center justify-between p-4 bg-neutral-50 dark:bg-neutral-700 rounded-xl">
                                     <div>
-                                        <p className="font-medium text-neutral-700">
+                                        <p className="font-medium text-neutral-700 dark:text-neutral-200">
                                             Email notifications
                                         </p>
-                                        <p className="text-sm text-neutral-500">
+                                        <p className="text-sm text-neutral-500 dark:text-neutral-400">
                                             Receive updates via email
                                         </p>
                                     </div>
@@ -569,16 +611,16 @@ export default function SettingsPage() {
                                     </button>
                                 </div>
 
-                                <div className="flex items-center justify-between p-4 bg-neutral-50 rounded-xl">
+                                <div className="flex items-center justify-between p-4 bg-neutral-50 dark:bg-neutral-700 rounded-xl">
                                     <div>
-                                        <p className="font-medium text-neutral-700">
+                                        <p className="font-medium text-neutral-700 dark:text-neutral-200">
                                             Push notifications
                                         </p>
-                                        <p className="text-sm text-neutral-500">
+                                        <p className="text-sm text-neutral-500 dark:text-neutral-400">
                                             Receive browser notifications
                                         </p>
                                     </div>
-                                    <button className="relative w-12 h-6 bg-neutral-200 rounded-full transition-colors">
+                                    <button className="relative w-12 h-6 bg-neutral-200 dark:bg-neutral-600 rounded-full transition-colors">
                                         <span className="absolute left-1 top-1 w-4 h-4 bg-white rounded-full shadow" />
                                     </button>
                                 </div>
@@ -587,17 +629,17 @@ export default function SettingsPage() {
                     </div>
 
                     {/* Security Section */}
-                    <div className="bg-white rounded-2xl border border-neutral-200 overflow-hidden shadow-sm">
+                    <div className="bg-white dark:bg-neutral-800 rounded-2xl border border-neutral-200 dark:border-neutral-700 overflow-hidden shadow-sm">
                         <div className="p-6">
                             <div className="flex items-center gap-3 mb-4">
-                                <div className="p-2 bg-green-50 rounded-xl">
-                                    <Shield className="w-5 h-5 text-green-500" />
+                                <div className="p-2 bg-green-50 dark:bg-green-900/30 rounded-xl">
+                                    <Shield className="w-5 h-5 text-green-500 dark:text-green-400" />
                                 </div>
                                 <div>
-                                    <h2 className="text-lg font-semibold text-neutral-900">
+                                    <h2 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100">
                                         Security
                                     </h2>
-                                    <p className="text-sm text-neutral-500">
+                                    <p className="text-sm text-neutral-500 dark:text-neutral-400">
                                         Manage your account security
                                     </p>
                                 </div>
@@ -606,20 +648,20 @@ export default function SettingsPage() {
                             <div className="space-y-4">
                                 <button
                                     onClick={() => setShowPasswordModal(true)}
-                                    className="w-full flex items-center justify-between p-4 bg-neutral-50 rounded-xl hover:bg-neutral-100 transition-colors"
+                                    className="w-full flex items-center justify-between p-4 bg-neutral-50 dark:bg-neutral-700 rounded-xl hover:bg-neutral-100 dark:hover:bg-neutral-600 transition-colors"
                                 >
                                     <div className="flex items-center gap-3">
-                                        <Lock className="w-5 h-5 text-neutral-500" />
+                                        <Lock className="w-5 h-5 text-neutral-500 dark:text-neutral-400" />
                                         <div className="text-left">
-                                            <p className="font-medium text-neutral-700">
+                                            <p className="font-medium text-neutral-700 dark:text-neutral-200">
                                                 Change password
                                             </p>
-                                            <p className="text-sm text-neutral-500">
+                                            <p className="text-sm text-neutral-500 dark:text-neutral-400">
                                                 Update your password
                                             </p>
                                         </div>
                                     </div>
-                                    <ArrowLeft className="w-5 h-5 text-neutral-400 rotate-180" />
+                                    <ArrowLeft className="w-5 h-5 text-neutral-400 dark:text-neutral-500 rotate-180" />
                                 </button>
                             </div>
                         </div>
@@ -630,9 +672,9 @@ export default function SettingsPage() {
             {/* Change Password Modal */}
             {showPasswordModal && (
                 <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center animate-fade-in">
-                    <div className="bg-white rounded-2xl p-6 w-full max-w-md mx-4 animate-slide-up shadow-modal">
+                    <div className="bg-white dark:bg-neutral-800 rounded-2xl p-6 w-full max-w-md mx-4 animate-slide-up shadow-modal">
                         <div className="flex items-center justify-between mb-6">
-                            <h2 className="text-xl font-bold text-neutral-900">
+                            <h2 className="text-xl font-bold text-neutral-900 dark:text-neutral-100">
                                 Change Password
                             </h2>
                             <button
@@ -641,16 +683,16 @@ export default function SettingsPage() {
                                     setNewPassword("");
                                     setConfirmPassword("");
                                 }}
-                                className="p-2 hover:bg-neutral-100 rounded-lg"
+                                className="p-2 hover:bg-neutral-100 dark:hover:bg-neutral-700 rounded-lg"
                             >
-                                <X className="w-5 h-5 text-neutral-500" />
+                                <X className="w-5 h-5 text-neutral-500 dark:text-neutral-400" />
                             </button>
                         </div>
 
                         <div className="space-y-4">
                             {/* New Password */}
                             <div className="space-y-2">
-                                <label className="text-sm font-medium text-neutral-700">
+                                <label className="text-sm font-medium text-neutral-700 dark:text-neutral-300">
                                     New Password
                                 </label>
                                 <div className="relative">
@@ -666,30 +708,30 @@ export default function SettingsPage() {
                                         }
                                         placeholder="Enter new password"
                                         disabled={isChangingPassword}
-                                        className="w-full px-4 py-3 bg-neutral-50 border border-neutral-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 focus:bg-white pr-12"
+                                        className="w-full px-4 py-3 bg-neutral-50 dark:bg-neutral-700 border border-neutral-200 dark:border-neutral-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 focus:bg-white dark:focus:bg-neutral-600 text-neutral-900 dark:text-neutral-100 pr-12"
                                     />
                                     <button
                                         type="button"
                                         onClick={() =>
                                             setShowNewPassword(!showNewPassword)
                                         }
-                                        className="absolute right-3 top-1/2 -translate-y-1/2 p-1 hover:bg-neutral-100 rounded"
+                                        className="absolute right-3 top-1/2 -translate-y-1/2 p-1 hover:bg-neutral-100 dark:hover:bg-neutral-600 rounded"
                                     >
                                         {showNewPassword ? (
-                                            <EyeOff className="w-5 h-5 text-neutral-400" />
+                                            <EyeOff className="w-5 h-5 text-neutral-400 dark:text-neutral-500" />
                                         ) : (
-                                            <Eye className="w-5 h-5 text-neutral-400" />
+                                            <Eye className="w-5 h-5 text-neutral-400 dark:text-neutral-500" />
                                         )}
                                     </button>
                                 </div>
-                                <p className="text-xs text-neutral-500">
+                                <p className="text-xs text-neutral-500 dark:text-neutral-400">
                                     Minimum 6 characters
                                 </p>
                             </div>
 
                             {/* Confirm Password */}
                             <div className="space-y-2">
-                                <label className="text-sm font-medium text-neutral-700">
+                                <label className="text-sm font-medium text-neutral-700 dark:text-neutral-300">
                                     Confirm Password
                                 </label>
                                 <div className="relative">
@@ -705,7 +747,7 @@ export default function SettingsPage() {
                                         }
                                         placeholder="Confirm new password"
                                         disabled={isChangingPassword}
-                                        className={`w-full px-4 py-3 bg-neutral-50 border rounded-xl focus:outline-none focus:ring-2 focus:bg-white pr-12 ${
+                                        className={`w-full px-4 py-3 bg-neutral-50 dark:bg-neutral-700 border rounded-xl focus:outline-none focus:ring-2 focus:bg-white dark:focus:bg-neutral-600 text-neutral-900 dark:text-neutral-100 pr-12 ${
                                             confirmPassword &&
                                             newPassword !== confirmPassword
                                                 ? "border-red-500 focus:ring-red-500"
@@ -713,7 +755,7 @@ export default function SettingsPage() {
                                                     newPassword ===
                                                         confirmPassword
                                                   ? "border-green-500 focus:ring-green-500"
-                                                  : "border-neutral-200 focus:ring-primary-500"
+                                                  : "border-neutral-200 dark:border-neutral-600 focus:ring-primary-500"
                                         }`}
                                     />
                                     <button
@@ -723,12 +765,12 @@ export default function SettingsPage() {
                                                 !showConfirmPassword
                                             )
                                         }
-                                        className="absolute right-3 top-1/2 -translate-y-1/2 p-1 hover:bg-neutral-100 rounded"
+                                        className="absolute right-3 top-1/2 -translate-y-1/2 p-1 hover:bg-neutral-100 dark:hover:bg-neutral-600 rounded"
                                     >
                                         {showConfirmPassword ? (
-                                            <EyeOff className="w-5 h-5 text-neutral-400" />
+                                            <EyeOff className="w-5 h-5 text-neutral-400 dark:text-neutral-500" />
                                         ) : (
-                                            <Eye className="w-5 h-5 text-neutral-400" />
+                                            <Eye className="w-5 h-5 text-neutral-400 dark:text-neutral-500" />
                                         )}
                                     </button>
                                 </div>
@@ -755,7 +797,7 @@ export default function SettingsPage() {
                                     setConfirmPassword("");
                                 }}
                                 disabled={isChangingPassword}
-                                className="flex-1 px-4 py-3 bg-neutral-100 text-neutral-700 rounded-xl font-medium hover:bg-neutral-200 transition-colors disabled:opacity-50"
+                                className="flex-1 px-4 py-3 bg-neutral-100 dark:bg-neutral-700 text-neutral-700 dark:text-neutral-200 rounded-xl font-medium hover:bg-neutral-200 dark:hover:bg-neutral-600 transition-colors disabled:opacity-50"
                             >
                                 Cancel
                             </button>
