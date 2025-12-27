@@ -43,6 +43,7 @@ export default defineConfig({
                 cleanupOutdatedCaches: true,
                 skipWaiting: true,
                 clientsClaim: true,
+                maximumFileSizeToCacheInBytes: 5 * 1024 * 1024, // 5 MB
                 runtimeCaching: [
                     {
                         urlPattern: /^https:\/\/api\..*/i,
