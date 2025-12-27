@@ -5,6 +5,7 @@ import { AuthProvider } from "./contexts/AuthContext";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import ProtectedRoute from "./components/layout/ProtectedRoute";
 import AppLayout from "./components/layout/AppLayout";
+import { InstallPWA } from "./components/shared/InstallPWA";
 
 // Public pages
 import LoginPage from "./pages/auth/LoginPage";
@@ -253,6 +254,7 @@ function App() {
                                 },
                             }}
                         />
+                        <InstallPWA />
                     </AuthProvider>
                 </ThemeProvider>
             </BrowserRouter>
