@@ -19,6 +19,7 @@ import MonacoEditor from "@/components/ui/MonacoEditor";
 import FileUploader from "./FileUploader";
 import TagSelector from "./TagSelector";
 import { UploadProgress } from "@/components/upload/UploadProgress";
+import { DateTimePicker } from "@/components/ui/DateTimePicker";
 
 interface CreateItemModalProps {
     isOpen: boolean;
@@ -46,6 +47,7 @@ export default function CreateItemModal({
     const [importance, setImportance] = useState<Importance>("MEDIUM");
     const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
     const [files, setFiles] = useState<File[]>([]);
+    const [reminderAt, setReminderAt] = useState<string | null>(null);
 
     // Existing files management (for edit mode)
     const [existingFiles, setExistingFiles] = useState<ItemFile[]>([]);
@@ -71,6 +73,7 @@ export default function CreateItemModal({
             setImportance(editItem.importance || "MEDIUM");
             setSelectedTagIds(editItem.itemTags?.map((t) => t.tagId) || []);
             setFiles([]);
+            setReminderAt(editItem.reminderAt || null);
             // Initialize existing files
             setExistingFiles(editItem.files || []);
             setRemoveFileIds([]);
@@ -99,6 +102,7 @@ export default function CreateItemModal({
                 content: type === "NOTE" ? content : undefined,
                 contentType: type === "NOTE" ? contentType : undefined,
                 tagIds: selectedTagIds.length > 0 ? selectedTagIds : undefined,
+                reminderAt: reminderAt || undefined,
             };
 
             // Auto-detect large files and use chunked upload
@@ -173,6 +177,7 @@ export default function CreateItemModal({
                         selectedTagIds.length > 0 ? selectedTagIds : undefined,
                     removeFileIds:
                         removeFileIds.length > 0 ? removeFileIds : undefined,
+                    reminderAt: reminderAt,
                 },
                 files.length > 0 ? files : undefined
             );
@@ -218,6 +223,7 @@ export default function CreateItemModal({
         setFiles([]);
         setExistingFiles([]);
         setRemoveFileIds([]);
+        setReminderAt(null);
     };
 
     const handleSubmit = (e: React.FormEvent) => {
@@ -577,6 +583,16 @@ export default function CreateItemModal({
                             selectedTagIds={selectedTagIds}
                             onTagsChange={setSelectedTagIds}
                             onCreateTag={handleCreateTag}
+                        />
+                    </div>
+
+                    {/* Reminder */}
+                    <div>
+                        <DateTimePicker
+                            value={reminderAt}
+                            onChange={setReminderAt}
+                            label="Nhắc nhở"
+                            placeholder="Chọn thời gian nhắc nhở"
                         />
                     </div>
                 </form>

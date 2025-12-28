@@ -69,6 +69,19 @@ export class ItemsService {
   }
 
   /**
+   * Parse reminderAt string to Date, preserving timezone information
+   */
+  private parseReminderAt(reminderAtString: string): Date {
+    // Frontend gửi: "2025-12-28T16:55:00+07:00"
+    // Chúng ta cần parse đúng timezone này
+    const date = new Date(reminderAtString);
+    this.logger.debug(
+      `Parsing reminderAt: "${reminderAtString}" -> UTC: "${date.toISOString()}" -> VN: "${date.toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' })}"`,
+    );
+    return date;
+  }
+
+  /**
    * Create a new item (FILE, LINK, or NOTE)
    * Uses transaction for atomicity
    * Supports multiple file uploads for FILE type
@@ -180,7 +193,12 @@ export class ItemsService {
         // 2. Build tags text for search
         const tagsText = await this.buildTagsTextInTransaction(tx, allTagIds);
 
-        // 3. Create Item first
+        // 3. Parse reminderAt if provided
+        const reminderAt = data.reminderAt
+          ? this.parseReminderAt(data.reminderAt)
+          : null;
+
+        // 4. Create Item first
         const item = await tx.item.create({
           data: {
             userId,
@@ -190,6 +208,7 @@ export class ItemsService {
             category: data.category,
             project: data.project,
             importance: data.importance || 'MEDIUM',
+            reminderAt,
             tagsText,
             itemTags: allTagIds.length
               ? {
@@ -266,6 +285,11 @@ export class ItemsService {
       );
       const tagsText = await this.buildTagsTextInTransaction(tx, allTagIds);
 
+      // Parse reminderAt if provided
+      const reminderAt = data.reminderAt
+        ? this.parseReminderAt(data.reminderAt)
+        : null;
+
       return tx.item.create({
         data: {
           userId,
@@ -277,6 +301,7 @@ export class ItemsService {
           category: data.category,
           project: data.project,
           importance: data.importance || 'MEDIUM',
+          reminderAt,
           tagsText,
           itemTags: allTagIds.length
             ? { create: allTagIds.map((tagId) => ({ tagId })) }
@@ -308,6 +333,11 @@ export class ItemsService {
       );
       const tagsText = await this.buildTagsTextInTransaction(tx, allTagIds);
 
+      // Parse reminderAt if provided
+      const reminderAt = data.reminderAt
+        ? this.parseReminderAt(data.reminderAt)
+        : null;
+
       return tx.item.create({
         data: {
           userId,
@@ -319,6 +349,7 @@ export class ItemsService {
           category: data.category,
           project: data.project,
           importance: data.importance || 'MEDIUM',
+          reminderAt,
           tagsText,
           itemTags: allTagIds.length
             ? { create: allTagIds.map((tagId) => ({ tagId })) }
@@ -644,6 +675,15 @@ export class ItemsService {
     // Handle URL domain extraction for LINK type
     if (data.url && existingItem.type === 'LINK') {
       (updateData as any).domain = this.extractDomain(data.url);
+    }
+
+    // Handle reminderAt parsing with timezone support
+    if (data.reminderAt !== undefined) {
+      if (data.reminderAt) {
+        (updateData as any).reminderAt = this.parseReminderAt(data.reminderAt);
+      } else {
+        (updateData as any).reminderAt = null;
+      }
     }
 
     // Use transaction for tag operations and item update

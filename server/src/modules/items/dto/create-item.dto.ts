@@ -111,6 +111,14 @@ export class CreateItemDto {
   @IsEnum(Importance)
   importance?: Importance;
 
+  @ApiPropertyOptional({
+    description: 'Reminder date and time (ISO 8601 format)',
+    example: '2025-12-31T10:00:00.000Z',
+  })
+  @IsOptional()
+  @IsString()
+  reminderAt?: string;
+
   // Existing tag IDs
   @ApiPropertyOptional({
     description: 'Array of existing tag IDs',

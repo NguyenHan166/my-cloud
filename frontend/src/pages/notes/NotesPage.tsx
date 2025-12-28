@@ -18,6 +18,7 @@ import {
     ArrowDownAZ,
     ArrowUpAZ,
     X,
+    Paperclip,
 } from "lucide-react";
 import type { Item, QueryItemsDto, Importance } from "@/types/item.types";
 import { itemsApi } from "@/lib/api/endpoints/items";
@@ -29,6 +30,7 @@ import ConfirmModal from "@/components/ui/ConfirmModal";
 import Badge from "@/components/ui/Badge";
 import MonacoEditor from "@/components/ui/MonacoEditor";
 import { getLanguageLabel } from "@/lib/constants/languageOptions";
+import { ReminderBadge } from "@/components/shared/ReminderBadge";
 
 export default function NotesPage() {
     const queryClient = useQueryClient();
@@ -268,9 +270,9 @@ export default function NotesPage() {
                                                 : cls +
                                                   " ring-2 ring-offset-1 ring-neutral-400"
                                             : val === undefined
-                                            ? "bg-white text-neutral-600 border border-neutral-200"
-                                            : cls +
-                                              " opacity-40 hover:opacity-70"
+                                              ? "bg-white text-neutral-600 border border-neutral-200"
+                                              : cls +
+                                                " opacity-40 hover:opacity-70"
                                     }`}
                                 >
                                     {label}
@@ -375,35 +377,80 @@ export default function NotesPage() {
                                         <Pin className="w-4 h-4 text-amber-500 fill-current flex-shrink-0" />
                                     )}
                                 </div>
+                                {note.description && (
+                                    <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-1 line-clamp-1">
+                                        {note.description}
+                                    </p>
+                                )}
                             </div>
                             <div className="px-4 pb-3">
                                 <p className="text-sm text-neutral-600 dark:text-neutral-400 line-clamp-4 whitespace-pre-wrap">
                                     {note.content}
                                 </p>
                             </div>
-                            {note.itemTags?.length > 0 && (
-                                <div className="px-4 pb-3 flex flex-wrap gap-1">
-                                    {note.itemTags.slice(0, 2).map((it) => (
+                            <div className="px-4 pb-3 space-y-2">
+                                {/* Tags */}
+                                {note.itemTags?.length > 0 && (
+                                    <div className="flex flex-wrap gap-1">
+                                        {note.itemTags.slice(0, 2).map((it) => (
+                                            <Badge
+                                                key={it.tag.id}
+                                                variant="default"
+                                                size="sm"
+                                                style={{
+                                                    backgroundColor:
+                                                        it.tag.color + "20",
+                                                    color: it.tag.color,
+                                                }}
+                                            >
+                                                {it.tag.name}
+                                            </Badge>
+                                        ))}
+                                        {note.itemTags.length > 2 && (
+                                            <Badge variant="default" size="sm">
+                                                +{note.itemTags.length - 2}
+                                            </Badge>
+                                        )}
+                                    </div>
+                                )}
+                                {/* Reminder & Meta info */}
+                                <div className="flex items-center gap-2 flex-wrap">
+                                    {note.reminderAt && (
+                                        <ReminderBadge
+                                            reminderAt={note.reminderAt}
+                                            showTime={false}
+                                        />
+                                    )}
+                                    {note.importance &&
+                                        note.importance !== "MEDIUM" && (
+                                            <Badge
+                                                variant="default"
+                                                size="sm"
+                                                className={`
+                                                ${note.importance === "URGENT" ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400" : ""}
+                                                ${note.importance === "HIGH" ? "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400" : ""}
+                                                ${note.importance === "LOW" ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" : ""}
+                                            `}
+                                            >
+                                                {note.importance === "URGENT"
+                                                    ? "🔴"
+                                                    : note.importance === "HIGH"
+                                                      ? "🟠"
+                                                      : "🟢"}
+                                            </Badge>
+                                        )}
+                                    {note.files && note.files.length > 0 && (
                                         <Badge
-                                            key={it.tag.id}
                                             variant="default"
                                             size="sm"
-                                            style={{
-                                                backgroundColor:
-                                                    it.tag.color + "20",
-                                                color: it.tag.color,
-                                            }}
+                                            className="bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
                                         >
-                                            {it.tag.name}
-                                        </Badge>
-                                    ))}
-                                    {note.itemTags.length > 2 && (
-                                        <Badge variant="default" size="sm">
-                                            +{note.itemTags.length - 2}
+                                            <Paperclip className="w-3 h-3 mr-1" />
+                                            {note.files.length}
                                         </Badge>
                                     )}
                                 </div>
-                            )}
+                            </div>
                             <div className="px-4 py-2.5 border-t border-neutral-100 flex items-center justify-between">
                                 <span className="text-xs text-neutral-400 flex items-center gap-1">
                                     <Calendar className="w-3 h-3" />{" "}
@@ -465,20 +512,64 @@ export default function NotesPage() {
                                     <StickyNote className="w-5 h-5 text-amber-600" />
                                 </div>
                                 <div className="flex-1 min-w-0">
-                                    <div className="flex items-center gap-2">
+                                    <div className="flex items-center gap-2 flex-wrap">
                                         <h3 className="font-medium text-neutral-900 dark:text-neutral-100 truncate">
                                             {note.title}
                                         </h3>
                                         {note.isPinned && (
                                             <Pin className="w-3.5 h-3.5 text-amber-500 fill-current flex-shrink-0" />
                                         )}
+                                        {note.importance &&
+                                            note.importance !== "MEDIUM" && (
+                                                <Badge
+                                                    variant="default"
+                                                    size="sm"
+                                                    className={`
+                                                    ${note.importance === "URGENT" ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400" : ""}
+                                                    ${note.importance === "HIGH" ? "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400" : ""}
+                                                    ${note.importance === "LOW" ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" : ""}
+                                                `}
+                                                >
+                                                    {note.importance ===
+                                                    "URGENT"
+                                                        ? "🔴"
+                                                        : note.importance ===
+                                                            "HIGH"
+                                                          ? "🟠"
+                                                          : "🟢"}
+                                                </Badge>
+                                            )}
+                                        {note.files &&
+                                            note.files.length > 0 && (
+                                                <Badge
+                                                    variant="default"
+                                                    size="sm"
+                                                    className="bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
+                                                >
+                                                    <Paperclip className="w-3 h-3 mr-1" />
+                                                    {note.files.length}
+                                                </Badge>
+                                            )}
                                     </div>
-                                    <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-0.5 line-clamp-2 whitespace-pre-wrap">
+                                    {note.description && (
+                                        <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-1 line-clamp-1">
+                                            {note.description}
+                                        </p>
+                                    )}
+                                    <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-1 line-clamp-2 whitespace-pre-wrap">
                                         {note.content}
                                     </p>
-                                    <div className="flex items-center gap-2 mt-2 text-xs text-neutral-400">
-                                        <Calendar className="w-3 h-3" />{" "}
-                                        {formatDate(note.createdAt)}
+                                    <div className="flex items-center gap-2 mt-2 text-xs text-neutral-400 flex-wrap">
+                                        <span className="flex items-center gap-1">
+                                            <Calendar className="w-3 h-3" />{" "}
+                                            {formatDate(note.createdAt)}
+                                        </span>
+                                        {note.reminderAt && (
+                                            <ReminderBadge
+                                                reminderAt={note.reminderAt}
+                                                showTime={false}
+                                            />
+                                        )}
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -553,12 +644,18 @@ export default function NotesPage() {
                     <div className="relative bg-white dark:bg-neutral-900 rounded-2xl shadow-2xl w-full max-w-3xl max-h-[85vh] overflow-hidden">
                         <div className="p-6 border-b border-neutral-200 dark:border-neutral-700">
                             <div className="flex items-start justify-between">
-                                <div>
+                                <div className="flex-1">
                                     <h2 className="text-xl font-bold text-neutral-900 dark:text-neutral-100">
                                         {previewNote.title}
                                     </h2>
-                                    <div className="flex items-center gap-3 mt-1">
-                                        <span className="text-sm text-neutral-500">
+                                    {previewNote.description && (
+                                        <p className="text-sm text-neutral-600 dark:text-neutral-400 mt-1">
+                                            {previewNote.description}
+                                        </p>
+                                    )}
+                                    <div className="flex items-center gap-2 mt-2 flex-wrap">
+                                        <span className="text-sm text-neutral-500 flex items-center gap-1">
+                                            <Calendar className="w-3.5 h-3.5" />
                                             {formatDate(previewNote.createdAt)}
                                         </span>
                                         <span className="text-xs bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400 px-2 py-0.5 rounded">
@@ -568,14 +665,92 @@ export default function NotesPage() {
                                                     "plaintext"
                                             )}
                                         </span>
+                                        {previewNote.reminderAt && (
+                                            <ReminderBadge
+                                                reminderAt={
+                                                    previewNote.reminderAt
+                                                }
+                                            />
+                                        )}
+                                        {previewNote.importance &&
+                                            previewNote.importance !==
+                                                "MEDIUM" && (
+                                                <Badge
+                                                    variant="default"
+                                                    size="sm"
+                                                    className={`
+                                                    ${previewNote.importance === "URGENT" ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400" : ""}
+                                                    ${previewNote.importance === "HIGH" ? "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400" : ""}
+                                                    ${previewNote.importance === "LOW" ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" : ""}
+                                                `}
+                                                >
+                                                    {previewNote.importance ===
+                                                    "URGENT"
+                                                        ? "🔴 Urgent"
+                                                        : previewNote.importance ===
+                                                            "HIGH"
+                                                          ? "🟠 High"
+                                                          : "🟢 Low"}
+                                                </Badge>
+                                            )}
+                                        {previewNote.files &&
+                                            previewNote.files.length > 0 && (
+                                                <Badge
+                                                    variant="default"
+                                                    size="sm"
+                                                    className="bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
+                                                >
+                                                    <Paperclip className="w-3 h-3 mr-1" />
+                                                    {previewNote.files.length}{" "}
+                                                    file
+                                                    {previewNote.files.length >
+                                                    1
+                                                        ? "s"
+                                                        : ""}
+                                                </Badge>
+                                            )}
+                                        {previewNote.isPinned && (
+                                            <Badge
+                                                variant="default"
+                                                size="sm"
+                                                className="bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
+                                            >
+                                                <Pin className="w-3 h-3 mr-1 fill-current" />
+                                                Pinned
+                                            </Badge>
+                                        )}
                                     </div>
+                                    {previewNote.itemTags &&
+                                        previewNote.itemTags.length > 0 && (
+                                            <div className="flex flex-wrap gap-1 mt-3">
+                                                {previewNote.itemTags.map(
+                                                    (it) => (
+                                                        <Badge
+                                                            key={it.tag.id}
+                                                            variant="default"
+                                                            size="sm"
+                                                            style={{
+                                                                backgroundColor:
+                                                                    it.tag
+                                                                        .color +
+                                                                    "20",
+                                                                color: it.tag
+                                                                    .color,
+                                                            }}
+                                                        >
+                                                            {it.tag.name}
+                                                        </Badge>
+                                                    )
+                                                )}
+                                            </div>
+                                        )}
                                 </div>
                                 <button
                                     onClick={() => {
                                         setPreviewNote(null);
                                         setPreviewDisplayMode(null);
                                     }}
-                                    className="p-2 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-lg"
+                                    className="p-2 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-lg flex-shrink-0"
                                 >
                                     <X className="w-5 h-5 text-neutral-500" />
                                 </button>

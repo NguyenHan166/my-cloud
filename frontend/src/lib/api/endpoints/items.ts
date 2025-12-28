@@ -57,6 +57,7 @@ export const itemsApi = {
         if (data.importance) formData.append("importance", data.importance);
         if (data.url) formData.append("url", data.url);
         if (data.content) formData.append("content", data.content);
+        if (data.reminderAt) formData.append("reminderAt", data.reminderAt);
 
         // Add tag IDs
         if (data.tagIds && data.tagIds.length > 0) {
@@ -111,6 +112,12 @@ export const itemsApi = {
         if (data.url !== undefined) formData.append("url", data.url);
         if (data.content !== undefined)
             formData.append("content", data.content);
+        if (data.reminderAt !== undefined) {
+            formData.append(
+                "reminderAt",
+                data.reminderAt === null ? "" : data.reminderAt
+            );
+        }
 
         // Tag IDs
         if (data.tagIds && data.tagIds.length > 0) {

@@ -25,6 +25,7 @@ import { getLanguageLabel } from "@/lib/constants/languageOptions";
 import FilePreviewModal from "./FilePreviewModal";
 import { AddToCollectionModal } from "@/components/collections";
 import ShareLinkModal from "@/components/shared/ShareLinkModal";
+import { ReminderBadge } from "@/components/shared/ReminderBadge";
 
 interface ItemDetailPanelProps {
     item: Item | null;
@@ -448,6 +449,24 @@ export default function ItemDetailPanel({
                                         </Badge>
                                     ))}
                                 </div>
+                            </div>
+                        )}
+
+                        {/* Reminder */}
+                        {item.reminderAt && (
+                            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-xl p-4 border border-blue-200 dark:border-blue-800">
+                                <span className="text-xs text-blue-600 dark:text-blue-400 block mb-2 font-medium">
+                                    🔔 Lời nhắc
+                                </span>
+                                <ReminderBadge
+                                    reminderAt={item.reminderAt}
+                                    showTime={true}
+                                />
+                                <p className="text-xs text-blue-600 dark:text-blue-400 mt-2">
+                                    {new Date(item.reminderAt).toLocaleString(
+                                        "vi-VN"
+                                    )}
+                                </p>
                             </div>
                         )}
 

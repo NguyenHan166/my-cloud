@@ -78,7 +78,8 @@ export class ItemResponseDto {
   content?: string;
 
   @ApiPropertyOptional({
-    description: 'Content type/language for NOTE (e.g., javascript, python, json)',
+    description:
+      'Content type/language for NOTE (e.g., javascript, python, json)',
     example: 'javascript',
   })
   contentType?: string;
@@ -100,6 +101,12 @@ export class ItemResponseDto {
     type: [ItemTagJunctionResponseDto],
   })
   itemTags: ItemTagJunctionResponseDto[];
+
+  @ApiPropertyOptional({
+    description: 'Reminder date and time',
+    example: '2025-12-31T10:00:00.000Z',
+  })
+  reminderAt?: Date;
 
   @ApiProperty({
     description: 'Item creation date',

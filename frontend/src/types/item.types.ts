@@ -69,6 +69,7 @@ export interface Item {
     tagsText?: string; // For search
     files: ItemFile[];
     itemTags: ItemTag[];
+    reminderAt?: string; // ISO 8601 datetime string
     createdAt: string;
     updatedAt: string;
 }
@@ -86,6 +87,7 @@ export interface CreateItemDto {
     importance?: Importance;
     tagIds?: string[];
     newTags?: NewTagDto[];
+    reminderAt?: string; // ISO 8601 datetime string
 }
 
 export interface NewTagDto {
@@ -105,6 +107,7 @@ export interface UpdateItemDto {
     url?: string; // For LINK type
     content?: string; // For NOTE type
     contentType?: string; // Language/format for NOTE
+    reminderAt?: string | null; // ISO 8601 datetime string, null to remove
 }
 
 export interface QueryItemsDto {

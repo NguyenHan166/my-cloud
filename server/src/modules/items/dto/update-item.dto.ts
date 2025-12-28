@@ -57,7 +57,8 @@ export class UpdateItemDto {
   content?: string;
 
   @ApiPropertyOptional({
-    description: 'Update content type/language (e.g., javascript, python, json)',
+    description:
+      'Update content type/language (e.g., javascript, python, json)',
   })
   @IsOptional()
   @IsString()
@@ -82,6 +83,14 @@ export class UpdateItemDto {
   @IsOptional()
   @IsEnum(Importance)
   importance?: Importance;
+
+  @ApiPropertyOptional({
+    description: 'Update reminder date and time (ISO 8601 format)',
+    example: '2025-12-31T10:00:00.000Z',
+  })
+  @IsOptional()
+  @IsString()
+  reminderAt?: string;
 
   // Existing tag IDs
   @ApiPropertyOptional({

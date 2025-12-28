@@ -6,6 +6,7 @@ import {
 } from "@/lib/utils/item.utils";
 import { Pin } from "lucide-react";
 import Badge from "@/components/ui/Badge";
+import { ReminderBadge } from "@/components/shared/ReminderBadge";
 
 interface ItemListRowProps {
     item: Item;
@@ -81,6 +82,16 @@ export default function ItemListRow({
                         </Badge>
                     )}
                 </div>
+
+                {/* Reminder Badge */}
+                {item.reminderAt && (
+                    <div className="hidden md:block flex-shrink-0">
+                        <ReminderBadge
+                            reminderAt={item.reminderAt}
+                            showTime={false}
+                        />
+                    </div>
+                )}
 
                 {/* Metadata */}
                 <div className="hidden lg:flex items-center gap-4 text-sm text-neutral-600 dark:text-neutral-400">

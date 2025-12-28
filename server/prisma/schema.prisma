@@ -131,6 +131,7 @@ model Item {
   trashedAt   DateTime? // Timestamp when moved to trash
   tagsText    String? // cache tags dang text de search nhanh
   domain      String? // vi du : youtube.com
+  reminderAt  DateTime? // Thoi gian nhac nho
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
 
@@ -152,6 +153,7 @@ model Item {
   @@index([isPinned])
   @@index([isTrashed])
   @@index([trashedAt])
+  @@index([reminderAt])
   @@index([title]) // Full-text search co the dung rieng
 }
 

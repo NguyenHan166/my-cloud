@@ -5,6 +5,7 @@ import {
 } from "@/lib/utils/item.utils";
 import { Pin } from "lucide-react";
 import Badge from "@/components/ui/Badge";
+import { ReminderBadge } from "@/components/shared/ReminderBadge";
 
 interface ItemCardProps {
     item: Item;
@@ -120,6 +121,13 @@ export default function ItemCard({ item, onClick, onPin }: ItemCardProps) {
                                 +{item.itemTags.length - 3}
                             </Badge>
                         )}
+                    </div>
+                )}
+
+                {/* Reminder Badge */}
+                {item.reminderAt && (
+                    <div className="mb-3">
+                        <ReminderBadge reminderAt={item.reminderAt} />
                     </div>
                 )}
 

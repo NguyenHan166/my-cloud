@@ -23,6 +23,7 @@ import {
 import { JwtAuthGuard } from 'src/modules/auth/guards/jwt-auth.guard';
 import { GetUser } from 'src/common';
 import { ItemsService } from './items.service';
+import { ReminderService } from './reminder.service';
 import {
   CreateItemDto,
   UpdateItemDto,
@@ -39,7 +40,10 @@ import { MessageResponseDto } from 'src/common/dto/message.response.dto';
 @Controller('items')
 @UseGuards(JwtAuthGuard)
 export class ItemsController {
-  constructor(private readonly itemsService: ItemsService) {}
+  constructor(
+    private readonly itemsService: ItemsService,
+    private readonly reminderService: ReminderService,
+  ) {}
 
   /**
    * Create a new item
@@ -449,5 +453,24 @@ export class ItemsController {
     @GetUser() user: { id: string },
   ) {
     return this.itemsService.restoreFromTrash(id, user.id);
+  }
+
+  /**
+   * Send reminder manually (for testing)
+   */
+  @Post(':id/send-reminder')
+  @ApiOperation({ summary: 'Manually send reminder for an item (for testing)' })
+  @ApiResponse({
+    status: 200,
+    description: 'Reminder sent successfully.',
+    type: MessageResponseDto,
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Item not found.',
+  })
+  async sendReminder(@Param('id') id: string, @GetUser() user: { id: string }) {
+    await this.reminderService.sendReminderManually(id);
+    return { message: 'Reminder sent successfully' };
   }
 }
