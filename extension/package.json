@@ -1,0 +1,33 @@
+{
+    "name": "personalcloud-extension",
+    "description": "Quick access to your PersonalCloud storage",
+    "private": true,
+    "version": "1.0.0",
+    "type": "module",
+    "scripts": {
+        "dev": "wxt",
+        "dev:firefox": "wxt -b firefox",
+        "build": "wxt build",
+        "build:firefox": "wxt build -b firefox",
+        "build:chrome": "wxt build -b chrome",
+        "build:edge": "wxt build -b edge",
+        "zip": "wxt zip",
+        "zip:firefox": "wxt zip -b firefox",
+        "zip:chrome": "wxt zip -b chrome",
+        "zip:edge": "wxt zip -b edge",
+        "compile": "tsc --noEmit",
+        "postinstall": "wxt prepare"
+    },
+    "dependencies": {
+        "react": "^19.2.3",
+        "react-dom": "^19.2.3",
+        "zustand": "^5.0.9"
+    },
+    "devDependencies": {
+        "@types/react": "^19.2.7",
+        "@types/react-dom": "^19.2.3",
+        "@wxt-dev/module-react": "^1.1.5",
+        "typescript": "^5.9.3",
+        "wxt": "^0.20.6"
+    }
+}
